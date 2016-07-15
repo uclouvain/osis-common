@@ -42,7 +42,7 @@ from django.utils.translation import ugettext as _
 from django.utils import translation
 
 
-def __get_all_lang_templates(templates_refs):
+def _get_all_lang_templates(templates_refs):
     """
     Get all the templates, for all languages, according to the list of template reference.
     :param templates_refs: The list of templates references we want to retrieve
@@ -53,7 +53,7 @@ def __get_all_lang_templates(templates_refs):
              list(message_template_mdl.find_by_reference(template_ref))} for template_ref in templates_refs)
 
 
-def __get_template_by_language_or_default(lang_code, html_message_templates, txt_message_templates):
+def _get_template_by_language_or_default(lang_code, html_message_templates, txt_message_templates):
     """
     Get the txt and html templates by language if the lang_code exists in templates dictionnaries.
     If not , the default language template is taken.
@@ -73,7 +73,7 @@ def __get_template_by_language_or_default(lang_code, html_message_templates, txt
     return html_message_template, txt_message_template
 
 
-def __send_messages(html_message_template, txt_message_template, html_data,txt_data, receivers, subject):
+def __send_messages(html_message_template, txt_message_template, html_data, txt_data, receivers, subject):
     """
     Send a message to a list of person ,with txt and html format.
     The messages are build according templates and data (dictionnary of template vars).
@@ -152,7 +152,7 @@ def __send_and_save(receivers, reference=None, **kwargs):
     Send the message :
     - by mail if person.mail exists
     Save the message in message_history table
-    :param persons List of the persons to send the message
+    :param receivers List of the receivers of the message
     :param reference business reference of the message
     :param kwargs List of arguments used by the django send_mail method.
     The recipient_list argument is taken form the persons list.
@@ -173,10 +173,13 @@ def __send_and_save(receivers, reference=None, **kwargs):
             message_history.save()
         send_mail(recipient_list=recipient_list, **kwargs)
 
+
 def __make_tables_template_data(tables, lang_code):
     """
-    :param tables:
-    :return:
+    Make table from data and header to insert into messages.
+    :param tables: The lists of tables to inserts into template.
+    Table are created by message_config.create_table function
+    :return: The html tables and txt table to insert in each type of messages
     """
     html_templates_data = {}
     txt_templates_data = {}
@@ -203,9 +206,10 @@ def __make_tables_template_data(tables, lang_code):
 
 def send_messages(message_content):
     """
-
-    :param message_content:
-    :return:
+    Send messages according to the message_content
+    :param message_content: The message content and configuration dictionnary
+    message_content is created by message_config.create_message_content function
+    :return: An error message if something wrong,None else
     """
     html_template_ref = message_content.get('html_template_ref', None)
     txt_template_ref = message_content.get('txt_template_ref', None)
@@ -215,22 +219,24 @@ def send_messages(message_content):
     subject_data = message_content.get('subject_data', None)
     if not (html_template_ref and receivers and subject_data):
         return _('message_content_error')
-    txt_message_templates, html_message_templates = __get_all_lang_templates([html_template_ref,
+    html_message_templates, txt_message_templates = _get_all_lang_templates([html_template_ref,
                                                                               txt_template_ref])
     if not html_message_templates:
         return _('template_error').format(html_template_ref)
 
     for lang_code, receivers in __map_receivers_by_languages(receivers).items():
         html_table_data, txt_table_data = __make_tables_template_data(tables, lang_code)
-        html_message_template, txt_message_template = __get_template_by_language_or_default(lang_code,
+        html_message_template, txt_message_template = _get_template_by_language_or_default(lang_code,
                                                                                             html_message_templates,
                                                                                             txt_message_templates)
         subject = html_message_template.subject.format(subject_data)
-        html_data = template_base_data + html_table_data
-        txt_data = template_base_data + txt_table_data
+        html_data = template_base_data.copy()
+        html_data.update(html_table_data)
+        txt_data = template_base_data.copy()
+        txt_data.update(txt_table_data)
         html_data['signature'] = render_to_string('messaging/html_email_signature.html', {
             'logo_mail_signature_url': settings.LOGO_EMAIL_SIGNATURE_URL,
-            'logo_osis_url': settings.LOGO_OSIS_URL})
+            'logo_osis_url': settings.LOGO_OSIS_URL, })
         __send_messages(html_message_template, txt_message_template, html_data,txt_data, receivers, subject)
 
     return None

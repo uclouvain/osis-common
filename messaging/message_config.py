@@ -27,7 +27,7 @@
 def create_message_content(html_template_ref,
                            txt_template_ref,
                            tables,
-                           persons,
+                           receivers,
                            template_base_data,
                            subject_data):
     """
@@ -40,12 +40,11 @@ def create_message_content(html_template_ref,
     :param subject_data:
     :return:
     """
-    return
-    {
+    return {
         'html_template_ref':    html_template_ref,
         'txt_template_ref':     txt_template_ref,
         'tables':               tables,
-        'persons':              receivers,
+        'receivers':            receivers,
         'template_base_data':   template_base_data,
         'subject_data':         subject_data,
     }
