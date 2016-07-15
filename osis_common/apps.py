@@ -2,4 +2,4 @@ from django.apps import AppConfig
 
 
 class OsisCommonConfig(AppConfig):
-    name = 'osis-common'
+    name = 'osis_common'
