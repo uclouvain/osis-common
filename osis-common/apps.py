@@ -1,5 +1,5 @@
 from django.apps import AppConfig
 
 
-class CommonConfig(AppConfig):
-    name = 'common'
+class OsisCommonConfig(AppConfig):
+    name = 'osis-common'
