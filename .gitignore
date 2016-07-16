@@ -89,3 +89,4 @@ ENV/
 .ropeproject
 
 /reports/
+/tests/data_after_tests/

@@ -78,11 +78,11 @@ def __send_messages(html_message_template, txt_message_template, html_data, txt_
     Send a message to a list of person ,with txt and html format.
     The messages are build according templates and data (dictionnary of template vars).
     Messages are sent by mail and saved in history.
-    :param html_messages_template: The html template of the message
+    :param html_message_template: The html template of the message
     :param txt_message_template: The txt template of the message
     :param html_data: the data for the html_template
     :param txt_data: the data for the txt template
-    :param persons: The receivers list of the message
+    :param receivers: The receivers list of the message
     :param subject: The subject of the message
     """
     html_data['signature'] = render_to_string('messaging/html_email_signature.html', {
@@ -120,7 +120,7 @@ def __map_receivers_by_languages(receivers):
     """
     Convert a list of persons into a dictionnary langage_code: list_of_persons ,
     according to the language of the person.
-    :param persons the list of persons we want to map
+    :param receivers the list of receivers we want to map
     """
     lang_dict = {lang[0]: [] for lang in settings.LANGUAGES}
     for receiver in receivers:
@@ -131,14 +131,14 @@ def __map_receivers_by_languages(receivers):
     return lang_dict
 
 
-def send_again(message_history_id):
+def send_again(receiver, message_history_id):
     """
     send a message from message history again
     :param message_history_id The id of the message history to send again
     :return the sent message
     """
     message_history = message_history_mdl.find_by_id(message_history_id)
-    __send_and_save(receiver_id = message_history.receiver_id,
+    __send_and_save(receivers=(receiver, ),
                     reference=message_history.reference,
                     subject=message_history.subject,
                     message=message_history.content_txt,
@@ -220,15 +220,15 @@ def send_messages(message_content):
     if not (html_template_ref and receivers and subject_data):
         return _('message_content_error')
     html_message_templates, txt_message_templates = _get_all_lang_templates([html_template_ref,
-                                                                              txt_template_ref])
+                                                                             txt_template_ref])
     if not html_message_templates:
         return _('template_error').format(html_template_ref)
 
     for lang_code, receivers in __map_receivers_by_languages(receivers).items():
         html_table_data, txt_table_data = __make_tables_template_data(tables, lang_code)
         html_message_template, txt_message_template = _get_template_by_language_or_default(lang_code,
-                                                                                            html_message_templates,
-                                                                                            txt_message_templates)
+                                                                                           html_message_templates,
+                                                                                           txt_message_templates)
         subject = html_message_template.subject.format(subject_data)
         html_data = template_base_data.copy()
         html_data.update(html_table_data)
@@ -237,6 +237,6 @@ def send_messages(message_content):
         html_data['signature'] = render_to_string('messaging/html_email_signature.html', {
             'logo_mail_signature_url': settings.LOGO_EMAIL_SIGNATURE_URL,
             'logo_osis_url': settings.LOGO_OSIS_URL, })
-        __send_messages(html_message_template, txt_message_template, html_data,txt_data, receivers, subject)
+        __send_messages(html_message_template, txt_message_template, html_data, txt_data, receivers, subject)
 
     return None

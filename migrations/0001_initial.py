@@ -42,6 +42,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterUniqueTogether(
             name='messagetemplate',
-            unique_together=set([('reference', 'language')]),
+            unique_together={('reference', 'language')},
         ),
     ]
