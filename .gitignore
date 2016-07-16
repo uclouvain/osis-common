@@ -87,3 +87,6 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+/reports/
+/tests/data_after_tests/

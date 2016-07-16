@@ -1,0 +1,61 @@
+[
+{
+    "model": "osis_common.messagetemplate",
+    "pk": 1,
+    "fields": {
+        "reference": "assessments_scores_submission_html",
+        "subject": "Soumission de notes pour {}",
+        "template": "<p>{% autoescape off %}</p>\r\n\r\n<h3>Soumission de notes</h3>\r\n\r\n<p><em>Ceci est un message automatique g&eacute;n&eacute;r&eacute; par le serveur OSIS &ndash; Merci de ne pas y r&eacute;pondre.</em></p>\r\n\r\n<p><br />\r\nNous vous informons qu&#39;une soumission de notes &agrave; &eacute;t&eacute; effectu&eacute;e pour <strong>{{ learning_unit_name }}</strong></p>\r\n\r\n<p>{{ submitted_enrollments }}</p>\r\n\r\n<p>Status : {{ encoding_status }}</p>\r\n\r\n<p>{{ signature }}</p>\r\n\r\n<p>{% endautoescape %}</p>",
+        "format": "HTML",
+        "language": "fr-be"
+    }
+},
+{
+    "model": "osis_common.messagetemplate",
+    "pk": 2,
+    "fields": {
+        "reference": "assessments_scores_submission_txt",
+        "subject": "Soumission de notes pour {}",
+        "template": "<p><em>Ceci est un message automatique g&eacute;n&eacute;r&eacute; par le serveur OSIS &ndash; Merci de ne pas y r&eacute;pondre.</em><br />\r\n<br />\r\nNous vous informons qu&#39;une soumission de notes &agrave; &eacute;t&eacute; effectu&eacute;e pour {{ learning_unit_name }}</p>\r\n\r\n<p>{{ submitted_enrollments }}</p>\r\n\r\n<p>Status : {{ encoding_status }}</p>",
+        "format": "PLAIN",
+        "language": "fr-be"
+    }
+},
+{
+    "model": "osis_common.messagetemplate",
+    "pk": 3,
+    "fields": {
+        "reference": "assessments_scores_submission_txt",
+        "subject": "Scores submission for  {}",
+        "template": "<p>This is a generated message - Please don&#39;t reply<br />\r\nWe inform tou that scores have been submitted for&nbsp; {{ learning_unit_name }}</p>\r\n\r\n<p>{{ submitted_enrollments }}</p>\r\n\r\n<p>Status : {{ encoding_status }}</p>",
+        "format": "PLAIN",
+        "language": "en"
+    }
+},
+{
+    "model": "osis_common.messagetemplate",
+    "pk": 4,
+    "fields": {
+        "reference": "assessments_scores_submission_html",
+        "subject": "Scores submission for {}",
+        "template": "<p>{% autoescape off %}</p>\r\n\r\n<h3>Scores submission</h3>\r\n\r\n<p>This is a generated message - Please don&#39;t reply<br />\r\n<br />\r\nWe inform you that scores have been submitted for <strong>{{ learning_unit_name }}</strong></p>\r\n\r\n<p>{{ submitted_enrollments }}</p>\r\n\r\n<p>Status : {{ encoding_status }}</p>\r\n\r\n<p>{{ signature }}</p>\r\n\r\n<p>{% endautoescape %}</p>",
+        "format": "HTML",
+        "language": "en"
+    }
+},
+    {
+        "model": "osis_common.messagehistory",
+        "pk": 1,
+        "fields": {
+            "subject": "Scores submission for ('DROI1100',)",
+            "content_txt": "This is a generated message - Please don't reply\r\nWe inform tou that scores have been submitted for\u00a0 DROI1100\r\n\r\n\r\n\r\nStatus : ",
+            "content_html": "<p></p>\r\n\r\n<h3>Scores submission</h3>\r\n\r\n<p>This is a generated message - Please don&#39;t reply<br />\r\n<br />\r\nWe inform you that scores have been submitted for <strong>DROI1100</strong></p>\r\n\r\n<p></p>\r\n\r\n<p>Status : </p>\r\n\r\n<p>\n<div>\n    <table cellpadding=\"5\" cellspacing=\"5\">\n        <tbody>\n        <tr>\n            <td width=\"60\">\n                <img src=\"\" alt=\"Mail Signature Logo\">\n            </td>\n            <td>\n                <img src=\"\" alt=\"Osis Logo\">\n            </td>\n        </tr>\n        </tbody>\n    </table>\n</div></p>\r\n\r\n<p></p>",
+            "receiver_id": 1,
+            "created": "2016-07-16T00:31:44.185Z",
+            "sent": "2016-07-16T00:31:44.184Z",
+            "reference": null,
+            "show_to_user": true,
+            "read_by_user": false
+        }
+    }
+]
