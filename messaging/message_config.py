@@ -24,6 +24,7 @@
 #
 ##############################################################################
 
+
 def create_message_content(html_template_ref,
                            txt_template_ref,
                            tables,
@@ -50,7 +51,7 @@ def create_message_content(html_template_ref,
     }
 
 
-def create_table(table_template_name,header_txt,data):
+def create_table(table_template_name, header_txt, data):
     """
 
     :param table_template_name:
@@ -63,6 +64,7 @@ def create_table(table_template_name,header_txt,data):
         'header_txt':           header_txt,
         'data':                 data
     }
+
 
 def create_receiver(receiver_id, receiver_email, receiver_lang):
     """
