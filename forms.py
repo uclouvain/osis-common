@@ -39,9 +39,11 @@ class MessageTemplateForm(ModelForm):
 
 
 class UploadDocumentFileForm(ModelForm):
+    file_name = forms.CharField(required=False)
+
     class Meta:
         model = DocumentFile
         fields = ('file_name', 'content_type', 'storage_duration', 'file', 'description', 'user',
                   'document_type', 'size')
         widgets = {'storage_duration': forms.HiddenInput(), 'user': forms.HiddenInput(),
-                   'size': forms.HiddenInput(), 'document_type': forms.HiddenInput()}
+                   'size': forms.HiddenInput(), 'document_type': forms.HiddenInput(), 'file_name': forms.HiddenInput()}

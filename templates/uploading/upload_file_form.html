@@ -30,21 +30,12 @@
         <label for="txt_file" {% if form.file.errors %} style="color:red;" {% endif %}>{% trans 'file' %}</label>
     </div>
     <div class="col-md-4">
-        <input type="file" id="txt_file"  name="file" style="margin:-6px;" value="{{ form.file_name.value | default_if_none:'' }}">
+        <input type="file" id="txt_file"  name="file" style="margin:-6px;">
     </div>
 </div>
 <br>
 <div class="row">
-    <div class="col-md-2 col-lg-offset-1" style="text-align:right">
-        <label for="txt_file_name" {% if form.file_name.errors %} style="color:red;" {% endif %}>{% trans 'file_name' %}</label>
-    </div>
-    <div class="col-md-4">
-        <input class="form-control" id="txt_file_name"  name="file_name" style="margin:-6px;" value="{{ form.file_name.value | default_if_none:'' }}">
-    </div>
-</div>
-<br>
-<div class="row">
-    {{ form.user }}{{ form.storage_duration }}{{ form.size }}{{ form.document_type }}
+    {{ form.user }}{{ form.storage_duration }}{{ form.size }}{{ form.document_type }}{{ form.file_name }}
 </div>
 
 
