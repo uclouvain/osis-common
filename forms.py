@@ -27,6 +27,7 @@ from ckeditor.widgets import CKEditorWidget
 from django import forms
 from django.forms import ModelForm
 from osis_common.models import message_template
+from osis_common.models.document_file import DocumentFile
 
 
 class MessageTemplateForm(ModelForm):
@@ -35,3 +36,12 @@ class MessageTemplateForm(ModelForm):
     class Meta:
         model = message_template.MessageTemplate
         fields = ['reference', 'subject', 'template', 'format', 'language']
+
+
+class UploadDocumentFileForm(ModelForm):
+    class Meta:
+        model = DocumentFile
+        fields = ('file_name', 'content_type', 'storage_duration', 'file', 'description', 'user',
+                  'document_type', 'size')
+        widgets = {'storage_duration': forms.HiddenInput(), 'user': forms.HiddenInput(),
+                   'size': forms.HiddenInput(), 'document_type': forms.HiddenInput()}
