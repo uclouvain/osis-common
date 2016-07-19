@@ -23,14 +23,14 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-import uuid
+from django.conf import settings
 from django.db import models
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.core.files.storage import FileSystemStorage
 
 
-fs = FileSystemStorage(location="/home/endloril/pictures/")
+fs = FileSystemStorage(location=settings.UPLOAD_DIR)
 
 
 class DocumentFileAdmin(admin.ModelAdmin):
