@@ -33,7 +33,7 @@
                     <label>{% trans 'file_name' %}</label>
                 </div>
                 <div class="col-md-4">
-                    {{ document.file_name }}
+                    <a href="{% url 'download' pk=document.pk %}">{{ document.file_name }}</a>
                 </div>
             </div>
             <div class="row">

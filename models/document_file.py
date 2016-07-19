@@ -27,6 +27,10 @@ import uuid
 from django.db import models
 from django.contrib import admin
 from django.contrib.auth.models import User
+from django.core.files.storage import FileSystemStorage
+
+
+fs = FileSystemStorage(location="/home/endloril/pictures/")
 
 
 class DocumentFileAdmin(admin.ModelAdmin):
@@ -58,7 +62,7 @@ class DocumentFile(models.Model):
     content_type = models.CharField(max_length=50, choices=CONTENT_TYPE_CHOICES, default='APPLICATION_PDF')
     creation_date = models.DateTimeField(auto_now_add=True, editable=False)
     storage_duration = models.IntegerField()
-    file = models.FileField(upload_to='/'.join(['uploads']))
+    file = models.FileField(storage=fs)
     description = models.CharField(max_length=50, choices=DESCRIPTION_CHOICES, default='LETTER_MOTIVATION')
     user = models.ForeignKey(User)
     document_type = models.CharField(max_length=100, null=True, blank=True)
