@@ -34,6 +34,7 @@
                 </div>
                 <div class="col-md-4">
                     <a href="{% url 'download' pk=document.pk %}">{{ document.file_name }}</a>
+                    {{ document.file.content_type}}
                 </div>
             </div>
             <div class="row">

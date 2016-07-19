@@ -46,4 +46,5 @@ class UploadDocumentFileForm(ModelForm):
         fields = ('content_type', 'storage_duration', 'file', 'description', 'user',
                   'document_type', 'size')
         widgets = {'storage_duration': forms.HiddenInput(), 'user': forms.HiddenInput(),
-                   'size': forms.HiddenInput(), 'document_type': forms.HiddenInput()}
+                   'content_type': forms.HiddenInput(), 'size': forms.HiddenInput(),
+                   'document_type': forms.HiddenInput()}

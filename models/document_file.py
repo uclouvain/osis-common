@@ -42,24 +42,24 @@ class DocumentFileAdmin(admin.ModelAdmin):
 
 
 class DocumentFile(models.Model):
-    CONTENT_TYPE_CHOICES = (('APPLICATION_CSV', 'application/csv'),
-                            ('APPLICATION_DOC', 'application/doc'),
-                            ('APPLICATION_PDF', 'application/pdf'),
-                            ('APPLICATION_XLS', 'application/xls'),
-                            ('APPLICATION_XLSX', 'application/xlsx'),
-                            ('APPLICATION_XML', 'application/xml'),
-                            ('APPLICATION_ZIP', 'application/zip'),
-                            ('IMAGE_JPEG', 'image/jpeg'),
-                            ('IMAGE_GIF', 'image/gif'),
-                            ('IMAGE_PNG', 'image/png'),
-                            ('TEXT_HTML', 'text/html'),
-                            ('TEXT_PLAIN', 'text/plain'),)
+    CONTENT_TYPE_CHOICES = (('application/csv', 'application/csv'),
+                            ('application/doc', 'application/doc'),
+                            ('application/pdf', 'application/pdf'),
+                            ('application/xls', 'application/xls'),
+                            ('application/xlsx', 'application/xlsx'),
+                            ('application/xml', 'application/xml'),
+                            ('application/zip', 'application/zip'),
+                            ('image/jpeg', 'image/jpeg'),
+                            ('image/gif', 'image/gif'),
+                            ('image/png', 'image/png'),
+                            ('text/html', 'text/html'),
+                            ('text/plain', 'text/plain'),)
 
     DESCRIPTION_CHOICES = (('ID_CARD', 'identity_card'),
                            ('LETTER_MOTIVATION', 'letter_motivation'),)
 
     file_name = models.CharField(max_length=100)
-    content_type = models.CharField(max_length=50, choices=CONTENT_TYPE_CHOICES, default='APPLICATION_PDF')
+    content_type = models.CharField(max_length=50, choices=CONTENT_TYPE_CHOICES, default='application/csv')
     creation_date = models.DateTimeField(auto_now_add=True, editable=False)
     storage_duration = models.IntegerField()
     file = models.FileField(storage=fs)
