@@ -41,6 +41,23 @@ class DocumentFileAdmin(admin.ModelAdmin):
     search_fields = ('file_name', 'user')
 
 
+CONTENT_TYPE_CHOICES = (('application/csv', 'application/csv'),
+                        ('application/doc', 'application/doc'),
+                        ('application/pdf', 'application/pdf'),
+                        ('application/xls', 'application/xls'),
+                        ('application/xlsx', 'application/xlsx'),
+                        ('application/xml', 'application/xml'),
+                        ('application/zip', 'application/zip'),
+                        ('image/jpeg', 'image/jpeg'),
+                        ('image/gif', 'image/gif'),
+                        ('image/png', 'image/png'),
+                        ('text/html', 'text/html'),
+                        ('text/plain', 'text/plain'),)
+
+DESCRIPTION_CHOICES = (('ID_CARD', 'identity_card'),
+                       ('LETTER_MOTIVATION', 'letter_motivation'),)
+
+
 class DocumentFile(models.Model):
     CONTENT_TYPE_CHOICES = (('application/csv', 'application/csv'),
                             ('application/doc', 'application/doc'),
@@ -76,9 +93,14 @@ def find_by_id(document_file_id):
     return DocumentFile.objects.get(pk=document_file_id)
 
 
-def find_by_document_type(document_type, user):
-    queryset = DocumentFile.objects.all()
+def search(document_type=None, user=None):
+    out = None
+    queryset = DocumentFile.objects
     if document_type:
         queryset = queryset.filter(document_type=document_type)
+    if user:
         queryset = queryset.filter(user=user)
-    return queryset
+    if document_type or user:
+        out = queryset
+    return out
+
