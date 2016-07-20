@@ -76,8 +76,9 @@ def find_by_id(document_file_id):
     return DocumentFile.objects.get(pk=document_file_id)
 
 
-def find_by_document_type(document_type):
-    queryset = DocumentFile.objects.all().filter(user=request.user)
+def find_by_document_type(document_type, user):
+    queryset = DocumentFile.objects.all()
     if document_type:
         queryset = queryset.filter(document_type=document_type)
+        queryset = queryset.filter(user=user)
     return queryset
