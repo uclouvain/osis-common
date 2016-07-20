@@ -28,7 +28,7 @@ from django.db import models
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.core.files.storage import FileSystemStorage
-
+from django.http import request
 
 fs = FileSystemStorage(location=settings.UPLOAD_DIR)
 
@@ -74,3 +74,10 @@ class DocumentFile(models.Model):
 
 def find_by_id(document_file_id):
     return DocumentFile.objects.get(pk=document_file_id)
+
+
+def find_by_document_type(document_type):
+    queryset = DocumentFile.objects.all().filter(user=request.user)
+    if document_type:
+        queryset = queryset.filter(document_type=document_type)
+    return queryset
