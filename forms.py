@@ -25,7 +25,10 @@
 ##############################################################################
 from ckeditor.widgets import CKEditorWidget
 from django import forms
+from django.conf import settings
 from django.forms import ModelForm
+from django.template.defaultfilters import filesizeformat
+from django.utils.translation import ugettext_lazy as _
 from osis_common.models import message_template
 from osis_common.models.document_file import DocumentFile
 
@@ -48,3 +51,12 @@ class UploadDocumentFileForm(ModelForm):
         widgets = {'storage_duration': forms.HiddenInput(), 'user': forms.HiddenInput(),
                    'content_type': forms.HiddenInput(), 'size': forms.HiddenInput(),
                    'document_type': forms.HiddenInput()}
+
+    def clean(self):
+        cleaned_data = super(UploadDocumentFileForm, self).clean()
+        file = cleaned_data.get("file")
+        if file.size > settings.MAX_UPLOAD_SIZE:
+            self.errors['file'] = _('MAX_UPLOAD_SIZE')
+        if file.content_type not in settings.CONTENT_TYPES:
+            self.errors['content_type'] = _(' title')
+        return cleaned_data

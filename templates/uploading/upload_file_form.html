@@ -33,7 +33,14 @@
         <input type="file" id="txt_file"  name="file" style="margin:-6px;">
     </div>
 </div>
+{%if form.errors%}
+<div class="row">
+    <div class="col-md-4 col-lg-offset-3">
+        <p class="text-danger">{% trans 'msg_error_size_and_content' %}</p>
+    </div>
+</div>
 <br>
+{% endif %}
 <div class="row">
     {{ form.user }}{{ form.storage_duration }}{{ form.document_type }}{{ form.content_type }}
 </div>
