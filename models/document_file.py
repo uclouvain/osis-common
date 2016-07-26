@@ -23,15 +23,10 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from django.conf import settings
+
 from django.db import models
 from django.contrib import admin
 from django.contrib.auth.models import User
-from django.core.files.storage import FileSystemStorage
-import os
-
-files_storage = FileSystemStorage(location=settings.UPLOAD_DIR if hasattr(settings, 'UPLOAD_DIR') else os.path.join(settings.BASE_DIR, "uploads"))
-
 
 class DocumentFileAdmin(admin.ModelAdmin):
     list_display = ('file_name', 'content_type', 'creation_date', 'size')
@@ -79,7 +74,7 @@ class DocumentFile(models.Model):
     content_type = models.CharField(max_length=50, choices=CONTENT_TYPE_CHOICES, default='application/csv')
     creation_date = models.DateTimeField(auto_now_add=True, editable=False)
     storage_duration = models.IntegerField()
-    file = models.FileField(storage=files_storage)
+    file = models.FileField(upload_to='files/')
     description = models.CharField(max_length=50, choices=DESCRIPTION_CHOICES, default='LETTER_MOTIVATION')
     user = models.ForeignKey(User)
     document_type = models.CharField(max_length=100, null=True, blank=True)

@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
                 ('content_type', models.CharField(choices=[('application/csv', 'application/csv'), ('application/doc', 'application/doc'), ('application/pdf', 'application/pdf'), ('application/xls', 'application/xls'), ('application/xlsx', 'application/xlsx'), ('application/xml', 'application/xml'), ('application/zip', 'application/zip'), ('image/jpeg', 'image/jpeg'), ('image/gif', 'image/gif'), ('image/png', 'image/png'), ('text/html', 'text/html'), ('text/plain', 'text/plain')], default='application/csv', max_length=50)),
                 ('creation_date', models.DateTimeField(auto_now_add=True)),
                 ('storage_duration', models.IntegerField()),
-                ('file', models.FileField(storage=django.core.files.storage.FileSystemStorage(location='/home/endloril/python/projects/osis/osis-portal/uploads'), upload_to='')),
+                ('file',models.FileField(upload_to='files/'),),
                 ('description', models.CharField(choices=[('ID_CARD', 'identity_card'), ('LETTER_MOTIVATION', 'letter_motivation')], default='LETTER_MOTIVATION', max_length=50)),
                 ('document_type', models.CharField(blank=True, max_length=100, null=True)),
                 ('size', models.IntegerField(blank=True, null=True)),
