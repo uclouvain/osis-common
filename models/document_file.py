@@ -28,9 +28,9 @@ from django.db import models
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.core.files.storage import FileSystemStorage
-from django.http import request
+import os
 
-files_storage = FileSystemStorage(location=settings.UPLOAD_DIR)
+files_storage = FileSystemStorage(location=settings.UPLOAD_DIR if hasattr(settings, 'UPLOAD_DIR') else os.path.join(settings.BASE_DIR, "uploads"))
 
 
 class DocumentFileAdmin(admin.ModelAdmin):
