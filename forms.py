@@ -25,11 +25,8 @@
 ##############################################################################
 from ckeditor.widgets import CKEditorWidget
 from django import forms
-from django.conf import settings
 from django.forms import ModelForm
-from django.utils.translation import ugettext_lazy as _
 from osis_common.models import message_template
-from osis_common.models.document_file import DocumentFile
 
 
 class MessageTemplateForm(ModelForm):
@@ -38,24 +35,3 @@ class MessageTemplateForm(ModelForm):
     class Meta:
         model = message_template.MessageTemplate
         fields = ['reference', 'subject', 'template', 'format', 'language']
-
-
-class UploadDocumentFileForm(ModelForm):
-    file_name = forms.CharField(required=False)
-
-    class Meta:
-        model = DocumentFile
-        fields = ('content_type', 'storage_duration', 'file', 'description', 'user',
-                  'document_type', 'size')
-        widgets = {'storage_duration': forms.HiddenInput(), 'user': forms.HiddenInput(),
-                   'content_type': forms.HiddenInput(), 'size': forms.HiddenInput(),
-                   'document_type': forms.HiddenInput()}
-
-    def clean(self):
-        cleaned_data = super(UploadDocumentFileForm, self).clean()
-        file = cleaned_data.get("file")
-        if file.size > settings.MAX_UPLOAD_SIZE:
-            self.errors['file'] = _('MAX_UPLOAD_SIZE')
-        if file.content_type not in settings.CONTENT_TYPES:
-            self.errors['content_type'] = _(' title')
-        return cleaned_data
