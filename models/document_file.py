@@ -30,7 +30,7 @@ from django.contrib.auth.models import User
 from django.core.files.storage import FileSystemStorage
 from django.http import request
 
-fs = FileSystemStorage(location=settings.UPLOAD_DIR)
+files_storage = FileSystemStorage(location=settings.UPLOAD_DIR)
 
 
 class DocumentFileAdmin(admin.ModelAdmin):
@@ -79,7 +79,7 @@ class DocumentFile(models.Model):
     content_type = models.CharField(max_length=50, choices=CONTENT_TYPE_CHOICES, default='application/csv')
     creation_date = models.DateTimeField(auto_now_add=True, editable=False)
     storage_duration = models.IntegerField()
-    file = models.FileField(storage=fs)
+    file = models.FileField(storage=files_storage)
     description = models.CharField(max_length=50, choices=DESCRIPTION_CHOICES, default='LETTER_MOTIVATION')
     user = models.ForeignKey(User)
     document_type = models.CharField(max_length=100, null=True, blank=True)
