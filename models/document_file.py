@@ -50,7 +50,8 @@ CONTENT_TYPE_CHOICES = (('application/csv', 'application/csv'),
                         ('text/plain', 'text/plain'),)
 
 DESCRIPTION_CHOICES = (('ID_CARD', 'identity_card'),
-                       ('LETTER_MOTIVATION', 'letter_motivation'),)
+                       ('LETTER_MOTIVATION', 'letter_motivation'),
+                       ('ID_PICTURE', 'id_picture'),)
 
 
 class DocumentFile(models.Model):
@@ -68,7 +69,8 @@ class DocumentFile(models.Model):
                             ('text/plain', 'text/plain'),)
 
     DESCRIPTION_CHOICES = (('ID_CARD', 'identity_card'),
-                           ('LETTER_MOTIVATION', 'letter_motivation'),)
+                           ('LETTER_MOTIVATION', 'letter_motivation'),
+                           ('ID_PICTURE', 'id_picture'),)
 
     file_name = models.CharField(max_length=100)
     content_type = models.CharField(max_length=50, choices=CONTENT_TYPE_CHOICES, default='application/csv')
@@ -83,19 +85,28 @@ class DocumentFile(models.Model):
     def __str__(self):
         return self.file_name
 
+    def is_image_content(self):
+        if self.content_type and self.content_type.startswith('image'):
+            return True
+        return False
+
 
 def find_by_id(document_file_id):
     return DocumentFile.objects.get(pk=document_file_id)
 
 
-def search(document_type=None, user=None):
+def search(document_type=None, user=None, description=None):
     out = None
-    queryset = DocumentFile.objects
+    queryset = DocumentFile.objects.order_by('creation_date')
     if document_type:
         queryset = queryset.filter(document_type=document_type)
     if user:
         queryset = queryset.filter(user=user)
-    if document_type or user:
+    if description:
+        queryset = queryset.filter(description=description)
+    if document_type or user or description:
         out = queryset
     return out
+
+
 
