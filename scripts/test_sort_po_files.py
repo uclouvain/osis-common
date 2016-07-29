@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 ##############################################################################
 #
 #    OSIS stands for Open Student Information System. It's an application
@@ -23,4 +24,31 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from osis_common.models import document_file
+
+from django.test import SimpleTestCase
+import scripts.sort_po_files as sort_po_files
+import os
+
+
+class SortPoCase(SimpleTestCase):
+    def test1(self):
+        # Initialize script
+        dir_path = "./scripts/"
+        sort_po_files.filename_to_be_sorted = "test1.po"
+        sort_po_files.filename_sorted = "test1_ordered.po"
+
+        sort_po_files.sort_po_file(dir_path)
+
+        f_expected = open(dir_path + "test1_expected.po", "r")
+        string_expected = f_expected.read()
+        f_expected.close()
+
+        f_actual = open(dir_path + "test1_ordered.po", "r")
+        string_actual = f_actual.read()
+        f_actual.close()
+
+        self.assertEqual(string_actual, string_expected)
+
+        # Remove files
+        os.remove(dir_path + sort_po_files.filename_sorted)
+
