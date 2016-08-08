@@ -28,8 +28,9 @@ from django.db import models
 from django.contrib import admin
 from django.contrib.auth.models import User
 
+
 class DocumentFileAdmin(admin.ModelAdmin):
-    list_display = ('file_name', 'content_type', 'creation_date', 'size')
+    list_display = ('file_name', 'content_type', 'description', 'creation_date', 'size')
     fieldsets = ((None, {'fields': ('file_name', 'content_type', 'creation_date', 'storage_duration', 'file',
                                     'description', 'user', 'document_type', 'size')}),)
     readonly_fields = ('creation_date',)
@@ -70,7 +71,22 @@ class DocumentFile(models.Model):
 
     DESCRIPTION_CHOICES = (('ID_CARD', 'identity_card'),
                            ('LETTER_MOTIVATION', 'letter_motivation'),
-                           ('ID_PICTURE', 'id_picture'),)
+                           ('ID_PICTURE', 'id_picture'),
+                           ('NATIONAL_DIPLOMA_VERSO', 'national_diploma_verso'),
+                           ('NATIONAL_DIPLOMA_RECTO', 'national_diploma_recto'),
+                           ('INTERNATIONAL_DIPLOMA_VERSO', 'international_diploma_verso'),
+                           ('INTERNATIONAL_DIPLOMA_RECTO', 'international_diploma_recto'),
+                           ('TRANSLATED_INTERNATIONAL_DIPLOMA_VERSO', 'translated_international_diploma_verso'),
+                           ('TRANSLATED_INTERNATIONAL_DIPLOMA_RECTO', 'translated_international_diploma_recto'),
+                           ('HIGH_SCHOOL_SCORES_TRANSCRIPT_RECTO', 'high_school_scores_transcript_recto'),
+                           ('HIGH_SCHOOL_SCORES_TRANSCRIPT_VERSO', 'high_school_scores_transcript_verso'),
+                           ('TRANSLATED_HIGH_SCHOOL_SCORES_TRANSCRIPT_RECTO',
+                            'translated_high_school_scores_transcript_recto'),
+                           ('TRANSLATED_HIGH_SCHOOL_SCORES_TRANSCRIPT_VERSO',
+                            'translated_high_school_scores_transcript_verso'),
+                           ('EQUIVALENCE', 'equivalence'),
+                           ('ADMISSION_EXAM_CERTIFICATE', 'admission_exam_certificate'),
+                           ('PROFESSIONAL_EXAM_CERTIFICATE', 'professional_exam_certificate'))
 
     file_name = models.CharField(max_length=100)
     content_type = models.CharField(max_length=50, choices=CONTENT_TYPE_CHOICES, default='application/csv')
@@ -107,6 +123,3 @@ def search(document_type=None, user=None, description=None):
     if document_type or user or description:
         out = queryset
     return out
-
-
-
