@@ -55,7 +55,7 @@ class MessageHistory(models.Model):
     subject = models.CharField(max_length=255)
     content_txt = models.TextField()
     content_html = models.TextField()
-    receiver_id = models.IntegerField()
+    receiver_id = models.IntegerField(db_index=True)
     created = models.DateTimeField(editable=False)
     sent = models.DateTimeField(null=True)
     reference = models.CharField(max_length=100, null=True, db_index=True)
@@ -79,13 +79,13 @@ def find_by_id(message_history_id):
     return message_history
 
 
-def find_my_messages(person):
+def find_my_messages(person_id):
     """
-    Get the messages for a user to show in my osis.
-    :param person: The related person
+    Get the messages for a person
+    :param person_id: The id of the person who belongs the messages
     :return: The list of messages for this person
     """
-    return MessageHistory.objects.filter(person=person).filter(show_to_user=True).order_by('sent')
+    return MessageHistory.objects.filter(receiver_id=person_id).filter(show_to_user=True).order_by('sent')
 
 
 def delete_my_messages(messages_ids):
