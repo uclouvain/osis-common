@@ -26,24 +26,24 @@
 ##############################################################################
 
 from django.test import SimpleTestCase
-import scripts.sort_po_files as sort_po_files
+import osis_common.scripts.sort_po_files as sort_po_files
 import os
 
 
 class SortPoCase(SimpleTestCase):
     def test1(self):
         # Initialize script
-        dir_path = "./scripts/"
-        sort_po_files.filename_to_be_sorted = "test1.po"
-        sort_po_files.filename_sorted = "test1_ordered.po"
+        dir_path = "./osis_common/tests/ressources/"
+        sort_po_files.filename_to_be_sorted = "sort_po_test.po"
+        sort_po_files.filename_sorted = "sort_po_test_sorted.po"
 
         sort_po_files.sort_po_file(dir_path)
 
-        f_expected = open(dir_path + "test1_expected.po", "r")
+        f_expected = open(dir_path + "sort_po_expected.po", "r")
         string_expected = f_expected.read()
         f_expected.close()
 
-        f_actual = open(dir_path + "test1_ordered.po", "r")
+        f_actual = open(dir_path + "sort_po_test_sorted.po", "r")
         string_actual = f_actual.read()
         f_actual.close()
 
