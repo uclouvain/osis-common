@@ -46,10 +46,10 @@ class UploadDocumentFileForm(ModelForm):
     class Meta:
         model = DocumentFile
         fields = ('content_type', 'storage_duration', 'file', 'description', 'user',
-                  'document_type', 'size')
+                  'application_name', 'size')
         widgets = {'storage_duration': forms.HiddenInput(), 'user': forms.HiddenInput(),
                    'content_type': forms.HiddenInput(), 'size': forms.HiddenInput(),
-                   'document_type': forms.HiddenInput()}
+                   'application_name': forms.HiddenInput()}
 
     def clean(self):
         cleaned_data = super(UploadDocumentFileForm, self).clean()

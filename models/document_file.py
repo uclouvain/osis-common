@@ -32,7 +32,7 @@ from django.contrib.auth.models import User
 class DocumentFileAdmin(admin.ModelAdmin):
     list_display = ('file_name', 'content_type', 'description', 'creation_date', 'size')
     fieldsets = ((None, {'fields': ('file_name', 'content_type', 'creation_date', 'storage_duration', 'file',
-                                    'description', 'user', 'document_type', 'size')}),)
+                                    'description', 'user', 'size')}),)
     readonly_fields = ('creation_date',)
     search_fields = ('file_name', 'user')
 
@@ -50,52 +50,16 @@ CONTENT_TYPE_CHOICES = (('application/csv', 'application/csv'),
                         ('text/html', 'text/html'),
                         ('text/plain', 'text/plain'),)
 
-DESCRIPTION_CHOICES = (('ID_CARD', 'identity_card'),
-                       ('LETTER_MOTIVATION', 'letter_motivation'),
-                       ('ID_PICTURE', 'id_picture'),)
-
 
 class DocumentFile(models.Model):
-    CONTENT_TYPE_CHOICES = (('application/csv', 'application/csv'),
-                            ('application/doc', 'application/doc'),
-                            ('application/pdf', 'application/pdf'),
-                            ('application/xls', 'application/xls'),
-                            ('application/xlsx', 'application/xlsx'),
-                            ('application/xml', 'application/xml'),
-                            ('application/zip', 'application/zip'),
-                            ('image/jpeg', 'image/jpeg'),
-                            ('image/gif', 'image/gif'),
-                            ('image/png', 'image/png'),
-                            ('text/html', 'text/html'),
-                            ('text/plain', 'text/plain'),)
-
-    DESCRIPTION_CHOICES = (('ID_CARD', 'identity_card'),
-                           ('LETTER_MOTIVATION', 'letter_motivation'),
-                           ('ID_PICTURE', 'id_picture'),
-                           ('NATIONAL_DIPLOMA_VERSO', 'national_diploma_verso'),
-                           ('NATIONAL_DIPLOMA_RECTO', 'national_diploma_recto'),
-                           ('INTERNATIONAL_DIPLOMA_VERSO', 'international_diploma_verso'),
-                           ('INTERNATIONAL_DIPLOMA_RECTO', 'international_diploma_recto'),
-                           ('TRANSLATED_INTERNATIONAL_DIPLOMA_VERSO', 'translated_international_diploma_verso'),
-                           ('TRANSLATED_INTERNATIONAL_DIPLOMA_RECTO', 'translated_international_diploma_recto'),
-                           ('HIGH_SCHOOL_SCORES_TRANSCRIPT_RECTO', 'high_school_scores_transcript_recto'),
-                           ('HIGH_SCHOOL_SCORES_TRANSCRIPT_VERSO', 'high_school_scores_transcript_verso'),
-                           ('TRANSLATED_HIGH_SCHOOL_SCORES_TRANSCRIPT_RECTO',
-                            'translated_high_school_scores_transcript_recto'),
-                           ('TRANSLATED_HIGH_SCHOOL_SCORES_TRANSCRIPT_VERSO',
-                            'translated_high_school_scores_transcript_verso'),
-                           ('EQUIVALENCE', 'equivalence'),
-                           ('ADMISSION_EXAM_CERTIFICATE', 'admission_exam_certificate'),
-                           ('PROFESSIONAL_EXAM_CERTIFICATE', 'professional_exam_certificate'))
-
     file_name = models.CharField(max_length=100)
     content_type = models.CharField(max_length=50, choices=CONTENT_TYPE_CHOICES, default='application/csv')
     creation_date = models.DateTimeField(auto_now_add=True, editable=False)
     storage_duration = models.IntegerField()
     file = models.FileField(upload_to='files/')
-    description = models.CharField(max_length=50, choices=DESCRIPTION_CHOICES, default='LETTER_MOTIVATION')
+    description = models.CharField(max_length=50)
     user = models.ForeignKey(User)
-    document_type = models.CharField(max_length=100, null=True, blank=True)
+    application_name = models.CharField(max_length=100, null=True, blank=True)
     size = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
@@ -111,15 +75,13 @@ def find_by_id(document_file_id):
     return DocumentFile.objects.get(pk=document_file_id)
 
 
-def search(document_type=None, user=None, description=None):
+def search(user=None, description=None):
     out = None
     queryset = DocumentFile.objects.order_by('creation_date')
-    if document_type:
-        queryset = queryset.filter(document_type=document_type)
     if user:
         queryset = queryset.filter(user=user)
     if description:
         queryset = queryset.filter(description=description)
-    if document_type or user or description:
+    if user or description:
         out = queryset
     return out
