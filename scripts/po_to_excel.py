@@ -37,6 +37,7 @@ ENGLISH_MODIFIED_TRANSLATION and FRENCH_MODIFIED_TRANSLATION are empty columns u
 english and french translations of the .po files.
 """
 import xlsxwriter
+import os
 from osis_common.scripts import sort_po_files
 
 
@@ -87,51 +88,103 @@ def format_string(string_to_format):
     return formatted_string
 
 
+def fetch_data(list_files_path):
+    """
+    Fetch the data to be written to the excel file.
+    For that we convert each translation file (.po) to a dictionary
+    where the key is the msgid and value the corresponding msgstr.
+    :param list_files_path: list of string which are valid path to .po files
+    :return: a list of dictionary where key is the msgid and value the msgstr
+            (see .po files)
+    """
+    list_data = []  # List of dictionary (one by language).
+    for file_path in list_files_path:
+        with open(file_path) as f:
+            dic = parse_file(f)  # Dictionary where the key is the msgid and value is the msgstr.
+            list_data.append(dic)
+    return list_data
 
-print("Create a workbook and add a worksheet")
-workbook = xlsxwriter.Workbook("translations.xlsx")
-worksheet = workbook.add_worksheet()
 
-print("Initialize formats")
-bold = workbook.add_format({'bold': True})
+def find_directories():
+    """
+    Find directory that contains translation files.
+    :return: list of string
+    """
+    list_dirs_path = []
+    for root, dirs, files in os.walk("."):
+        list_dirs_path = dirs
+        break
+    return list_dirs_path
 
-# Header
+
+def get_file_path(direcory_name, lang_list):
+    """
+    Get the file path of the translation file for that language
+    for the directory.
+    :param direcory_name: a string
+    :param lang_list: as tring
+    :return: expected file path
+    """
+    return "".join(["./", direcory_name, "/locale/", lang_list, "/LC_MESSAGES/django.po"])
+
+
+def files_exist(list_files_path):
+    """
+    Return true if all files exist.
+    :param list_files_path: list of string
+    :return: boolean
+    """
+    for file_path in list_files_path:
+        if not os.path.exists(file_path):
+            return False
+    return True
+
+list_directories = find_directories()
+language_list = ["en", "fr_BE"]
 header = ["Key", "English", "French", "English Modification", "French Modification"]
 
-# Files
-list_files_path = ["/home/ndizera/workspace/work/osis-portal/base/locale/en/LC_MESSAGES/django.po",
-                   "/home/ndizera/workspace/work/osis-portal/base/locale/fr_BE/LC_MESSAGES/django.po"]
-# List of path to the translation files (one by language) by module.
+for dir_name in list_directories:
+    # List of path to the translation files (one by language) by module.
+    list_files_path = list(map(lambda language: get_file_path(dir_name, language), language_list))
+    if not files_exist(list_files_path):
+        continue
 
-print("Fetch data")
-list_data = []  # List of dictionary (one by language).
-for file_path in list_files_path:
-    with open(file_path) as f:
-        dic = parse_file(f)  # Dictionary where the key is the msgid and value is the msgstr.
-        list_data.append(dic)
+    print("".join(["Directory: ", dir_name]))
 
-print("Write to worksheet")
+    # Create a workbook and add a worksheet
+    workbook = xlsxwriter.Workbook("".join([dir_name, ".xlsx"]))
+    worksheet = workbook.add_worksheet()
 
-print("Write header")
-write_header(worksheet, header, bold)
+    # Initialize formats
+    bold = workbook.add_format({'bold': True})
 
-print("Write translations")
-list_data_copy = list(map(dict.copy, list_data))
+    # Fetch data
+    list_data = fetch_data(list_files_path)  # List of dictionary (one by language).
 
-row = 1
-for x in range(0, len(list_data)):
-    for key in list(list_data[x].keys()):
-        data_to_write = [format_string(key)]
-        for dic in list_data_copy:
-            value = dic.pop(key, " ")
-            value = format_string(value)
-            data_to_write.append(value)
-        write_row(worksheet, data_to_write, row=row)
-        row += 1
-    list_data = list_data_copy
+    # Write header
+    write_header(worksheet, header, bold)
 
-print("Close")
-workbook.close()
+    # Write translations
+    list_data_copy = list(map(dict.copy, list_data))
+
+    # Need to iterate over all dictionary as it could happen that two translation files
+    # don't have the same content (one has more translations for example)
+    row = 1
+    for x in range(0, len(list_data)):
+        for key in list(list_data[x].keys()):
+            data_to_write = [format_string(key)]
+            # Pop the value corresponding to the key in each dictionary as to not iterate
+            # over it again.
+            for dic in list_data_copy:
+                value = dic.pop(key, " ")
+                value = format_string(value)
+                data_to_write.append(value)
+            write_row(worksheet, data_to_write, row=row)
+            row += 1
+        list_data = list_data_copy  # Fix for if two translations (.po) don't have the same content.
+
+    # Close file
+    workbook.close()
 
 
 
