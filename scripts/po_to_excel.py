@@ -47,7 +47,7 @@ def parse_file(file):
     :param file: File object to be parsed
     :return: a dictionnary of key value
     """
-    head, dic = sort_po_files.parse_file(file)
+    dic, head = sort_po_files.parse_file(file)
     return dic
 
 
@@ -77,6 +77,17 @@ def write_row(worksheet, data_to_write, row=0, column=0, format=None):
         column += 1
 
 
+def format_string(string_to_format):
+    """
+    Format the string.
+    :param string_to_format: a string
+    :return: the formatted string
+    """
+    formatted_string = string_to_format.strip().strip('"')
+    return formatted_string
+
+
+
 print("Create a workbook and add a worksheet")
 workbook = xlsxwriter.Workbook("translations.xlsx")
 worksheet = workbook.add_worksheet()
@@ -92,7 +103,7 @@ list_files_path = ["/home/ndizera/workspace/work/osis-portal/base/locale/en/LC_M
                    "/home/ndizera/workspace/work/osis-portal/base/locale/fr_BE/LC_MESSAGES/django.po"]
 # List of path to the translation files (one by language) by module.
 
-print("Fetch ata")
+print("Fetch data")
 list_data = []  # List of dictionary (one by language).
 for file_path in list_files_path:
     with open(file_path) as f:
@@ -100,14 +111,23 @@ for file_path in list_files_path:
         list_data.append(dic)
 
 print("Write to worksheet")
-list_data_copy = list(map(lambda x: x.copy(), list_data))
 
+print("Write header")
+write_header(worksheet, header, bold)
+
+print("Write translations")
+list_data_copy = list(map(dict.copy, list_data))
+
+row = 1
 for x in range(0, len(list_data)):
     for key in list(list_data[x].keys()):
-        data_to_write = [key]
+        data_to_write = [format_string(key)]
         for dic in list_data_copy:
-            data_to_write.append(dic.pop(key, ""))
-    write_row(worksheet, data_to_write, row=x+1)
+            value = dic.pop(key, " ")
+            value = format_string(value)
+            data_to_write.append(value)
+        write_row(worksheet, data_to_write, row=row)
+        row += 1
     list_data = list_data_copy
 
 print("Close")
