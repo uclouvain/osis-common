@@ -171,7 +171,8 @@ for dir_name in list_directories:
     # don't have the same content (one has more translations for example)
     row = 1
     for x in range(0, len(list_data)):
-        for key in list(list_data[x].keys()):
+        sorted_keys = sorted(list(list_data[x].keys()))
+        for key in sorted_keys:
             data_to_write = [format_string(key)]
             # Pop the value corresponding to the key in each dictionary as to not iterate
             # over it again.
