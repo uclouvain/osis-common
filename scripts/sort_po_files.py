@@ -26,7 +26,9 @@
 ##############################################################################
 # Sort the "filename_to_be_sorted" located in "dir_path".
 # The file to be sorted must be a ".po" file used in django for translation.
-# Call the script with:  python -c 'import sort_po_files; sort_po_files.sort_and_replace()'
+# Call the script with:
+# python -c 'import osis_common.scripts.sort_po_files as sort_po_files; sort_po_files.sort_and_replace()'
+# Also modify the dir_path to select the .po file you want to order.
 
 import os
 
@@ -37,7 +39,7 @@ value_keyword = "msgstr"
 filename_to_be_sorted= "django.po"
 filename_sorted = "django_ordered.po"
 
-dir_path = "./admission/locale/en/LC_MESSAGES/"
+dir_path = "./base/locale/fr_BE/LC_MESSAGES/"
 
 
 # ******************************** MAIN FUNCTIONS *********************
@@ -85,8 +87,10 @@ def dic_to_file(key_order, d, f):
     :param f: file to write
     """
     for key in key_order:
-        f.write(key_keyword + "\t" + key)
-        f.write(value_keyword + "\t" + d[key])
+        f.write("\n")
+        f.write(key_keyword + " " + key.strip())
+        f.write("\n")
+        f.write(value_keyword + " " + d[key].strip())
         f.write("\n")
 
 
@@ -102,7 +106,7 @@ def parse_file(file):
         if not is_header_line(line):
             dic_from_file(file, d)
             return d, header
-        header = header + line;
+        header = header + line
     return d, header
 
 
@@ -114,9 +118,9 @@ def dic_from_file(file, d):
             Will return d = {"professional": "Professional}
         :param file: a .po object file.
         :param d:  a dictionary
+        :param last_line: current line of the file
         :return: A dictionary
     """
-    key = ""
     for line in file:
         if line.startswith(key_keyword):
             key = msg_after_prefix(line, key_keyword)
