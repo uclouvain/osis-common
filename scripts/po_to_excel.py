@@ -141,7 +141,7 @@ def files_exist(list_files_path):
 
 list_directories = find_directories()
 language_list = ["en", "fr_BE"]
-header = ["Key", "English", "French", "English Modification", "French Modification"]
+header = ["Key", "English", "French", "English Proposition", "French Proposition"]
 
 for dir_name in list_directories:
     # List of path to the translation files (one by language) by module.
