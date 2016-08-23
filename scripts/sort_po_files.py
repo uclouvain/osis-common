@@ -37,7 +37,7 @@ value_keyword = "msgstr"
 filename_to_be_sorted= "django.po"
 filename_sorted = "django_ordered.po"
 
-dir_path = "./admission/locale/en/LC_MESSAGES/"
+dir_path = "./dissertation/locale/fr_BE/LC_MESSAGES/"
 
 
 # ******************************** MAIN FUNCTIONS *********************
@@ -85,8 +85,10 @@ def dic_to_file(key_order, d, f):
     :param f: file to write
     """
     for key in key_order:
-        f.write(key_keyword + "\t" + key)
-        f.write(value_keyword + "\t" + d[key])
+        f.write("\n")
+        f.write(key_keyword + " " + key.strip())
+        f.write("\n")
+        f.write(value_keyword + " " + d[key].strip())
         f.write("\n")
 
 
@@ -102,7 +104,7 @@ def parse_file(file):
         if not is_header_line(line):
             dic_from_file(file, d)
             return d, header
-        header = header + line;
+        header = header + line
     return d, header
 
 
@@ -114,6 +116,7 @@ def dic_from_file(file, d):
             Will return d = {"professional": "Professional}
         :param file: a .po object file.
         :param d:  a dictionary
+        :param last_line: current line of the file
         :return: A dictionary
     """
     key = ""
