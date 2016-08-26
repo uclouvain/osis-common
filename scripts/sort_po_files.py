@@ -26,18 +26,19 @@
 ##############################################################################
 # Sort the "filename_to_be_sorted" located in "dir_path".
 # The file to be sorted must be a ".po" file used in django for translation.
-# Call the script with:  python -c 'import sort_po_files; sort_po_files.sort_and_replace()'
+# Call the script with:
+# python -c 'import osis_common.scripts.sort_po_files as sort_po_files; sort_po_files.sort_and_replace()'
+# Also modify the dir_path to select the .po file you want to order.
 
 import os
-
 
 key_keyword = "msgid"
 value_keyword = "msgstr"
 
-filename_to_be_sorted= "django.po"
+filename_to_be_sorted = "django.po"
 filename_sorted = "django_ordered.po"
 
-dir_path = "./admission/locale/en/LC_MESSAGES/"
+dir_path = "./base/locale/fr_BE/LC_MESSAGES/"
 
 
 # ******************************** MAIN FUNCTIONS *********************
@@ -47,13 +48,13 @@ def sort_po_file(relative_dir_path):
     "filename_to_be_sorted".
     :param relative_dir_path: path of the directory containing the file to be sorted.
     """
-    with open(relative_dir_path+filename_to_be_sorted) as f:
+    with open(relative_dir_path + filename_to_be_sorted) as f:
         d, header = parse_file(f)
 
         list_keys = list(d.keys())
         list_keys.sort()
 
-    with open(relative_dir_path+filename_sorted, "w") as new_f:
+    with open(relative_dir_path + filename_sorted, "w") as new_f:
         header_to_file(header, new_f)
         dic_to_file(list_keys, d, new_f)
 
@@ -64,8 +65,7 @@ def replace_file(old_file, new_file):
     :param old_file: file to be replaced
     :param new_file: file which replaced
     """
-    files_exist = os.path.isfile(old_file) and \
-                  os.path.isfile(new_file)
+    files_exist = os.path.isfile(old_file) and os.path.isfile(new_file)
     if not files_exist:
         return
     # Rename replace dst by src if dst exists
@@ -85,8 +85,10 @@ def dic_to_file(key_order, d, f):
     :param f: file to write
     """
     for key in key_order:
-        f.write(key_keyword + "\t" + key)
-        f.write(value_keyword + "\t" + d[key])
+        f.write("\n")
+        f.write(key_keyword + " " + key.strip())
+        f.write("\n")
+        f.write(value_keyword + " " + d[key].strip())
         f.write("\n")
 
 
@@ -102,7 +104,7 @@ def parse_file(file):
         if not is_header_line(line):
             dic_from_file(file, d)
             return d, header
-        header = header + line;
+        header = header + line
     return d, header
 
 
@@ -116,7 +118,6 @@ def dic_from_file(file, d):
         :param d:  a dictionary
         :return: A dictionary
     """
-    key = ""
     for line in file:
         if line.startswith(key_keyword):
             key = msg_after_prefix(line, key_keyword)
@@ -131,7 +132,7 @@ def dic_from_file(file, d):
 
 
 def header_to_file(header, f):
-    f.write(header);
+    f.write(header)
 
 
 def is_header_line(line):
@@ -143,8 +144,8 @@ def is_header_line(line):
     :return: a truth value if the line is header
     """
     prefixes = ["#", '"Project-Id-Version:', '"Report-Msgid-Bugs-To:', '"POT-Creation-Date:',
-              '"PO-Revision-Date:', '"Last-Translator:', '"Language-Team:', '"Language:',
-              '"MIME-Version:', '"Content-Type:', '"Content-Transfer-Encoding:', 'msgid ""',
+                '"PO-Revision-Date:', '"Last-Translator:', '"Language-Team:', '"Language:',
+                '"MIME-Version:', '"Content-Type:', '"Content-Transfer-Encoding:', 'msgid ""',
                 'msgstr ""']
 
     for prefix in prefixes:
@@ -162,7 +163,8 @@ def msg_after_prefix(s, prefix):
     """
     msg = s.split(prefix)[1]
     msg = msg.strip('\n\r')
-    return msg+"\n"
+    return msg + "\n"
+
 
 # *********************** SORT AND REPLACE FILE *******************************
 
