@@ -41,6 +41,9 @@ from osis_common.models import message_template as message_template_mdl
 from django.utils.translation import ugettext as _
 from django.utils import translation
 
+import logging
+
+logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
 def _get_all_lang_templates(templates_refs):
     """
@@ -161,7 +164,7 @@ def __send_and_save(receivers, reference=None, **kwargs):
     recipient_list = []
     if receivers:
         for receiver in receivers:
-            if settings.ENVIRONMENT.upper() not in settings.PRODUCTION_ENVIRONNMENTS:
+            if not settings.EMAIL_PRODUCTION_SENDING:
                 recipient_list.append(settings.COMMON_EMAIL_RECEIVER)
             elif receiver.get('receiver_email'):
                 recipient_list.append(receiver.get('receiver_email'))
