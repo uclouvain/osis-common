@@ -165,8 +165,10 @@ def __send_and_save(receivers, reference=None, **kwargs):
     if receivers:
         for receiver in receivers:
             if not settings.EMAIL_PRODUCTION_SENDING:
+                logger.info('Sending mail not in production to {}'.format(settings.COMMON_EMAIL_RECEIVER))
                 recipient_list.append(settings.COMMON_EMAIL_RECEIVER)
             elif receiver.get('receiver_email'):
+                logger.info('Sending mail in production to {}'.format(receiver.get('receiver_email')))
                 recipient_list.append(receiver.get('receiver_email'))
             message_history = message_history_mdl.MessageHistory(
                 reference=reference,
