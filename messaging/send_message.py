@@ -161,7 +161,7 @@ def __send_and_save(receivers, reference=None, **kwargs):
     recipient_list = []
     if receivers:
         for receiver in receivers:
-            if(settings.ENVIRONMENT.upper() not in settings.PRODUCTION_ENVIRONNMENTS):
+            if settings.ENVIRONMENT.upper() not in settings.PRODUCTION_ENVIRONNMENTS:
                 recipient_list.append(settings.COMMON_EMAIL_RECEIVER)
             elif receiver.get('receiver_email'):
                 recipient_list.append(receiver.get('receiver_email'))
