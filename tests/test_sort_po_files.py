@@ -24,6 +24,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+from django.conf import settings
 
 from django.test import SimpleTestCase
 import osis_common.scripts.sort_po_files as sort_po_files
@@ -32,8 +33,10 @@ import os
 
 class SortPoCase(SimpleTestCase):
     def test1(self):
+        self.maxDiff = None
         # Initialize script
-        dir_path = "./osis_common/tests/ressources/"
+        dir_path = os.path.join(settings.BASE_DIR,"osis_common/tests/ressources/")
+
         sort_po_files.filename_to_be_sorted = "sort_po_test.po"
         sort_po_files.filename_sorted = "sort_po_test_sorted.po"
 
