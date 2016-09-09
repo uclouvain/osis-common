@@ -24,13 +24,16 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-# Sort the "filename_to_be_sorted" located in "dir_path".
-# The file to be sorted must be a ".po" file used in django for translation.
-# Call the script with:
-# python -c 'import osis_common.scripts.sort_po_files as sort_po_files; sort_po_files.sort_and_replace()'
-# Also modify the dir_path to select the .po file you want to order.
+# usage :
+# python3 manage.py shell
+# from osis_common.scripts import sor_po_fils as spf
+# spf.sort_and_replace(APPS_NAME, LANG)
+# APPS name is the name of the apps where the .po file is located. It is mandatory
+# LANG is the language of the .po files. By default, fr_BE is used.
+from django.conf.project_template.project_name import settings
 
 import os
+from django.conf import settings
 
 key_keyword = "msgid"
 value_keyword = "msgstr"
@@ -38,7 +41,8 @@ value_keyword = "msgstr"
 filename_to_be_sorted = "django.po"
 filename_sorted = "django_ordered.po"
 
-dir_path = "./base/locale/fr_BE/LC_MESSAGES/"
+
+generic_dir_path = os.path.join(settings.BASE_DIR, "{apps_name}/locale/{lang}/LC_MESSAGES/")
 
 
 # ******************************** MAIN FUNCTIONS *********************
@@ -169,6 +173,8 @@ def msg_after_prefix(s, prefix):
 # *********************** SORT AND REPLACE FILE *******************************
 
 
-def sort_and_replace():
+def sort_and_replace(apps_name, lang='fr_BE'):
+    dir_path = generic_dir_path.format(apps_name=apps_name, lang=lang)
+    print(dir_path)
     sort_po_file(dir_path)
     replace_file(dir_path + filename_to_be_sorted, dir_path + filename_sorted)

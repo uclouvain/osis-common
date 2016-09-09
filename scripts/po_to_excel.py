@@ -35,7 +35,14 @@ ENGLISH_TRANSLATION  and FRENCH_TRANSLATION are the "msgstr" values of the engli
 respectively.
 ENGLISH_MODIFIED_TRANSLATION and FRENCH_MODIFIED_TRANSLATION are empty columns used to write correction of the
 english and french translations of the .po files.
+
+
+Usage
+cd BASE_DIR
+python3 manage.py shell
+from osis_common.scripts import po_to_excel
 """
+from django.conf import settings
 import xlsxwriter
 import os
 from osis_common.scripts import sort_po_files
@@ -111,7 +118,7 @@ def find_directories():
     :return: list of string
     """
     list_dirs_path = []
-    for root, dirs, files in os.walk("."):
+    for root, dirs, files in os.walk(settings.BASE_DIR):
         list_dirs_path = dirs
         break
     return list_dirs_path
