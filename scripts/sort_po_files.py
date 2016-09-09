@@ -30,7 +30,7 @@
 # spf.sort_and_replace(APPS_NAME, LANG)
 # APPS name is the name of the apps where the .po file is located. It is mandatory
 # LANG is the language of the .po files. By default, fr_BE is used.
-
+from django.conf.project_template.project_name import settings
 
 import os
 from django.conf import settings
@@ -40,6 +40,7 @@ value_keyword = "msgstr"
 
 filename_to_be_sorted = "django.po"
 filename_sorted = "django_ordered.po"
+
 
 generic_dir_path = os.path.join(settings.BASE_DIR, "{apps_name}/locale/{lang}/LC_MESSAGES/")
 
