@@ -41,6 +41,9 @@ from osis_common.models import message_template as message_template_mdl
 from django.utils.translation import ugettext as _
 from django.utils import translation
 
+import logging
+
+logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
 def _get_all_lang_templates(templates_refs):
     """
@@ -134,6 +137,7 @@ def __map_receivers_by_languages(receivers):
 def send_again(receiver, message_history_id):
     """
     send a message from message history again
+    :param receiver receiver of the message
     :param message_history_id The id of the message history to send again
     :return the sent message
     """
@@ -160,7 +164,11 @@ def __send_and_save(receivers, reference=None, **kwargs):
     recipient_list = []
     if receivers:
         for receiver in receivers:
-            if receiver.get('receiver_email'):
+            if not settings.EMAIL_PRODUCTION_SENDING:
+                logger.info('Sending mail not in production to {}'.format(settings.COMMON_EMAIL_RECEIVER))
+                recipient_list.append(settings.COMMON_EMAIL_RECEIVER)
+            elif receiver.get('receiver_email'):
+                logger.info('Sending mail in production to {}'.format(receiver.get('receiver_email')))
                 recipient_list.append(receiver.get('receiver_email'))
             message_history = message_history_mdl.MessageHistory(
                 reference=reference,
@@ -183,24 +191,25 @@ def __make_tables_template_data(tables, lang_code):
     """
     html_templates_data = {}
     txt_templates_data = {}
-    for table in tables:
-        table_template_name = table.get('table_template_name')
-        table_header_txt = table.get('header_txt')
-        with translation.override(lang_code):
-            table_headers = (_(txt) for txt in table_header_txt)
-        table_data = table.get('data')
-        table_html = __render_table_template_as_string(
-            table_headers,
-            table_data,
-            True
-        )
-        table_txt = __render_table_template_as_string(
-            table_headers,
-            table_data,
-            False
-        )
-        html_templates_data[table_template_name] = table_html
-        txt_templates_data[table_template_name] = table_txt
+    if tables:
+        for table in tables:
+            table_template_name = table.get('table_template_name')
+            table_header_txt = table.get('header_txt')
+            with translation.override(lang_code):
+                table_headers = (_(txt) for txt in table_header_txt)
+            table_data = table.get('data')
+            table_html = __render_table_template_as_string(
+                table_headers,
+                table_data,
+                True
+            )
+            table_txt = __render_table_template_as_string(
+                table_headers,
+                table_data,
+                False
+            )
+            html_templates_data[table_template_name] = table_html
+            txt_templates_data[table_template_name] = table_txt
     return html_templates_data, txt_templates_data
 
 
@@ -217,7 +226,7 @@ def send_messages(message_content):
     receivers = message_content.get('receivers', None)
     template_base_data = message_content.get('template_base_data', None)
     subject_data = message_content.get('subject_data', None)
-    if not (html_template_ref and receivers and subject_data):
+    if not (html_template_ref and receivers):
         return _('message_content_error')
     html_message_templates, txt_message_templates = _get_all_lang_templates([html_template_ref,
                                                                              txt_template_ref])
