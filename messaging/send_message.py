@@ -238,7 +238,7 @@ def send_messages(message_content):
         html_message_template, txt_message_template = _get_template_by_language_or_default(lang_code,
                                                                                            html_message_templates,
                                                                                            txt_message_templates)
-        subject = html_message_template.subject.format(subject_data)
+        subject = html_message_template.subject.format(**subject_data)
         html_data = template_base_data.copy()
         html_data.update(html_table_data)
         txt_data = template_base_data.copy()
