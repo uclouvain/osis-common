@@ -24,6 +24,10 @@
 #
 ##############################################################################
 
+"""
+Utility class used to create a message content.
+The message content is used to send a message to one or more receiver.
+"""
 
 def create_message_content(html_template_ref,
                            txt_template_ref,
@@ -32,14 +36,26 @@ def create_message_content(html_template_ref,
                            template_base_data,
                            subject_data):
     """
+    Create a message_content dict , used by the send_message function.
+    The message_content dict contains all the data needed to create and send the message to a list of receiver.
 
-    :param html_template_ref:
-    :param txt_template_ref:
-    :param tables:
-    :param receivers:
-    :param template_base_data:
-    :param subject_data:
-    :return:
+    :param html_template_ref: The html template reference.
+    :param txt_template_ref: The txt template reference
+    :param tables: The tables to be inserted as template data.
+    It is a list of 'table' created by the create_table function
+    :param receivers: The receivers of the message.
+    It is a list of receivers created by the crete_receiver function
+    :param template_base_data: The data used by the template. ({{ my_data }} in templates)
+    It is a dict like all context data used by django templates
+    :param subject_data: The data used to format the subject.
+    The subject is a string with formated param.
+    The subject data is a dict, containing all key/value of the formated string.
+    (Ex:
+    str = 'This is a {param1} using {param2}'
+    params = {'param1' : 'String', 'param2': 'dict formating'}
+    print(str.format(**params)) => This is a String using dict formating'
+    )
+    :return: The message_content dict used by the send_message function
     """
     return {
         'html_template_ref':    html_template_ref,
@@ -53,11 +69,11 @@ def create_message_content(html_template_ref,
 
 def create_table(table_template_name, header_txt, data):
     """
-
-    :param table_template_name:
-    :param header_txt:
-    :param data:
-    :return:
+    Create à dict that represent the table of data hat has to be inserted in a message template.
+    :param table_template_name:The name of the param in the template used to represent the table.
+    :param header_txt: The header of the table, as a list of strings
+    :param data: The data for each row of the table as list of tuples
+    :return: The dict representing the table used in the formating of the message
     """
     return {
         'table_template_name':  table_template_name,
@@ -68,11 +84,11 @@ def create_table(table_template_name, header_txt, data):
 
 def create_receiver(receiver_id, receiver_email, receiver_lang):
     """
-
-    :param receiver_id:
-    :param receiver_email:
-    :param receiver_lang:
-    :return:
+    Create a receiver dict used by the sending message function.
+    :param receiver_id: The id of the receiver (usually person.id)
+    :param receiver_email: The eail of the receiver.
+    :param receiver_lang: The language of the receiver
+    :return: The dict representing the receiver of a message
     """
     return {
         'receiver_id':      receiver_id,
