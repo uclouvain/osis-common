@@ -31,33 +31,37 @@ of these project was used alone whitout the second one.
 The script functions have to be launched from common line 'dbshell' in osis or osis-portal environnment.
 Migrations are made trough the queue system
 
-ex from osis :
+ex migration of person from osis:
 (VENV) cd /path/to/osis
-(VENV) python3 manage.py dbshell
+(VENV) python3 manage.py shell
 ~ from osis_common.scripts import initial_migration
-~ initial_migration.migrate_document_files_to_osis_portal()
+~ initial_migration.migrate_model('base', 'person')
 """
-from django.apps import AppConfig
+from django.apps import apps
 from pika.exceptions import ChannelClosed, ConnectionClosed
 from osis_common.models.serializable_model import format_data_for_migration
 from osis_common.queue import queue_sender
 from django.conf import settings
 
 
-def migrate_model(model_name):
+def migrate_model(app_label, model_name):
     if hasattr(settings, 'QUEUES'):
+        print('Queue Name : {}'.format(settings.QUEUES.get('QUEUES_NAME').get('QUEUE_TO_PRODUCE')))
+        print('Model Name : {}.{}'.format(app_label, model_name))
         try:
-            Model = AppConfig.get_model(model_name)
+            Model = apps.get_model(app_label=app_label, model_name=model_name)
         except LookupError:
             print('Model {} does not exists'.format(model_name))
             exit(1)
         objects = Model.objects.all()
-        try:
-            queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MODEL_MIGRATION'),
-                                      format_data_for_migration(objects))
-        except (ChannelClosed, ConnectionClosed):
-            print('QueueServer is not installed or not launched')
-            exit(1)
+        print('Count of objects to send : {}'.format(str(len(objects))))
+        for object in objects:
+            try:
+                queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('QUEUE_TO_PRODUCE'),
+                                          format_data_for_migration([object]))
+            except (ChannelClosed, ConnectionClosed):
+                print('QueueServer is not installed or not launched')
+                exit(1)
     else:
         print('You have to configure queues to use migration script!')
         exit(1)
