@@ -46,13 +46,20 @@ from django.conf import settings
 
 def migrate_model(model_name):
     if hasattr(settings, 'QUEUES'):
-        Model = AppConfig.get_model(model_name)
+        try:
+            Model = AppConfig.get_model(model_name)
+        except LookupError:
+            print('Model {} does not exists'.format(model_name))
+            exit(1)
         objects = Model.objects.all()
         try:
             queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MODEL_MIGRATION'),
                                       format_data_for_migration(objects))
         except (ChannelClosed, ConnectionClosed):
             print('QueueServer is not installed or not launched')
+            exit(1)
     else:
         print('You have to configure queues to use migration script!')
+        exit(1)
+    exit(0)
 
