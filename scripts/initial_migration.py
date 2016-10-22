@@ -46,7 +46,7 @@ from django.conf import settings
 
 def migrate_model(app_label, model_name):
     if hasattr(settings, 'QUEUES'):
-        print('Queue Name : {}'.format(settings.QUEUES.get('QUEUES_NAME').get('QUEUE_TO_PRODUCE')))
+        print('Queue Name : {}'.format(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE')))
         print('Model Name : {}.{}'.format(app_label, model_name))
         try:
             Model = apps.get_model(app_label=app_label, model_name=model_name)
@@ -57,7 +57,7 @@ def migrate_model(app_label, model_name):
         print('Count of objects to send : {}'.format(str(len(objects))))
         for object in objects:
             try:
-                queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('QUEUE_TO_PRODUCE'),
+                queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
                                           format_data_for_migration([object]))
             except (ChannelClosed, ConnectionClosed):
                 print('QueueServer is not installed or not launched')
