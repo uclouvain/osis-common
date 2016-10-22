@@ -24,5 +24,5 @@
 #
 ##############################################################################
 
-from frontoffice.queue import callbacks
-from frontoffice.queue import queue_listener
+from osis_common.queue import callbacks
+from osis_common.queue import queue_listener
