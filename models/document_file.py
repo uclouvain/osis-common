@@ -59,7 +59,7 @@ class DocumentFile(serializable_model.SerializableModel):
     storage_duration = models.IntegerField()
     file = models.FileField(upload_to='files/')
     description = models.CharField(max_length=50)
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, null=True)
     application_name = models.CharField(max_length=100, null=True, blank=True)
     size = models.IntegerField(null=True, blank=True)
 
