@@ -24,7 +24,6 @@
 #
 ##############################################################################
 import json
-import inspect
 from django.core import serializers
 from osis_common.models import serializable_model
 
@@ -42,5 +41,4 @@ def insert_or_update(json_data):
                 pass
     else:
         for deser_object in deserialized_objects:
-            print(inspect.getmro(deser_object.object.__class__))
             super(serializable_model.SerializableModel, deser_object.object).save()
