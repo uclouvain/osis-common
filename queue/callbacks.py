@@ -23,5 +23,22 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from osis_common.models import document_file
-from osis_common.models import serializable_model
+import json
+from django.core import serializers
+
+
+def insert_or_update(json_data):
+    from osis_common.models import serializable_model
+    json_data = json.loads(json_data.decode("utf-8"))
+    serialized_objects = json_data['serialized_objects']
+    deserialized_objects = serializers.deserialize('json', serialized_objects, ignorenonexistent=True)
+    if json_data['to_delete']:
+        for deser_object in deserialized_objects:
+            try:
+                super(serializable_model.SerializableModel, deser_object.object).delete()
+            except AssertionError:
+                # In case the object doesn't exist (object can't be deleted)
+                pass
+    else:
+        for deser_object in deserialized_objects:
+            super(serializable_model.SerializableModel, deser_object.object).save()
