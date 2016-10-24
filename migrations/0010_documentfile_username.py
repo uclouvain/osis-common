@@ -5,14 +5,6 @@ from __future__ import unicode_literals
 from django.db import migrations, models
 from osis_common.models.document_file import DocumentFile
 
-
-def migrate_user_to_username(apps, schema_editor):
-    document_files = DocumentFile.objects.all()
-    for document_file in document_files:
-        document_file.username = document_file.user.username
-        document_file.save()
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -23,9 +15,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='documentfile',
             name='username',
-            field=models.CharField(default='system', max_length=75, db_index=True),
+            field=models.CharField(default='system', max_length=254, db_index=True),
         ),
-        migrations.RunPython(migrate_user_to_username),
         migrations.RemoveField(
             model_name='documentfile',
             name='user',
