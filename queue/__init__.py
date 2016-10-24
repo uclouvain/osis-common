@@ -23,5 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from osis_common.models import document_file
-from osis_common.models import serializable_model
+
+from osis_common.queue import callbacks
+from osis_common.queue import queue_listener
+from osis_common.queue import queue_sender

@@ -27,6 +27,7 @@
 from django.db import models
 from django.contrib import admin
 from django.contrib.auth.models import User
+from osis_common.models import serializable_model
 
 
 class DocumentFileAdmin(admin.ModelAdmin):
@@ -51,14 +52,14 @@ CONTENT_TYPE_CHOICES = (('application/csv', 'application/csv'),
                         ('text/plain', 'text/plain'),)
 
 
-class DocumentFile(models.Model):
+class DocumentFile(serializable_model.SerializableModel):
     file_name = models.CharField(max_length=100)
     content_type = models.CharField(max_length=50, choices=CONTENT_TYPE_CHOICES, default='application/csv')
     creation_date = models.DateTimeField(auto_now_add=True, editable=False)
     storage_duration = models.IntegerField()
     file = models.FileField(upload_to='files/')
     description = models.CharField(max_length=50)
-    user = models.ForeignKey(User)
+    username = models.CharField(max_length=254, default='system', db_index=True)
     application_name = models.CharField(max_length=100, null=True, blank=True)
     size = models.IntegerField(null=True, blank=True)
 
@@ -75,13 +76,17 @@ def find_by_id(document_file_id):
     return DocumentFile.objects.get(pk=document_file_id)
 
 
-def search(user=None, description=None):
+def find_by_username(username):
+    return DocumentFile.objects.filter(username=username).order_by('creation_date')
+
+
+def search(username=None, description=None):
     out = None
     queryset = DocumentFile.objects.order_by('creation_date')
-    if user:
-        queryset = queryset.filter(user=user)
+    if username:
+        queryset = queryset.filter(username=username)
     if description:
         queryset = queryset.filter(description=description)
-    if user or description:
+    if username or description:
         out = queryset
     return out
