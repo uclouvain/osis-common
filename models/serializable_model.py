@@ -64,7 +64,7 @@ class SerializableModel(models.Model):
                 queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
                                           format_data_for_migration([self]))
             except (ChannelClosed, ConnectionClosed):
-                LOGGER.warning('QueueServer is not installed or not launched')
+                LOGGER.exception('QueueServer is not installed or not launched')
 
     def delete(self, *args, **kwargs):
         super(SerializableModel, self).delete(*args, **kwargs)
@@ -73,7 +73,7 @@ class SerializableModel(models.Model):
                 queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
                                           format_data_for_migration([self], to_delete=True))
             except (ChannelClosed, ConnectionClosed):
-                LOGGER.warning('QueueServer is not installed or not launched')
+                LOGGER.exception('QueueServer is not installed or not launched')
 
     def natural_key(self):
         return [self.uuid]
