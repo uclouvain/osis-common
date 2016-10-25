@@ -78,9 +78,8 @@ def send_message(queue_name, message, connection=None, channel=None):
                               routing_key=queue_name,
                               body=json.dumps(message),
                               properties=pika.BasicProperties(content_type='application/json'))
-    except Exception as e:
-        logger.error("Exception in queue : {0} ".format(e))
-        traceback.print_exc()
+    except Exception:
+        logger.exception("Exception in queue")
     finally:
         if channel and close_channel:
             channel.close()

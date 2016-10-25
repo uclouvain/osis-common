@@ -31,11 +31,11 @@ from osis_common.models import serializable_model
 
 
 class DocumentFileAdmin(admin.ModelAdmin):
-    list_display = ('file_name', 'content_type', 'description', 'creation_date', 'size')
+    list_display = ('file_name', 'content_type', 'description', 'username', 'creation_date', 'size')
     fieldsets = ((None, {'fields': ('file_name', 'content_type', 'creation_date', 'storage_duration', 'file',
-                                    'description', 'user', 'size')}),)
+                                    'description', 'username', 'size')}),)
     readonly_fields = ('creation_date',)
-    search_fields = ('file_name', 'user')
+    search_fields = ('file_name', 'username')
 
 
 CONTENT_TYPE_CHOICES = (('application/csv', 'application/csv'),
