@@ -31,11 +31,11 @@ from osis_common.models import serializable_model
 
 
 class DocumentFileAdmin(admin.ModelAdmin):
-    list_display = ('file_name', 'content_type', 'description', 'username', 'creation_date', 'size')
+    list_display = ('file_name', 'content_type', 'description', 'update_by', 'creation_date', 'size')
     fieldsets = ((None, {'fields': ('file_name', 'content_type', 'creation_date', 'storage_duration', 'file',
-                                    'description', 'username', 'size')}),)
+                                    'description', 'update_by', 'size')}),)
     readonly_fields = ('creation_date',)
-    search_fields = ('file_name', 'username')
+    search_fields = ('file_name', 'update_by')
 
 
 CONTENT_TYPE_CHOICES = (('application/csv', 'application/csv'),
@@ -59,7 +59,7 @@ class DocumentFile(serializable_model.SerializableModel):
     storage_duration = models.IntegerField()
     file = models.FileField(upload_to='files/')
     description = models.CharField(max_length=50)
-    username = models.CharField(max_length=254, default='system', db_index=True)
+    update_by = models.CharField(max_length=254, default='system', db_index=True)
     application_name = models.CharField(max_length=100, null=True, blank=True)
     size = models.IntegerField(null=True, blank=True)
 
@@ -74,19 +74,3 @@ class DocumentFile(serializable_model.SerializableModel):
 
 def find_by_id(document_file_id):
     return DocumentFile.objects.get(pk=document_file_id)
-
-
-def find_by_username(username):
-    return DocumentFile.objects.filter(username=username).order_by('creation_date')
-
-
-def search(username=None, description=None):
-    out = None
-    queryset = DocumentFile.objects.order_by('creation_date')
-    if username:
-        queryset = queryset.filter(username=username)
-    if description:
-        queryset = queryset.filter(description=description)
-    if username or description:
-        out = queryset
-    return out
