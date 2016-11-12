@@ -24,12 +24,13 @@
 #
 ##############################################################################
 import json
-from django.contrib.auth.models import User
 from django.test.testcases import TestCase
+from frontoffice import settings
 from osis_common.models.exception import MultipleModelsSerializationException
 from osis_common.models.serializable_model import serialize_objects, format_data_for_migration
 from osis_common.tests.models_for_tests.serializable_tests_models import ModelWithoutUser, \
     ModelWithUser
+
 
 
 class TestSerializeObject(TestCase):
@@ -67,7 +68,7 @@ class TestSerializeObject(TestCase):
         self.assertEqual('tests.modelwithoutuser', serialized_model)
 
 
-class TestFormatDataFoeMigration(TestCase):
+class TestFormatDataForMigration(TestCase):
 
     @classmethod
     def setUpTestData(cls):
@@ -83,6 +84,7 @@ class TestFormatDataFoeMigration(TestCase):
     def test_format_without_delete(self):
         object_to_format = [self.model_with_user]
         formated_objects = format_data_for_migration(object_to_format, to_delete=False)
+        print(formated_objects)
         self.assertFalse(formated_objects.get('to_delete'))
         print(formated_objects)
 

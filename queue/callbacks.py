@@ -24,15 +24,14 @@
 #
 ##############################################################################
 import json
+import logging
+from django.conf import settings
 from django.core import serializers
 
 
 def insert_or_update(json_data):
     from osis_common.models import serializable_model
-    try:
-        json_data = json.loads(json_data.decode("utf-8"))
-    except AttributeError:
-        json_data = json.loads(json_data)
+    json_data = json.loads(json_data.decode("utf-8"))
     serialized_objects = json_data['serialized_objects']
     deserialized_objects = serializers.deserialize('json', serialized_objects, ignorenonexistent=True)
     if json_data['to_delete']:
