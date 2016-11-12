@@ -90,3 +90,5 @@ ENV/
 
 /reports/
 /tests/data_after_tests/
+
+.idea

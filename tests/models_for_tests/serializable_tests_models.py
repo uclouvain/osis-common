@@ -23,3 +23,15 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+from django.contrib.auth.models import User
+from django.db import models
+from django.db.models.fields import CharField
+
+
+class ModelWithUser(models.Model):
+    user = CharField(max_length=30)
+    name = CharField(max_length=30, null=True)
+
+
+class ModelWithoutUser(models.Model):
+    name = CharField(max_length=30, null=True)

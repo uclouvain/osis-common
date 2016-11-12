@@ -29,6 +29,7 @@ from django.db import models
 from django.core import serializers
 import uuid
 from pika.exceptions import ChannelClosed, ConnectionClosed
+from osis_common.models.exception import MultipleModelsSerializationException
 from osis_common.queue import queue_sender
 
 LOGGER = logging.getLogger(settings.DEFAULT_LOGGER)
@@ -60,7 +61,6 @@ class SerializableModel(models.Model):
 
         if hasattr(settings, 'QUEUES'):
             try:
-                print()
                 queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
                                           format_data_for_migration([self]))
             except (ChannelClosed, ConnectionClosed):
@@ -107,7 +107,7 @@ def serialize_objects(objects, format='json'):
     if not objects:
         return None
     if len({obj.__class__ for obj in objects}) > 1:
-        raise Exception("Please give objects for only 1 model at the same time")
+        raise MultipleModelsSerializationException
     model_class = objects[0].__class__
     return serializers.serialize(format,
                                  objects,
