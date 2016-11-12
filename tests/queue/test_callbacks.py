@@ -23,31 +23,29 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
-from django.db.models.fields import CharField
-from osis_common.models.serializable_model import SerializableModel
+from django.test import TestCase
+from osis_common.queue.callbacks import insert_or_update
+from osis_common.tests.models_for_tests.serializable_tests_models import ModelWithUser
 
 
-class ModelWithUser(SerializableModel):
-    user = CharField(max_length=30)
-    name = CharField(max_length=30,unique=True)
-
-    @classmethod
-    def find_by_name(self,name):
-        try:
-            return ModelWithUser.objects.get(name=name)
-        except ObjectDoesNotExist:
-            return None
+def model_with_user_json():
+    return """{"to_delete": 'False', "serialized_objects": '[{"model": "tests.modelwithuser",
+    "fields": {"uuid": "3ca878cf-9391-49cf-8e4e-3909111f74ed", "name": "With User"}}]'}"""
 
 
-class ModelWithoutUser(SerializableModel):
-    name = CharField(max_length=30, unique=True)
+def model_withour_user_json():
+    return """{'to_delete': True, 'serialized_objects': '[{"model": "tests.modelwithoutuser",
+    "fields": {"uuid": "daf86b06-b784-4e02-9131-3098da60506c", "name": "Without User"}}]'}"""
 
-    @classmethod
-    def find_by_name(self,name):
-        try:
-            return ModelWithUser.objects.get(name=name)
-        except ObjectDoesNotExist:
-            return None
+
+class TestInsertOrUpdate(TestCase):
+
+    def test_insert_model_with_user(self):
+        model_with_user = ModelWithUser.find_by_name('With User')
+        self.assertIsNone(model_with_user)
+        insert_or_update(model_with_user_json())
+        model_with_user = ModelWithUser.find_by_name('With User')
+        self.assertIsNotNone(model_with_user)
+        self.assertIsNone(model_with_user.user)
+
+

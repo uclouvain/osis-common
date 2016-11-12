@@ -29,7 +29,10 @@ from django.core import serializers
 
 def insert_or_update(json_data):
     from osis_common.models import serializable_model
-    json_data = json.loads(json_data.decode("utf-8"))
+    try:
+        json_data = json.loads(json_data.decode("utf-8"))
+    except AttributeError:
+        json_data = json.loads(json_data)
     serialized_objects = json_data['serialized_objects']
     deserialized_objects = serializers.deserialize('json', serialized_objects, ignorenonexistent=True)
     if json_data['to_delete']:
