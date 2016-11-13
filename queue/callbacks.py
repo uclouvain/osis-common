@@ -26,7 +26,6 @@
 import json
 from django.core import serializers
 from django.core.exceptions import FieldDoesNotExist
-from osis_common.models import serializable_model
 
 
 def add_user_field_to_object_if_possible(object):
@@ -50,6 +49,7 @@ def __user_field_in_model(object):
 
 
 def insert_or_update(json_data):
+    from osis_common.models import serializable_model
     json_data = json.loads(json_data.decode("utf-8"))
     serialized_objects = json_data['serialized_objects']
     deserialized_objects = serializers.deserialize('json', serialized_objects, ignorenonexistent=True)
