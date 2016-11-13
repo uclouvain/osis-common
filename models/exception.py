@@ -23,3 +23,12 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+from django.utils.translation import ugettext_lazy as _
+
+
+class MultipleModelsSerializationException(Exception):
+    def __init__(self, errors=None):
+        message = _('must_give_only_one_model')
+        super(MultipleModelsSerializationException, self).__init__(message)
+        self.errors = errors
+

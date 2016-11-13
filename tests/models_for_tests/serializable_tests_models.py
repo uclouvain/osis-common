@@ -23,3 +23,43 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models.fields import CharField
+from osis_common.models.serializable_model import SerializableModel
+
+
+class ModelWithUser(SerializableModel):
+    user = CharField(max_length=30, null=True)
+    name = CharField(max_length=30, unique=True)
+
+    @classmethod
+    def find_by_name(cls,name):
+        try:
+            return ModelWithUser.objects.get(name=name)
+        except ObjectDoesNotExist:
+            return None
+
+    @classmethod
+    def find_by_id(cls, id):
+        try:
+            return ModelWithUser.objects.get(id=id)
+        except ObjectDoesNotExist:
+            return None
+
+
+class ModelWithoutUser(SerializableModel):
+    name = CharField(max_length=30, unique=True)
+
+    @classmethod
+    def find_by_name(self,name):
+        try:
+            return ModelWithoutUser.objects.get(name=name)
+        except ObjectDoesNotExist:
+            return None
+
+    @classmethod
+    def find_by_id(cls, id):
+        try:
+            return ModelWithoutUser.objects.get(id=id)
+        except ObjectDoesNotExist:
+            return None

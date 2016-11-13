@@ -44,26 +44,31 @@ from osis_common.queue import queue_sender
 from django.conf import settings
 
 
-def migrate_model(app_label, model_name):
+def migrate_model(app_label_models):
+    """
+    Send all models obect from the models in the list of tuple to the queue migration
+    :param app_label_models: A list of tuple, each tuple has app_label as key and a list of model_name as value
+    ex : [('base',['person', 'tutor', 'offer']),('dissertation',['offer_proposition', 'adviser'])]
+    """
     if hasattr(settings, 'QUEUES'):
         print('Queue Name : {}'.format(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE')))
-        print('Model Name : {}.{}'.format(app_label, model_name))
-        try:
-            Model = apps.get_model(app_label=app_label, model_name=model_name)
-        except LookupError:
-            print('Model {} does not exists'.format(model_name))
-            exit(1)
-        objects = Model.objects.all()
-        print('Count of objects to send : {}'.format(str(len(objects))))
-        for object in objects:
-            try:
-                queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
-                                          format_data_for_migration([object]))
-            except (ChannelClosed, ConnectionClosed):
-                print('QueueServer is not installed or not launched')
-                exit(1)
+        print('Models : ')
+        for app_label, model_names in app_label_models:
+            print('  App label : {}'.format(app_label))
+            for model_name in model_names:
+                print('    Model : {}'.format(model_name))
+                try:
+                    Model = apps.get_model(app_label=app_label, model_name=model_name)
+                except LookupError:
+                    print('   Model {} does not exists'.format(model_name))
+                    continue
+                objects = Model.objects.all()
+                print('    Count of objects to send : {}'.format(str(len(objects))))
+                for object in objects:
+                    try:
+                        queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
+                                                  format_data_for_migration([object]))
+                    except (ChannelClosed, ConnectionClosed):
+                        print('QueueServer is not installed or not launched')
     else:
         print('You have to configure queues to use migration script!')
-        exit(1)
-    exit(0)
-
