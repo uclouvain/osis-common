@@ -77,11 +77,8 @@ class TestFormatDataForMigration(TestCase):
         object_to_format = [self.model_without_user]
         formated_objects = format_data_for_migration(object_to_format, to_delete=True)
         self.assertTrue(formated_objects.get('to_delete'))
-        print(formated_objects)
 
     def test_format_without_delete(self):
         object_to_format = [self.model_with_user]
         formated_objects = format_data_for_migration(object_to_format, to_delete=False)
-        print(formated_objects)
         self.assertFalse(formated_objects.get('to_delete'))
-        print(formated_objects)
