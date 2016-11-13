@@ -44,26 +44,24 @@ from osis_common.queue import queue_sender
 from django.conf import settings
 
 
-def migrate_model(app_label, model_name):
+def migrate_model(app_label, models_names):
     if hasattr(settings, 'QUEUES'):
         print('Queue Name : {}'.format(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE')))
-        print('Model Name : {}.{}'.format(app_label, model_name))
-        try:
-            Model = apps.get_model(app_label=app_label, model_name=model_name)
-        except LookupError:
-            print('Model {} does not exists'.format(model_name))
-            exit(1)
-        objects = Model.objects.all()
-        print('Count of objects to send : {}'.format(str(len(objects))))
-        for object in objects:
+        print('Models : ')
+        for model_name in models_names:
+            print('  {}.{}'.format(app_label, model_name))
             try:
-                queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
-                                          format_data_for_migration([object]))
-            except (ChannelClosed, ConnectionClosed):
-                print('QueueServer is not installed or not launched')
-                exit(1)
+                Model = apps.get_model(app_label=app_label, model_name=model_name)
+            except LookupError:
+                print('   Model {} does not exists'.format(model_name))
+                continue
+            objects = Model.objects.all()
+            print('    Count of objects to send : {}'.format(str(len(objects))))
+            for object in objects:
+                try:
+                    queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
+                                              format_data_for_migration([object]))
+                except (ChannelClosed, ConnectionClosed):
+                    print('QueueServer is not installed or not launched')
     else:
         print('You have to configure queues to use migration script!')
-        exit(1)
-    exit(0)
-
