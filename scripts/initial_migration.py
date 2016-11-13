@@ -44,19 +44,16 @@ from osis_common.queue import queue_sender
 from django.conf import settings
 
 
-def migrate_model(app_label_models_dict):
+def migrate_model(app_label_models):
     """
-    Send all models obect from the models in the dict to the queue migration
-    :param app_label_models_dict: A dictionnary with app_labels as keys and a list of model_names as values
-    ex : {
-            'base': ['person', 'tutor', 'offer'],
-            'dissertation':  ['offer_proposition', 'adviser']
-        }
+    Send all models obect from the models in the list of tuple to the queue migration
+    :param app_label_models: A list of tuple, each tuple has app_label as key and a list of model_name as value
+    ex : [('base',['person', 'tutor', 'offer']),('dissertation',['offer_proposition', 'adviser'])]
     """
     if hasattr(settings, 'QUEUES'):
         print('Queue Name : {}'.format(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE')))
         print('Models : ')
-        for app_label, model_names in app_label_models_dict:
+        for app_label, model_names in app_label_models:
             print('  App label : {}'.format(app_label))
             for model_name in model_names:
                 print('    Model : {}'.format(model_name))
