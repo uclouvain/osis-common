@@ -22,3 +22,6 @@ msgstr "No messages were sent because of message content failure."
 
 msgid "template_error"
 msgstr "No messages were sent : the message template {} does not exist."
+
+msgid "must_give_only_one_model"
+msgstr "Only objects from the same models are allowed"
