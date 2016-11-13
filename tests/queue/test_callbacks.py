@@ -24,16 +24,12 @@
 #
 ##############################################################################
 import json
-from unittest import skip
 from django.test import TestCase
 from osis_common.queue.callbacks import insert_or_update
 from osis_common.tests.models_for_tests.serializable_tests_models import ModelWithUser, ModelWithoutUser
 
 
 def get_object_json(model_name='modelwithuser', to_delete=False):
-    data = {
-        'to_delete': to_delete
-    }
     data_json = json.dumps(
         {
             'to_delete': to_delete,
@@ -67,6 +63,7 @@ def get_object(model_name, name, uuid, user=None):
     elif 'modelwithoutuser' == model_name:
         return ModelWithoutUser(name=name, uuid=uuid)
     return None
+
 
 class TestInsertOrUpdate(TestCase):
 
