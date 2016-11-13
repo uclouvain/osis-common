@@ -99,7 +99,6 @@ class TestInsertOrUpdate(TestCase):
         model_without_user = ModelWithoutUser.find_by_id(id=model_id)
         self.assertEqual(model_without_user.name, 'Without User')
 
-
     def test_update_with_user_object_user_defined(self):
         model_with_user = get_object(model_name='modelwithuser',
                                      name='With User Undefined',
@@ -109,7 +108,7 @@ class TestInsertOrUpdate(TestCase):
         model_id = model_with_user.id
         model_with_user = ModelWithUser.find_by_id(id=model_id)
         self.assertEqual(model_with_user.name, 'With User Undefined')
-        self.assertIsNone(model_with_user.user)
+        self.assertEqual(model_with_user.user, 'user1')
         insert_or_update(get_object_json(model_name='modelwithuser'))
         model_with_user = ModelWithUser.find_by_id(id=model_id)
         self.assertEqual(model_with_user.name, 'With User')
@@ -117,8 +116,8 @@ class TestInsertOrUpdate(TestCase):
 
     def test_update_with_user_object_user_undefined(self):
         model_with_user = get_object(model_name='modelwithuser',
-                                        name='With User Undefined',
-                                        uuid='c03a1839-6eb3-4565-b256-e0aea5ec8437')
+                                     name='With User Undefined',
+                                     uuid='c03a1839-6eb3-4565-b256-e0aea5ec8437')
         model_with_user.save()
         model_id = model_with_user.id
         model_with_user = ModelWithUser.find_by_id(id=model_id)

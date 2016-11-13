@@ -24,7 +24,9 @@
 #
 ##############################################################################
 import logging
+from abc import abstractclassmethod
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.core import serializers
 import uuid
@@ -83,6 +85,14 @@ class SerializableModel(models.Model):
 
     class Meta:
         abstract = True
+
+    @classmethod
+    def find_by_uuid(cls,uuid):
+        try:
+            return cls.objects.get(uuid=uuid)
+        except ObjectDoesNotExist:
+            return None
+
 
 
 def format_data_for_migration(objects, to_delete=False):
