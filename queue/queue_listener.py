@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+import traceback
 from django.conf import settings
 
 import pika
@@ -31,6 +32,7 @@ from pika.exceptions import ConnectionClosed
 from django.conf import settings
 import threading
 import logging
+from osis_common.models.queue_exception import QueueException
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
@@ -88,7 +90,16 @@ class SynchronousConsumerThread(threading.Thread):
 def listen_queue_synchronously(queue_name, callback, counter=3):
 
     def on_message(channel, method_frame, header_frame, body):
-        callback(body)
+        try:
+            callback(body)
+        except Exception as e:
+            trace = traceback.format_exc()
+            queue_exception = QueueException(queue_name=queue_name,
+                                             message=body,
+                                             exception_title=type(e).__name__,
+                                             exception=trace
+                                             )
+            queue_exception.save()
         channel.basic_ack(delivery_tag=method_frame.delivery_tag)
 
     if counter == 0:
