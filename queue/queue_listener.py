@@ -47,7 +47,7 @@ class ScoresSheetClient(object):
 
         self.channel = self.connection.channel()
 
-        result = self.channel.queue_declare(exclusive=True)
+        result = self.channel.queue_declare(exclusive=True, durable=True)
         self.callback_queue = result.method.queue
 
         self.channel.basic_consume(self.on_response, no_ack=True,
@@ -105,7 +105,7 @@ def listen_queue_synchronously(queue_name, callback, counter=3):
     logger.debug("Channel opened.")
     logger.debug("Declaring queue (if it doesn't exist yet)...")
     channel.queue_declare(queue=queue_name,
-                          # durable=True,
+                          durable=True,
                           # exclusive=False,
                           # auto_delete=False,
                           )
@@ -366,7 +366,7 @@ class ExampleConsumer(object):
         :param str|unicode queue_name: The name of the queue to declare.
         """
         logger.debug('Declaring queue %s' % (queue_name))
-        self._channel.queue_declare(self.on_queue_declareok, queue_name)
+        self._channel.queue_declare(self.on_queue_declareok, queue_name, durable=True)
 
     def on_queue_declareok(self, method_frame):
         """
