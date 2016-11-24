@@ -23,6 +23,8 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+import json
+import traceback
 from django.conf import settings
 
 import pika
@@ -31,6 +33,7 @@ from pika.exceptions import ConnectionClosed
 from django.conf import settings
 import threading
 import logging
+from osis_common.models.queue_exception import QueueException
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
@@ -47,7 +50,7 @@ class ScoresSheetClient(object):
 
         self.channel = self.connection.channel()
 
-        result = self.channel.queue_declare(exclusive=True)
+        result = self.channel.queue_declare(exclusive=True, durable=True)
         self.callback_queue = result.method.queue
 
         self.channel.basic_consume(self.on_response, no_ack=True,
@@ -88,7 +91,17 @@ class SynchronousConsumerThread(threading.Thread):
 def listen_queue_synchronously(queue_name, callback, counter=3):
 
     def on_message(channel, method_frame, header_frame, body):
-        callback(body)
+        try:
+            callback(body)
+        except Exception as e:
+            trace = traceback.format_exc()
+            json_data = json.loads(body.decode("utf-8"))
+            queue_exception = QueueException(queue_name=queue_name,
+                                             message=json_data,
+                                             exception_title=type(e).__name__,
+                                             exception=trace
+                                             )
+            queue_exception.save()
         channel.basic_ack(delivery_tag=method_frame.delivery_tag)
 
     if counter == 0:
@@ -105,7 +118,7 @@ def listen_queue_synchronously(queue_name, callback, counter=3):
     logger.debug("Channel opened.")
     logger.debug("Declaring queue (if it doesn't exist yet)...")
     channel.queue_declare(queue=queue_name,
-                          # durable=True,
+                          durable=True,
                           # exclusive=False,
                           # auto_delete=False,
                           )
@@ -366,7 +379,7 @@ class ExampleConsumer(object):
         :param str|unicode queue_name: The name of the queue to declare.
         """
         logger.debug('Declaring queue %s' % (queue_name))
-        self._channel.queue_declare(self.on_queue_declareok, queue_name)
+        self._channel.queue_declare(self.on_queue_declareok, queue_name, durable=True)
 
     def on_queue_declareok(self, method_frame):
         """
