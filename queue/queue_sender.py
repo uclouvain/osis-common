@@ -44,7 +44,7 @@ def get_connection():
 
 def get_channel(connection, queue_name):
     channel = connection.channel()
-    channel.queue_declare(queue=queue_name)
+    channel.queue_declare(queue=queue_name, durable=True)
     return channel
 
 
@@ -77,7 +77,7 @@ def send_message(queue_name, message, connection=None, channel=None):
         channel.basic_publish(exchange='',
                               routing_key=queue_name,
                               body=json.dumps(message),
-                              properties=pika.BasicProperties(content_type='application/json'))
+                              properties=pika.BasicProperties(content_type='application/json', delivery_mode=2))
     except Exception:
         logger.exception("Exception in queue")
     finally:
