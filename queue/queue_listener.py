@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+import json
 import traceback
 from django.conf import settings
 
@@ -94,8 +95,9 @@ def listen_queue_synchronously(queue_name, callback, counter=3):
             callback(body)
         except Exception as e:
             trace = traceback.format_exc()
+            json_data = json.loads(body.decode("utf-8"))
             queue_exception = QueueException(queue_name=queue_name,
-                                             message=body,
+                                             message=json_data,
                                              exception_title=type(e).__name__,
                                              exception=trace
                                              )

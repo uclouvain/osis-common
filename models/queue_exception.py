@@ -31,9 +31,9 @@ from django.contrib import admin
 class QueueException(models.Model):
     queue_name = models.CharField(max_length=255)
     creation_date = models.DateTimeField(auto_now_add=True)
-    message = JSONField()
+    message = JSONField(null=True)
     exception_title = models.CharField(max_length=255)
-    exception = models.TextField(null=True)
+    exception = models.TextField()
 
 
 class QueueExceptionAdmin(admin.ModelAdmin):
