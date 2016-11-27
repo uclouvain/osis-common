@@ -93,6 +93,7 @@ def listen_queue_synchronously(queue_name, callback, counter=3):
     def on_message(channel, method_frame, header_frame, body):
         try:
             callback(body)
+            channel.basic_ack(delivery_tag=method_frame.delivery_tag)
         except Exception as e:
             trace = traceback.format_exc()
             json_data = json.loads(body.decode("utf-8"))
@@ -101,8 +102,12 @@ def listen_queue_synchronously(queue_name, callback, counter=3):
                                              exception_title=type(e).__name__,
                                              exception=trace
                                              )
-            queue_exception.save()
-        channel.basic_ack(delivery_tag=method_frame.delivery_tag)
+            try:
+                queue_exception.save()
+                channel.basic_ack(delivery_tag=method_frame.delivery_tag)
+            except Exception:
+                trace = traceback.format_exc()
+                logger.error(trace)
 
     if counter == 0:
         return # Stop the function
