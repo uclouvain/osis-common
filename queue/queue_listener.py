@@ -104,7 +104,6 @@ def listen_queue_synchronously(queue_name, callback, counter=3):
                                              )
             try:
                 queue_exception.save()
-                channel.basic_ack(delivery_tag=method_frame.delivery_tag)
             except Exception:
                 trace = traceback.format_exc()
                 logger.error(trace)
