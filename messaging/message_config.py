@@ -34,7 +34,8 @@ def create_message_content(html_template_ref,
                            tables,
                            receivers,
                            template_base_data,
-                           subject_data):
+                           subject_data,
+                           attachment):
     """
     Create a message_content dict , used by the send_message function.
     The message_content dict contains all the data needed to create and send the message to a list of receiver.
@@ -55,6 +56,8 @@ def create_message_content(html_template_ref,
     params = {'param1' : 'String', 'param2': 'dict formating'}
     print(str.format(**params)) => This is a String using dict formating'
     )
+    :param attachment: An attachment to the message. Represented by the 3-tuple
+    (name, content, mimetype)
     :return: The message_content dict used by the send_message function
     """
     return {
@@ -64,6 +67,7 @@ def create_message_content(html_template_ref,
         'receivers':            receivers,
         'template_base_data':   template_base_data,
         'subject_data':         subject_data,
+        'attachment':           attachment,
     }
 
 
