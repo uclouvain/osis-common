@@ -35,7 +35,7 @@ def create_message_content(html_template_ref,
                            receivers,
                            template_base_data,
                            subject_data,
-                           attachment):
+                           attachment=None):
     """
     Create a message_content dict , used by the send_message function.
     The message_content dict contains all the data needed to create and send the message to a list of receiver.
