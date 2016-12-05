@@ -41,7 +41,7 @@ logger = logging.getLogger(settings.DEFAULT_LOGGER)
 class ScoresSheetClient(object):
     def __init__(self):
         self.paper_sheet_queue = settings.QUEUES.get('QUEUES_NAME').get('PAPER_SHEET')
-        credentials = pika.PlainCredentials(settings.QUEUES.get('QUEUE_URL'),
+        credentials = pika.PlainCredentials(settings.QUEUES.get('QUEUE_USER'),
                                             settings.QUEUES.get('QUEUE_PASSWORD'))
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(settings.QUEUES.get('QUEUE_URL'),
                                                                             settings.QUEUES.get('QUEUE_PORT'),
