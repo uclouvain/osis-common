@@ -456,7 +456,14 @@ class ExampleConsumer(object):
         """
         logger.debug(self._connection_parameters['queue_name'] + ' : Received message # %s from %s' % (basic_deliver.delivery_tag, properties.app_id))
         logger.debug('Executing callback function on the received message...')
-        self.callback_func(body)
+        response = self.callback_func(body)
+        if properties.reply_to:
+            self._channel.basic_publish(exchange='',
+                                        routing_key=properties.reply_to,
+                                        properties=pika.BasicProperties(correlation_id=properties.correlation_id),
+                                        body=response)
+        self._channel.basic_ack(delivery_tag=basic_deliver.delivery_tag)
+
         self.acknowledge_message(basic_deliver.delivery_tag)
 
     def acknowledge_message(self, delivery_tag):
