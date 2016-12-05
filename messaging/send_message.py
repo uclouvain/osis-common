@@ -184,7 +184,6 @@ def __send_and_save(receivers, reference=None, **kwargs):
             message_history.save()
         msg = EmailMultiAlternatives(kwargs.get('subject'), kwargs.get('message'), kwargs.get('from_email'),
                                      recipient_list, attachments=__get_attachments(kwargs))
-        # msg.content_subtype = "html"
         msg.attach_alternative(kwargs.get('html_message'), "text/html")
         msg.send()
 
