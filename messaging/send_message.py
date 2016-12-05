@@ -182,12 +182,18 @@ def __send_and_save(receivers, reference=None, **kwargs):
                 sent=timezone.now() if receiver.get('receiver_email') else None
             )
             message_history.save()
-
-        msg = EmailMultiAlternatives(kwargs.get('subject'), kwargs.get('html_message'), kwargs.get('from_email'),
-                                     recipient_list, attachments=[kwargs.get('attachment')])
-        msg.content_subtype = "html"
-        msg.attach_alternative(kwargs.get('message'), "text/plain")
+        msg = EmailMultiAlternatives(kwargs.get('subject'), kwargs.get('message'), kwargs.get('from_email'),
+                                     recipient_list, attachments=__get_attachments(kwargs))
+        # msg.content_subtype = "html"
+        msg.attach_alternative(kwargs.get('html_message'), "text/html")
         msg.send()
+
+
+def __get_attachments(attributes_message):
+    attachment = attributes_message.get("attachment")
+    if attachment:
+        return [attachment]
+    return None
 
 
 def __make_tables_template_data(tables, lang_code):
