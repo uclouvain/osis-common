@@ -24,7 +24,6 @@
 #
 ##############################################################################
 import logging
-from abc import abstractclassmethod
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
