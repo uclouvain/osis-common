@@ -26,9 +26,9 @@
 import json
 
 import pika
+from pika import exceptions
 import logging
 from django.conf import settings
-import traceback
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
@@ -36,16 +36,23 @@ logger = logging.getLogger(settings.DEFAULT_LOGGER)
 def get_connection():
     credentials = pika.PlainCredentials(settings.QUEUES.get('QUEUE_USER'),
                                         settings.QUEUES.get('QUEUE_PASSWORD'))
-    return pika.BlockingConnection(pika.ConnectionParameters(settings.QUEUES.get('QUEUE_URL'),
-                                                             settings.QUEUES.get('QUEUE_PORT'),
-                                                             settings.QUEUES.get('QUEUE_CONTEXT_ROOT'),
-                                                             credentials))
+    try:
+        return pika.BlockingConnection(pika.ConnectionParameters(settings.QUEUES.get('QUEUE_URL'),
+                                                                 settings.QUEUES.get('QUEUE_PORT'),
+                                                                 settings.QUEUES.get('QUEUE_CONTEXT_ROOT'),
+                                                                 credentials))
+    except exceptions.ConnectionClosed:
+        logger.info("The queuing server is not available.")
+        return None
 
 
 def get_channel(connection, queue_name):
-    channel = connection.channel()
-    channel.queue_declare(queue=queue_name, durable=True)
-    return channel
+    if connection:
+        channel = connection.channel()
+        channel.queue_declare(queue=queue_name, durable=True)
+        return channel
+    else:
+        return None
 
 
 def send_message(queue_name, message, connection=None, channel=None):
@@ -65,23 +72,29 @@ def send_message(queue_name, message, connection=None, channel=None):
     """
     if channel and not connection:
         raise Exception('Please give the connection from which you opened the channel given by parameter')
-    close_connection = False
-    close_channel = False
+
+    connection_open = False
+    channel_open = False
+
     if not connection or connection.is_closed:
         connection = get_connection()
-        close_connection = True
+        if connection:
+            connection_open = True
     if not channel or channel.is_closed:
         channel = get_channel(connection, queue_name)
-        close_channel = True
-    try:
-        channel.basic_publish(exchange='',
-                              routing_key=queue_name,
-                              body=json.dumps(message),
-                              properties=pika.BasicProperties(content_type='application/json', delivery_mode=2))
-    except Exception:
-        logger.exception("Exception in queue")
-    finally:
-        if channel and close_channel:
-            channel.close()
-        if connection is not None and close_connection:
-            connection.close()
+        if channel:
+            channel_open = True
+
+    if channel and not channel.is_closed:
+        try:
+            channel.basic_publish(exchange='',
+                                  routing_key=queue_name,
+                                  body=json.dumps(message),
+                                  properties=pika.BasicProperties(content_type='application/json', delivery_mode=2))
+        except Exception:
+            logger.exception("Exception in queue")
+        finally:
+            if channel and channel_open:
+                channel.close()
+            if connection and connection_open:
+                connection.close()
