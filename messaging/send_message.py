@@ -29,7 +29,7 @@ Utility files for message sending
 """
 from html import unescape
 
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template import Template, Context
 from django.template.loader import render_to_string
 from django.utils import timezone
@@ -44,6 +44,7 @@ from django.utils import translation
 import logging
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
+
 
 def _get_all_lang_templates(templates_refs):
     """
@@ -76,7 +77,7 @@ def _get_template_by_language_or_default(lang_code, html_message_templates, txt_
     return html_message_template, txt_message_template
 
 
-def __send_messages(html_message_template, txt_message_template, html_data, txt_data, receivers, subject):
+def __send_messages(html_message_template, txt_message_template, html_data, txt_data, receivers, subject, attachment):
     """
     Send a message to a list of person ,with txt and html format.
     The messages are build according templates and data (dictionnary of template vars).
@@ -87,6 +88,7 @@ def __send_messages(html_message_template, txt_message_template, html_data, txt_
     :param txt_data: the data for the txt template
     :param receivers: The receivers list of the message
     :param subject: The subject of the message
+    :param attachment: An attachment to the message.
     """
     html_data['signature'] = render_to_string('messaging/html_email_signature.html', {
         'logo_mail_signature_url': settings.LOGO_EMAIL_SIGNATURE_URL,
@@ -96,7 +98,8 @@ def __send_messages(html_message_template, txt_message_template, html_data, txt_
     __send_and_save(receivers=receivers,
                     subject=unescape(strip_tags(subject)),
                     message=unescape(strip_tags(txt_message)),
-                    html_message=html_message, from_email=settings.DEFAULT_FROM_EMAIL)
+                    html_message=html_message, from_email=settings.DEFAULT_FROM_EMAIL,
+                    attachment=attachment)
 
 
 def __render_table_template_as_string(table_headers, table_rows, html_format):
@@ -158,7 +161,7 @@ def __send_and_save(receivers, reference=None, **kwargs):
     Save the message in message_history table
     :param receivers List of the receivers of the message
     :param reference business reference of the message
-    :param kwargs List of arguments used by the django send_mail method.
+    :param kwargs List of arguments used by the django EmailMultiAlternative class.
     The recipient_list argument is taken form the persons list.
     """
     recipient_list = []
@@ -179,7 +182,17 @@ def __send_and_save(receivers, reference=None, **kwargs):
                 sent=timezone.now() if receiver.get('receiver_email') else None
             )
             message_history.save()
-        send_mail(recipient_list=recipient_list, **kwargs)
+        msg = EmailMultiAlternatives(kwargs.get('subject'), kwargs.get('message'), kwargs.get('from_email'),
+                                     recipient_list, attachments=__get_attachments(kwargs))
+        msg.attach_alternative(kwargs.get('html_message'), "text/html")
+        msg.send()
+
+
+def __get_attachments(attributes_message):
+    attachment = attributes_message.get("attachment")
+    if attachment:
+        return [attachment]
+    return None
 
 
 def __make_tables_template_data(tables, lang_code):
@@ -226,6 +239,7 @@ def send_messages(message_content):
     receivers = message_content.get('receivers', None)
     template_base_data = message_content.get('template_base_data', None)
     subject_data = message_content.get('subject_data', None)
+    attachment = message_content.get('attachment', None)
     if not (html_template_ref and receivers):
         return _('message_content_error')
     html_message_templates, txt_message_templates = _get_all_lang_templates([html_template_ref,
@@ -249,6 +263,6 @@ def send_messages(message_content):
         html_data['signature'] = render_to_string('messaging/html_email_signature.html', {
             'logo_mail_signature_url': settings.LOGO_EMAIL_SIGNATURE_URL,
             'logo_osis_url': settings.LOGO_OSIS_URL, })
-        __send_messages(html_message_template, txt_message_template, html_data, txt_data, receivers, subject)
+        __send_messages(html_message_template, txt_message_template, html_data, txt_data, receivers, subject, attachment)
 
     return None

@@ -41,7 +41,7 @@ logger = logging.getLogger(settings.DEFAULT_LOGGER)
 class ScoresSheetClient(object):
     def __init__(self):
         self.paper_sheet_queue = settings.QUEUES.get('QUEUES_NAME').get('PAPER_SHEET')
-        credentials = pika.PlainCredentials(settings.QUEUES.get('QUEUE_URL'),
+        credentials = pika.PlainCredentials(settings.QUEUES.get('QUEUE_USER'),
                                             settings.QUEUES.get('QUEUE_PASSWORD'))
         self.connection = pika.BlockingConnection(pika.ConnectionParameters(settings.QUEUES.get('QUEUE_URL'),
                                                                             settings.QUEUES.get('QUEUE_PORT'),
@@ -93,6 +93,7 @@ def listen_queue_synchronously(queue_name, callback, counter=3):
     def on_message(channel, method_frame, header_frame, body):
         try:
             callback(body)
+            channel.basic_ack(delivery_tag=method_frame.delivery_tag)
         except Exception as e:
             trace = traceback.format_exc()
             json_data = json.loads(body.decode("utf-8"))
@@ -101,8 +102,11 @@ def listen_queue_synchronously(queue_name, callback, counter=3):
                                              exception_title=type(e).__name__,
                                              exception=trace
                                              )
-            queue_exception.save()
-        channel.basic_ack(delivery_tag=method_frame.delivery_tag)
+            try:
+                queue_exception.save()
+            except Exception:
+                trace = traceback.format_exc()
+                logger.error(trace)
 
     if counter == 0:
         return # Stop the function
@@ -456,7 +460,14 @@ class ExampleConsumer(object):
         """
         logger.debug(self._connection_parameters['queue_name'] + ' : Received message # %s from %s' % (basic_deliver.delivery_tag, properties.app_id))
         logger.debug('Executing callback function on the received message...')
-        self.callback_func(body)
+        response = self.callback_func(body)
+        if properties.reply_to:
+            self._channel.basic_publish(exchange='',
+                                        routing_key=properties.reply_to,
+                                        properties=pika.BasicProperties(correlation_id=properties.correlation_id),
+                                        body=response)
+        self._channel.basic_ack(delivery_tag=basic_deliver.delivery_tag)
+
         self.acknowledge_message(basic_deliver.delivery_tag)
 
     def acknowledge_message(self, delivery_tag):
