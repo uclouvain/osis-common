@@ -23,9 +23,25 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+import logging
 from django.db import models
 from django.contrib.postgres.fields import JSONField
 from django.contrib import admin
+from osis_common.queue import queue_sender
+from django.conf import settings
+from pika.exceptions import ChannelClosed, ConnectionClosed
+
+
+LOGGER = logging.getLogger(settings.DEFAULT_LOGGER)
+
+
+class QueueExceptionAdmin(admin.ModelAdmin):
+    date_hierarchy = 'creation_date'
+    list_display = ('queue_name', 'exception_title', 'creation_date')
+    fieldsets = ((None, {'fields': ('queue_name', 'exception_title', 'exception', 'message', 'creation_date')}),)
+    readonly_fields = ('queue_name', 'exception_title', 'creation_date', 'message', 'exception', )
+    ordering = ['-creation_date']
+    search_fields = ['queue_name', 'exception_title']
 
 
 class QueueException(models.Model):
@@ -36,10 +52,15 @@ class QueueException(models.Model):
     exception = models.TextField()
 
 
-class QueueExceptionAdmin(admin.ModelAdmin):
-    date_hierarchy = 'creation_date'
-    list_display = ('queue_name', 'exception_title', 'creation_date')
-    fieldsets = ((None, {'fields': ('queue_name', 'exception_title', 'exception', 'message', 'creation_date')}),)
-    readonly_fields = ('queue_name', 'exception_title', 'creation_date', 'message', 'exception', )
-    ordering = ['-creation_date']
-    search_fields = ['queue_name', 'exception_title']
+def find_all():
+    return list(QueueException.objects.all())
+
+
+def resend_messages_to_queue():
+    for queue_exc in find_all():
+        try:
+            queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_CONSUME'), queue_exc.message)
+            queue_exc.delete()
+        except (ChannelClosed, ConnectionClosed):
+            LOGGER.exception('QueueServer is not installed or not launched')
+
