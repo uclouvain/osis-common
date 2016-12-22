@@ -93,7 +93,6 @@ class SerializableModel(models.Model):
             return None
 
 
-
 def format_data_for_migration(objects, to_delete=False):
     """
     Format data to fit to a specific structure.

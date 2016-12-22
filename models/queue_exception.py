@@ -23,17 +23,26 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+import logging
 from django.db import models
 from django.contrib.postgres.fields import JSONField
 from django.contrib import admin
+from osis_common.queue import queue_sender
+from django.conf import settings
+from pika.exceptions import ChannelClosed, ConnectionClosed
 
 
-class QueueException(models.Model):
-    queue_name = models.CharField(max_length=255)
-    creation_date = models.DateTimeField(auto_now_add=True)
-    message = JSONField(null=True)
-    exception_title = models.CharField(max_length=255)
-    exception = models.TextField()
+LOGGER = logging.getLogger(settings.DEFAULT_LOGGER)
+
+
+def resend_messages_to_queue(modeladmin, request, queryset):
+    for q_exception in queryset:
+        try:
+            queue_sender.send_message(q_exception.queue_name, q_exception.message)
+            q_exception.delete()
+            LOGGER.info('Message resent.')
+        except (ChannelClosed, ConnectionClosed):
+            LOGGER.exception('QueueServer is not installed or not launched')
 
 
 class QueueExceptionAdmin(admin.ModelAdmin):
@@ -43,3 +52,15 @@ class QueueExceptionAdmin(admin.ModelAdmin):
     readonly_fields = ('queue_name', 'exception_title', 'creation_date', 'message', 'exception', )
     ordering = ['-creation_date']
     search_fields = ['queue_name', 'exception_title']
+    actions = [resend_messages_to_queue]
+
+
+class QueueException(models.Model):
+    queue_name = models.CharField(max_length=255)
+    creation_date = models.DateTimeField(auto_now_add=True)
+    message = JSONField(null=True)
+    exception_title = models.CharField(max_length=255)
+    exception = models.TextField()
+
+    def __str__(self):
+        return self.exception_title
