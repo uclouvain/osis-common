@@ -24,3 +24,18 @@ msgstr "Aucun message n'a été envoyé : le modèle de message {} n'existe pas.
 
 msgid "must_give_only_one_model"
 msgstr "Tous les objets doivent appartenir au même modèle"
+
+msgid "students"
+msgstr "étudiants"
+
+msgid "printing_date"
+msgstr "Date d'impression"
+
+msgid "not_passed"
+msgstr "Non communiquée"
+
+msgid "date_not_passed"
+msgstr "Date non communiquée"
+
+msgid "score"
+msgstr "Note"
