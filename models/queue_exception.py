@@ -35,6 +35,16 @@ from pika.exceptions import ChannelClosed, ConnectionClosed
 LOGGER = logging.getLogger(settings.DEFAULT_LOGGER)
 
 
+def resend_messages_to_queue(modeladmin, request, queryset):
+    for q_exception in queryset:
+        try:
+            queue_sender.send_message(q_exception.queue_name, q_exception.message)
+            q_exception.delete()
+            LOGGER.info('Message resent.')
+        except (ChannelClosed, ConnectionClosed):
+            LOGGER.exception('QueueServer is not installed or not launched')
+
+
 class QueueExceptionAdmin(admin.ModelAdmin):
     date_hierarchy = 'creation_date'
     list_display = ('queue_name', 'exception_title', 'creation_date')
@@ -42,6 +52,7 @@ class QueueExceptionAdmin(admin.ModelAdmin):
     readonly_fields = ('queue_name', 'exception_title', 'creation_date', 'message', 'exception', )
     ordering = ['-creation_date']
     search_fields = ['queue_name', 'exception_title']
+    actions = [resend_messages_to_queue]
 
 
 class QueueException(models.Model):
@@ -51,16 +62,5 @@ class QueueException(models.Model):
     exception_title = models.CharField(max_length=255)
     exception = models.TextField()
 
-
-def find_all():
-    return list(QueueException.objects.all())
-
-
-def resend_messages_to_queue():
-    for queue_exc in find_all():
-        try:
-            queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_CONSUME'), queue_exc.message)
-            queue_exc.delete()
-        except (ChannelClosed, ConnectionClosed):
-            LOGGER.exception('QueueServer is not installed or not launched')
-
+    def __str__(self):
+        return self.exception_title

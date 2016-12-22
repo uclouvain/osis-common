@@ -99,8 +99,7 @@ def listen_queue_synchronously(queue_name, callback, counter=3):
             queue_exception = QueueException(queue_name=queue_name,
                                              message=json_data,
                                              exception_title=type(e).__name__,
-                                             exception=trace
-                                             )
+                                             exception=trace)
             try:
                 queue_exception.save()
             except Exception:
