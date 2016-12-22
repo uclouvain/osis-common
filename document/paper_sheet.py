@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+import datetime
 from io import BytesIO
 from django.conf import settings
 from reportlab.lib.pagesizes import A4
@@ -36,7 +37,7 @@ from django.utils.translation import ugettext as _
 
 PAGE_SIZE = A4
 MARGIN_SIZE = 15 * mm
-COLS_WIDTH = [25*mm, 50*mm, 50*mm, 25*mm, 25*mm]
+COLS_WIDTH = [20*mm, 55*mm, 45*mm, 15*mm, 40*mm]
 STUDENTS_PER_PAGE = 24
 
 
@@ -76,6 +77,7 @@ def build_pdf(document):
             data = headers_table()
             students_printed = 0
             enrollments_to_print = len(program['enrollments'])
+            nb_students = len(program['enrollments'])
             for enrollment in program['enrollments']:
 
                 # 1. Append the examEnrollment to the table 'data'
@@ -92,7 +94,7 @@ def build_pdf(document):
                     students_printed = 0
                     # Print a complete PDF sheet
                     # 3. Write header
-                    main_data_json(learn_unit_year, program, styles, content)
+                    main_data_json(learn_unit_year, program, nb_students, styles, content)
                     # 4. Adding the complete table of examEnrollments to the PDF sheet
                     _write_table_of_students(content, data)
 
@@ -132,7 +134,9 @@ def header_building(canvas, doc, styles):
 
 
 def footer_building(canvas, doc, styles):
-    pageinfo = _('scores_sheet')
+    printing_date = datetime.datetime.now()
+    printing_date = printing_date.strftime("%d/%m/%Y")
+    pageinfo = "%s : %s" % (_('printing_date'), printing_date)
     footer = Paragraph(''' <para align=right>Page %d - %s </para>''' % (doc.page, pageinfo), styles['Normal'])
     w, h = footer.wrap(doc.width, doc.bottomMargin)
     footer.drawOn(canvas, doc.leftMargin, h)
@@ -204,7 +208,7 @@ def headers_table():
     data = [['''%s''' % _('registration_number'),
              '''%s''' % _('lastname'),
              '''%s''' % _('firstname'),
-             '''%s''' % _('numbered_score'),
+             '''%s''' % _('score'),
              '''%s''' % _('justification')]]
     return data
 
@@ -229,7 +233,7 @@ def get_data_coordinator_json(learning_unit_year, styles):
     return [[p_responsible], [p_coord_name], [p_coord_location], [p_coord_address]]
 
 
-def main_data_json(learning_unit_year, program, styles, content):
+def main_data_json(learning_unit_year, program, nb_students, styles, content):
 
     # We add first a blank line
     content.append(Paragraph('''
@@ -257,13 +261,20 @@ def main_data_json(learning_unit_year, program, styles, content):
         if struct_address.get('phone'):
             phone_fax_data += " - "
         phone_fax_data += "%s : %s" % (_('fax'), struct_address.get('fax'))
-    p_phone_fax_data = Paragraph('%s' % phone_fax_data,
-                                 styles["Normal"])
+    p_phone_fax_data = Paragraph('%s' % phone_fax_data, styles["Normal"])
 
-    data_structure = [[p_struct_name],
-                      [p_struct_location],
-                      [p_struct_address],
-                      [p_phone_fax_data]]
+    p_email_data = Paragraph('{0} : {1}'.format(_('email'), struct_address.get('email')), styles["Normal"])
+    if struct_address.get('email'):
+        data_structure = [[p_struct_name],
+                          [p_struct_location],
+                          [p_struct_address],
+                          [p_phone_fax_data],
+                          [p_email_data]]
+    else:
+        data_structure = [[p_struct_name],
+                          [p_struct_location],
+                          [p_struct_address],
+                          [p_phone_fax_data]]
 
     header_coordinator_structure = [[get_data_coordinator_json(learning_unit_year, styles), data_structure]]
     table_header = Table(header_coordinator_structure, colWidths='*')
@@ -289,7 +300,11 @@ def main_data_json(learning_unit_year, program, styles, content):
     # content.append(Paragraph('Session : %d' % session_exam.number_session, text_left_style))
     content.append(Paragraph("<strong>%s : %s</strong>" % (learning_unit_year['acronym'], learning_unit_year['title']),
                              styles["Normal"]))
-    content.append(Paragraph('''<b>%s : %s</b>''' % (_('program'), program['acronym']), styles["Normal"]))
+    content.append(Paragraph('''<b>%s : %s </b>(%s %s)''' % (_('program'),
+                                                             program['acronym'],
+                                                             nb_students,
+                                                             _('students')),
+                             styles["Normal"]))
     content.append(Paragraph('''
         <para spaceb=2>
             &nbsp;
@@ -301,8 +316,9 @@ def end_page_infos_building(content, end_date):
     p = ParagraphStyle('info')
     p.fontSize = 10
     p.alignment = TA_LEFT
-    content.append(Paragraph(_("return_doc_to_administrator") % end_date
-                             , p))
+    if not end_date:
+        end_date = '(%s)' % _('date_not_passed')
+    content.append(Paragraph(_("return_doc_to_administrator") % end_date, p))
     content.append(Paragraph('''
                             <para spaceb=5>
                                 &nbsp;
