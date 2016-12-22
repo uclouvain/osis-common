@@ -16,7 +16,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-
 msgid "message_content_error"
 msgstr "No messages were sent because of message content failure."
 
@@ -25,3 +24,18 @@ msgstr "No messages were sent : the message template {} does not exist."
 
 msgid "must_give_only_one_model"
 msgstr "Only objects from the same models are allowed"
+
+msgid "students"
+msgstr "students"
+
+msgid "printing_date"
+msgstr "Printing date"
+
+msgid "not_passed"
+msgstr "Not passed"
+
+msgid "date_not_passed"
+msgstr "Date not passed"
+
+msgid "score"
+msgstr "Score"
