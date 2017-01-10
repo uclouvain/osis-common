@@ -23,16 +23,17 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-import datetime
 from io import BytesIO
+from django.http import HttpResponse
 from django.conf import settings
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.enums import TA_JUSTIFY, TA_RIGHT, TA_CENTER, TA_LEFT
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Image, PageBreak, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, PageBreak, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.lib import colors
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
+import datetime
 
 
 PAGE_SIZE = A4
@@ -59,6 +60,16 @@ def add_header_footer(canvas, doc):
     canvas.restoreState()
 
 
+def build_response(document):
+    filename = "%s.pdf" % _('scores_sheet')
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="%s"' % filename
+
+    pdf = build_pdf(document)
+    response.write(pdf)
+    return response
+
+
 def build_pdf(document):
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer,
@@ -67,11 +78,9 @@ def build_pdf(document):
                             leftMargin=MARGIN_SIZE,
                             topMargin=85,
                             bottomMargin=18)
-
     styles = getSampleStyleSheet()
     styles.add(ParagraphStyle(name='Justify', alignment=TA_JUSTIFY))
     content = []
-
     for learn_unit_year in document['learning_unit_years']:
         for program in learn_unit_year['programs']:
             data = headers_table()
@@ -85,7 +94,7 @@ def build_pdf(document):
                              Paragraph(enrollment["last_name"], styles['Normal']),
                              Paragraph(enrollment["first_name"], styles['Normal']),
                              enrollment["score"],
-                             Paragraph(enrollment["justification"], styles['Normal'])])
+                             Paragraph(_(enrollment["justification"]), styles['Normal'])])
 
                 students_printed += 1
                 enrollments_to_print -= 1
@@ -94,14 +103,14 @@ def build_pdf(document):
                     students_printed = 0
                     # Print a complete PDF sheet
                     # 3. Write header
-                    main_data_json(learn_unit_year, program, nb_students, styles, content)
+                    main_data(learn_unit_year, program, nb_students, styles, content)
                     # 4. Adding the complete table of examEnrollments to the PDF sheet
                     _write_table_of_students(content, data)
 
                     # 5. Write Legend
                     deadline = program['deadline']
                     end_page_infos_building(content, deadline)
-                    legend_building_json(learn_unit_year['decimal_scores'], content)
+                    legend_building(learn_unit_year['decimal_scores'], document['justification_legend'], content)
 
                     # 6. New Page
                     content.append(PageBreak())
@@ -109,7 +118,6 @@ def build_pdf(document):
                     # 7. New headers_table in variable 'data' with headers ('noma', 'firstname', 'lastname'...)
                     #    in case there's one more page after this one
                     data = headers_table()
-
     doc.build(content, onFirstPage=add_header_footer, onLaterPages=add_header_footer)
     pdf = buffer.getvalue()
     buffer.close()
@@ -121,9 +129,9 @@ def header_building(canvas, doc, styles):
 
     p = Paragraph('''<para align=center>
                         <font size=16>%s</font>
-                    </para>''' % (_('scores_sheet')), styles["BodyText"])
+                    </para>''' % (_('scores_transcript')), styles["BodyText"])
 
-    data_header = [[a, '%s' % _('institution_denomination'), p], ]
+    data_header = [[a, '%s' % _('ucl_denom_location'), p], ]
 
     t_header = Table(data_header, [30*mm, 100*mm, 50*mm])
 
@@ -152,13 +160,7 @@ def _write_table_of_students(content, data):
     content.append(t)
 
 
-def justification_label_authorized():
-    return "%s, %s, %s" % (_('absent_pdf_legend'),
-                           _('cheating_pdf_legend'),
-                           _('score_missing_pdf_legend'))
-
-
-def legend_building_json(decimal_scores, content):
+def legend_building(decimal_scores, justification_legend, content):
     p = ParagraphStyle('legend')
     p.textColor = 'grey'
     p.borderColor = 'grey'
@@ -167,33 +169,12 @@ def legend_building_json(decimal_scores, content):
     p.fontSize = 8
     p.borderPadding = 5
 
-    legend_text = _('justification_legend') % justification_label_authorized()
+    legend_text = justification_legend
     legend_text += "<br/>%s" % (str(_('score_legend') % "0 - 20"))
-    if not decimal_scores:
-        legend_text += "<br/><font color=red>%s</font>" % _('unauthorized_decimal')
-
-    legend_text += '''<br/> %s : <a href="%s"><font color=blue><u>%s</u></font></a>''' \
-                   % (_("in_accordance_to_regulation"), _("link_to_RGEE"), _("link_to_RGEE"))
-    content.append(Paragraph('''
-                            <para>
-                                %s
-                            </para>
-                            ''' % legend_text, p))
-
-
-def legend_building(learning_unit_year, content):
-    p = ParagraphStyle('legend')
-    p.textColor = 'grey'
-    p.borderColor = 'grey'
-    p.borderWidth = 1
-    p.alignment = TA_CENTER
-    p.fontSize = 8
-    p.borderPadding = 5
-
-    legend_text = _('justification_legend') % justification_label_authorized()
-    legend_text += "<br/>%s" % (str(_('score_legend') % "0 - 20"))
-    if not learning_unit_year.decimal_scores:
-        legend_text += "<br/><font color=red>%s</font>" % _('unauthorized_decimal')
+    if decimal_scores:
+        legend_text += "<br/><font color=red>%s</font>" % _('authorized_decimal_for_this_activity')
+    else:
+        legend_text += "<br/><font color=red>%s</font>" % _('unauthorized_decimal_for_this_activity')
 
     legend_text += '''<br/> %s : <a href="%s"><font color=blue><u>%s</u></font></a>''' \
                    % (_("in_accordance_to_regulation"), _("link_to_RGEE"), _("link_to_RGEE"))
@@ -213,7 +194,7 @@ def headers_table():
     return data
 
 
-def get_data_coordinator_json(learning_unit_year, styles):
+def get_data_coordinator(learning_unit_year, styles):
     p_coord_location = Paragraph('''''', styles["Normal"])
     p_coord_address = Paragraph('''''', styles["Normal"])
     p_responsible = Paragraph('<b>%s :</b>' % _('learning_unit_responsible'), styles["Normal"])
@@ -226,14 +207,14 @@ def get_data_coordinator_json(learning_unit_year, styles):
             p_coord_location = Paragraph('''%s''' % address['location'], styles["Normal"])
             if address['postal_code'] or address['city']:
                 p_coord_address = Paragraph(
-                    '''%s %s''' % (address['postal_code'], address['city']), styles["Normal"])
+                    '''%s %s''' % (address['postal_code'], address['city']),styles["Normal"])
     else:
         p_coord_name = Paragraph('%s' % _('none'), styles["Normal"])
 
     return [[p_responsible], [p_coord_name], [p_coord_location], [p_coord_address]]
 
 
-def main_data_json(learning_unit_year, program, nb_students, styles, content):
+def main_data(learning_unit_year, program, nb_students, styles, content):
 
     # We add first a blank line
     content.append(Paragraph('''
@@ -261,9 +242,10 @@ def main_data_json(learning_unit_year, program, nb_students, styles, content):
         if struct_address.get('phone'):
             phone_fax_data += " - "
         phone_fax_data += "%s : %s" % (_('fax'), struct_address.get('fax'))
-    p_phone_fax_data = Paragraph('%s' % phone_fax_data, styles["Normal"])
-
-    p_email_data = Paragraph('{0} : {1}'.format(_('email'), struct_address.get('email')), styles["Normal"])
+    p_phone_fax_data = Paragraph('%s' % phone_fax_data,
+                                 styles["Normal"])
+    p_email_data = Paragraph('{0} : {1}'.format(_('email'), struct_address.get('email')),
+                             styles["Normal"])
     if struct_address.get('email'):
         data_structure = [[p_struct_name],
                           [p_struct_location],
@@ -276,7 +258,7 @@ def main_data_json(learning_unit_year, program, nb_students, styles, content):
                           [p_struct_address],
                           [p_phone_fax_data]]
 
-    header_coordinator_structure = [[get_data_coordinator_json(learning_unit_year, styles), data_structure]]
+    header_coordinator_structure = [[get_data_coordinator(learning_unit_year, styles), data_structure]]
     table_header = Table(header_coordinator_structure, colWidths='*')
     table_header.setStyle(TableStyle([
         ('LEFTPADDING', (0, 0), (-1, -1), 0),
@@ -318,7 +300,8 @@ def end_page_infos_building(content, end_date):
     p.alignment = TA_LEFT
     if not end_date:
         end_date = '(%s)' % _('date_not_passed')
-    content.append(Paragraph(_("return_doc_to_administrator") % end_date, p))
+    content.append(Paragraph(_("return_doc_to_administrator") % end_date
+                             , p))
     content.append(Paragraph('''
                             <para spaceb=5>
                                 &nbsp;
