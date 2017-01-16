@@ -27,11 +27,16 @@ import logging
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.db.models import DateTimeField, DateField
 from django.core import serializers
 import uuid
 from pika.exceptions import ChannelClosed, ConnectionClosed
-from osis_common.models.exception import MultipleModelsSerializationException
-from osis_common.queue import queue_sender
+from models.exception import MultipleModelsSerializationException
+from queue import queue_sender
+import json
+import datetime
+from django.utils.encoding import force_text
+from django.apps import apps
 
 LOGGER = logging.getLogger(settings.DEFAULT_LOGGER)
 
@@ -123,3 +128,60 @@ def serialize_objects(objects, format='json'):
                                  fields=[field.name for field in model_class._meta.fields if field.name != 'user'],
                                  use_natural_foreign_keys=True,
                                  use_natural_primary_keys=True)
+
+
+def serialize(obj):
+    dict = {}
+    for f in obj.__class__._meta.fields:
+        if f.is_relation:
+            print("is_relation true" + f.name)
+            print(str(getattr(obj, f.name)))
+            dict[f.name] = serialize(getattr(obj, f.name))
+        else:
+            try:
+                json.dumps(getattr(obj, f.name))
+                dict[f.name] = getattr(obj, f.name)
+            except TypeError:
+                if isinstance(f, DateTimeField) or isinstance(f, DateField):
+                    dict[f.name] = getattr(obj, f.name).timestamp()
+                else:
+                    dict[f.name] = force_text(getattr(obj, f.name))
+    return {"model": obj.__class__._meta.label, "fields": dict}
+
+
+def deserialize(deser_data):
+    model_class = apps.get_model(deser_data.get('model'))
+    fields = deser_data['fields']
+    obj = model_class()
+    for field_name, value in fields.items():
+        if isinstance(value, dict):
+            foreign_obj = deserialize(value)
+            setattr(obj, field_name, foreign_obj)
+        else:
+            setattr(obj, field_name, value)
+    return obj
+
+
+def get_attribute(obj, field):
+    attribute = getattr(obj, field.name)
+    if isinstance(field, DateTimeField) or isinstance(field, DateField):
+        return datetime.datetime.fromtimestamp(attribute) if attribute else None
+    return attribute
+
+
+def persist(obj):
+    for f in obj.__class__._meta.fields:
+        if f.is_relation:
+            setattr(obj, f.name, persist(getattr(obj, f.name)))
+            #if obj.changed > last_sync
+
+    query_set = obj.__class__.objects.filter(uuid=obj.uuid)
+    kwargs = {f.name: get_attribute(obj, f) for f in obj.__class__._meta.fields}
+    persisted_obj = query_set.first()
+    if persisted_obj:
+        kwargs['id'] = persisted_obj.id
+    if not query_set.update(**kwargs):
+        print("kwargs == " + str(kwargs))
+        return obj.__class__.objects.create(**kwargs)
+    else:
+        return persisted_obj
