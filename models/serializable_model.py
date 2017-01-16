@@ -31,8 +31,8 @@ from django.db.models import DateTimeField, DateField
 from django.core import serializers
 import uuid
 from pika.exceptions import ChannelClosed, ConnectionClosed
-from models.exception import MultipleModelsSerializationException
-from queue import queue_sender
+from osis_common.models.exception import MultipleModelsSerializationException
+from osis_common.queue import queue_sender
 import json
 import datetime
 from django.utils.encoding import force_text
