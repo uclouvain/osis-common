@@ -52,5 +52,4 @@ def process_message(json_data):
     data = json.loads(json_data.decode("utf-8"))
     body = serializable_model.unwrap_serialization(data)
     if body:
-        obj = serializable_model.deserialize(body)
-        serializable_model.persist(obj)
+        serializable_model.persist(body)

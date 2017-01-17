@@ -178,44 +178,38 @@ def serialize(obj):
         return None
 
 
-def deserialize(deser_data):
-    try:
-        model_class = apps.get_model(deser_data.get('model'))
-        fields = deser_data['fields']
-        obj = model_class()
-        for field_name, value in fields.items():
-            if isinstance(value, dict):
-                foreign_obj = deserialize(value)
-                setattr(obj, field_name, foreign_obj)
-            else:
-                setattr(obj, field_name, value)
-        return obj
-    except LookupError:
-        return None
-
-
-def _get_attribute(obj, field):
-    attribute = getattr(obj, field.name)
+def _get_value(fields, field):
+    attribute = fields.get(field.name)
     if isinstance(field, DateTimeField) or isinstance(field, DateField):
         return datetime.datetime.fromtimestamp(attribute) if attribute else None
     return attribute
 
 
-def persist(obj, last_syncs=None):
-    if obj:
-        for f in obj.__class__._meta.fields:
-            if f.is_relation:
-                setattr(obj, f.name, persist(getattr(obj, f.name)))
-        # last_sync = last_syncs.get()
-        # if not last_syncs or not obj.changed or obj.changed > last_syncs:
-        query_set = obj.__class__.objects.filter(uuid=obj.uuid)
-        kwargs = {f.name: _get_attribute(obj, f) for f in obj.__class__._meta.fields}
+def _get_field_name(field):
+    if field.is_relation:
+        return '{}_id'.format(field.name)
+    return field.name
+
+
+def persist(structure):
+    model_class = apps.get_model(structure.get('model'))
+    if structure:
+        fields = structure.get('fields')
+        for field_name, value in fields.items():
+            if isinstance(value, dict):
+                fields[field_name] = persist(value)
+        query_set = model_class.objects.filter(uuid=fields.get('uuid'))
+        kwargs = {_get_field_name(f): _get_value(fields, f) for f in model_class._meta.fields if f.name in fields.keys()}
+        # model_fields = [f.name for f in model_class._meta.fields]
+        # kwargs = {f_name: val for f_name, val in structure.get('fields').items() if f_name in model_fields}
         persisted_obj = query_set.first()
         if persisted_obj:
             kwargs['id'] = persisted_obj.id
         if not query_set.update(**kwargs):
-            return obj.__class__.objects.create(**kwargs)
+            del kwargs['id']
+            created_obj = model_class.objects.create(**kwargs)
+            return created_obj.id
         else:
-            return persisted_obj
+            return persisted_obj.id
     else:
         return None
