@@ -160,8 +160,9 @@ def serialize(obj):
         dict = {}
         for f in obj.__class__._meta.fields:
             attribute = getattr(obj, f.name)
-            if f.is_relation and isinstance(attribute, SerializableModel):
-                dict[f.name] = serialize(attribute)
+            if f.is_relation:
+                if isinstance(attribute, SerializableModel):
+                    dict[f.name] = serialize(attribute)
             else:
                 try:
                     json.dumps(attribute)
