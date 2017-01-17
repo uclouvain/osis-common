@@ -37,6 +37,7 @@ import json
 import datetime
 from django.utils.encoding import force_text
 from django.apps import apps
+import time
 
 LOGGER = logging.getLogger(settings.DEFAULT_LOGGER)
 
@@ -167,7 +168,8 @@ def serialize(obj):
                 dict[f.name] = getattr(obj, f.name)
             except TypeError:
                 if isinstance(f, DateTimeField) or isinstance(f, DateField):
-                    dict[f.name] = getattr(obj, f.name).timestamp()
+                    dt = getattr(obj, f.name)
+                    dict[f.name] = (time.mktime(dt.timetuple()))
                 else:
                     dict[f.name] = force_text(getattr(obj, f.name))
     return {"model": obj.__class__._meta.label, "fields": dict}
@@ -186,12 +188,14 @@ def deserialize(deser_data):
     return obj
 
 
-def get_attribute(obj, field):
-    attribute = getattr(obj, field.name)
-    if isinstance(field, DateTimeField) or isinstance(field, DateField):
-        return datetime.datetime.fromtimestamp(attribute) if attribute else None
-    return attribute
-
+def _get_attribute(obj, persisted_obj, field):
+    if hasattr(obj, field.name):
+        attribute = getattr(obj, field.name)
+        if isinstance(field, DateTimeField) or isinstance(field, DateField):
+            return datetime.datetime.fromtimestamp(attribute) if attribute else None
+        return attribute
+    else:
+        return getattr(persisted_obj, field.name)
 
 def persist(obj, last_syncs=None):
     for f in obj.__class__._meta.fields:
@@ -200,8 +204,8 @@ def persist(obj, last_syncs=None):
     # last_sync = last_syncs.get()
     # if not last_syncs or not obj.changed or obj.changed > last_syncs:
     query_set = obj.__class__.objects.filter(uuid=obj.uuid)
-    kwargs = {f.name: get_attribute(obj, f) for f in obj.__class__._meta.fields}
     persisted_obj = query_set.first()
+    kwargs = {f.name: _get_attribute(obj, persisted_obj, f) for f in persisted_obj.__class__._meta.fields}
     if persisted_obj:
         kwargs['id'] = persisted_obj.id
     if not query_set.update(**kwargs):
