@@ -67,8 +67,9 @@ class SerializableModel(models.Model):
 
         if hasattr(settings, 'QUEUES'):
             try:
+                ser_obj = serialize(self)
                 queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
-                                          format_data_for_migration([self]))
+                                          wrap_serialization(ser_obj))
             except (ChannelClosed, ConnectionClosed):
                 LOGGER.exception('QueueServer is not installed or not launched')
 
@@ -76,8 +77,9 @@ class SerializableModel(models.Model):
         super(SerializableModel, self).delete(*args, **kwargs)
         if hasattr(settings, 'QUEUES'):
             try:
+                ser_obj = serialize(self)
                 queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
-                                          format_data_for_migration([self], to_delete=True))
+                                          wrap_serialization(ser_obj, to_delete=True))
             except (ChannelClosed, ConnectionClosed):
                 LOGGER.exception('QueueServer is not installed or not launched')
 
@@ -98,6 +100,7 @@ class SerializableModel(models.Model):
             return None
 
 
+# To be deleted
 def format_data_for_migration(objects, to_delete=False):
     """
     Format data to fit to a specific structure.
@@ -109,6 +112,7 @@ def format_data_for_migration(objects, to_delete=False):
     return {'serialized_objects': serialize_objects(objects), 'to_delete': to_delete}
 
 
+# To be deleted
 def serialize_objects(objects, format='json'):
     """
     Serialize all objects given by parameter.
@@ -128,6 +132,26 @@ def serialize_objects(objects, format='json'):
                                  fields=[field.name for field in model_class._meta.fields if field.name != 'user'],
                                  use_natural_foreign_keys=True,
                                  use_natural_primary_keys=True)
+
+
+def wrap_serialization(body, to_delete=False):
+    wrapped_body = {"body": body}
+
+    if to_delete:
+        wrapped_body["to_delete"] = True
+
+    return wrapped_body
+
+
+def unwrap_serialization(wrapped_serialization):
+    if wrapped_serialization.get("to_delete"):
+        body = wrapped_serialization.get('body')
+        model_class = apps.get_model(body.get('model'))
+        fields = body.get('fields')
+        model_class.objects.filter(uuid=fields.get('uuid')).delete()
+        return None
+    else:
+        return wrapped_serialization.get("body")
 
 
 def serialize(obj):
@@ -169,12 +193,12 @@ def get_attribute(obj, field):
     return attribute
 
 
-def persist(obj):
+def persist(obj, last_syncs=None):
     for f in obj.__class__._meta.fields:
         if f.is_relation:
             setattr(obj, f.name, persist(getattr(obj, f.name)))
-            #if obj.changed > last_sync
-
+    # last_sync = last_syncs.get()
+    # if not last_syncs or not obj.changed or obj.changed > last_syncs:
     query_set = obj.__class__.objects.filter(uuid=obj.uuid)
     kwargs = {f.name: get_attribute(obj, f) for f in obj.__class__._meta.fields}
     persisted_obj = query_set.first()
