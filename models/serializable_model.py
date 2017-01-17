@@ -200,17 +200,20 @@ def _get_attribute(obj, field):
 
 
 def persist(obj, last_syncs=None):
-    for f in obj.__class__._meta.fields:
-        if f.is_relation:
-            setattr(obj, f.name, persist(getattr(obj, f.name)))
-    # last_sync = last_syncs.get()
-    # if not last_syncs or not obj.changed or obj.changed > last_syncs:
-    query_set = obj.__class__.objects.filter(uuid=obj.uuid)
-    kwargs = {f.name: _get_attribute(obj, f) for f in obj.__class__._meta.fields}
-    persisted_obj = query_set.first()
-    if persisted_obj:
-        kwargs['id'] = persisted_obj.id
-    if not query_set.update(**kwargs):
-        return obj.__class__.objects.create(**kwargs)
+    if obj:
+        for f in obj.__class__._meta.fields:
+            if f.is_relation:
+                setattr(obj, f.name, persist(getattr(obj, f.name)))
+        # last_sync = last_syncs.get()
+        # if not last_syncs or not obj.changed or obj.changed > last_syncs:
+        query_set = obj.__class__.objects.filter(uuid=obj.uuid)
+        kwargs = {f.name: _get_attribute(obj, f) for f in obj.__class__._meta.fields}
+        persisted_obj = query_set.first()
+        if persisted_obj:
+            kwargs['id'] = persisted_obj.id
+        if not query_set.update(**kwargs):
+            return obj.__class__.objects.create(**kwargs)
+        else:
+            return persisted_obj
     else:
-        return persisted_obj
+        return None
