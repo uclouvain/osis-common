@@ -156,7 +156,7 @@ def unwrap_serialization(wrapped_serialization):
 
 
 def serialize(obj):
-    if obj:
+    if obj and isinstance(obj, SerializableModel):
         dict = {}
         for f in obj.__class__._meta.fields:
             if f.is_relation:
