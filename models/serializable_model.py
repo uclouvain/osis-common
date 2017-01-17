@@ -159,8 +159,6 @@ def serialize(obj):
     dict = {}
     for f in obj.__class__._meta.fields:
         if f.is_relation:
-            print("is_relation true" + f.name)
-            print(str(getattr(obj, f.name)))
             dict[f.name] = serialize(getattr(obj, f.name))
         else:
             try:
@@ -188,14 +186,12 @@ def deserialize(deser_data):
     return obj
 
 
-def _get_attribute(obj, persisted_obj, field):
-    if hasattr(obj, field.name):
-        attribute = getattr(obj, field.name)
-        if isinstance(field, DateTimeField) or isinstance(field, DateField):
-            return datetime.datetime.fromtimestamp(attribute) if attribute else None
-        return attribute
-    else:
-        return getattr(persisted_obj, field.name)
+def _get_attribute(obj, field):
+    attribute = getattr(obj, field.name)
+    if isinstance(field, DateTimeField) or isinstance(field, DateField):
+        return datetime.datetime.fromtimestamp(attribute) if attribute else None
+    return attribute
+
 
 def persist(obj, last_syncs=None):
     for f in obj.__class__._meta.fields:
@@ -204,12 +200,11 @@ def persist(obj, last_syncs=None):
     # last_sync = last_syncs.get()
     # if not last_syncs or not obj.changed or obj.changed > last_syncs:
     query_set = obj.__class__.objects.filter(uuid=obj.uuid)
+    kwargs = {f.name: _get_attribute(obj, f) for f in obj.__class__._meta.fields}
     persisted_obj = query_set.first()
-    kwargs = {f.name: _get_attribute(obj, persisted_obj, f) for f in persisted_obj.__class__._meta.fields}
     if persisted_obj:
         kwargs['id'] = persisted_obj.id
     if not query_set.update(**kwargs):
-        print("kwargs == " + str(kwargs))
         return obj.__class__.objects.create(**kwargs)
     else:
         return persisted_obj
