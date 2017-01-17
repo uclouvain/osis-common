@@ -156,34 +156,40 @@ def unwrap_serialization(wrapped_serialization):
 
 
 def serialize(obj):
-    dict = {}
-    for f in obj.__class__._meta.fields:
-        if f.is_relation:
-            dict[f.name] = serialize(getattr(obj, f.name))
-        else:
-            try:
-                json.dumps(getattr(obj, f.name))
-                dict[f.name] = getattr(obj, f.name)
-            except TypeError:
-                if isinstance(f, DateTimeField) or isinstance(f, DateField):
-                    dt = getattr(obj, f.name)
-                    dict[f.name] = (time.mktime(dt.timetuple()))
-                else:
-                    dict[f.name] = force_text(getattr(obj, f.name))
-    return {"model": obj.__class__._meta.label, "fields": dict}
+    if obj:
+        dict = {}
+        for f in obj.__class__._meta.fields:
+            if f.is_relation:
+                dict[f.name] = serialize(getattr(obj, f.name))
+            else:
+                try:
+                    json.dumps(getattr(obj, f.name))
+                    dict[f.name] = getattr(obj, f.name)
+                except TypeError:
+                    if isinstance(f, DateTimeField) or isinstance(f, DateField):
+                        dt = getattr(obj, f.name)
+                        dict[f.name] = (time.mktime(dt.timetuple()))
+                    else:
+                        dict[f.name] = force_text(getattr(obj, f.name))
+        return {"model": obj.__class__._meta.label, "fields": dict}
+    else:
+        return None
 
 
 def deserialize(deser_data):
-    model_class = apps.get_model(deser_data.get('model'))
-    fields = deser_data['fields']
-    obj = model_class()
-    for field_name, value in fields.items():
-        if isinstance(value, dict):
-            foreign_obj = deserialize(value)
-            setattr(obj, field_name, foreign_obj)
-        else:
-            setattr(obj, field_name, value)
-    return obj
+    try:
+        model_class = apps.get_model(deser_data.get('model'))
+        fields = deser_data['fields']
+        obj = model_class()
+        for field_name, value in fields.items():
+            if isinstance(value, dict):
+                foreign_obj = deserialize(value)
+                setattr(obj, field_name, foreign_obj)
+            else:
+                setattr(obj, field_name, value)
+        return obj
+    except LookupError:
+        return None
 
 
 def _get_attribute(obj, field):
