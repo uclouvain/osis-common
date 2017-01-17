@@ -159,18 +159,19 @@ def serialize(obj):
     if obj:
         dict = {}
         for f in obj.__class__._meta.fields:
-            if f.is_relation and isinstance(obj, SerializableModel):
-                dict[f.name] = serialize(getattr(obj, f.name))
+            attribute = getattr(obj, f.name)
+            if f.is_relation and isinstance(attribute, SerializableModel):
+                dict[f.name] = serialize(attribute)
             else:
                 try:
-                    json.dumps(getattr(obj, f.name))
-                    dict[f.name] = getattr(obj, f.name)
+                    json.dumps(attribute)
+                    dict[f.name] = attribute
                 except TypeError:
                     if isinstance(f, DateTimeField) or isinstance(f, DateField):
-                        dt = getattr(obj, f.name)
+                        dt = attribute
                         dict[f.name] = (time.mktime(dt.timetuple()))
                     else:
-                        dict[f.name] = force_text(getattr(obj, f.name))
+                        dict[f.name] = force_text(attribute)
         return {"model": obj.__class__._meta.label, "fields": dict}
     else:
         return None
