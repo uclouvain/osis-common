@@ -26,7 +26,7 @@
 import logging
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
+from django.db import models, IntegrityError
 from django.db.models import DateTimeField, DateField
 from django.core import serializers
 import uuid
@@ -155,14 +155,14 @@ def unwrap_serialization(wrapped_serialization):
         return wrapped_serialization.get("body")
 
 
-def serialize(obj):
+def serialize(obj, last_syncs=None):
     if obj:
         dict = {}
         for f in obj.__class__._meta.fields:
             attribute = getattr(obj, f.name)
             if f.is_relation:
                 if isinstance(attribute, SerializableModel):
-                    dict[f.name] = serialize(attribute)
+                    dict[f.name] = serialize(attribute, last_syncs=last_syncs)
             else:
                 try:
                     json.dumps(attribute)
@@ -170,19 +170,31 @@ def serialize(obj):
                 except TypeError:
                     if isinstance(f, DateTimeField) or isinstance(f, DateField):
                         dt = attribute
-                        dict[f.name] = (time.mktime(dt.timetuple()))
+                        dict[f.name] = _convert_datetime_to_long(dt)
                     else:
                         dict[f.name] = force_text(attribute)
-        return {"model": obj.__class__._meta.label, "fields": dict}
+        class_label = obj.__class__._meta.label
+        last_sync = None
+        if last_syncs:
+            last_sync = _convert_datetime_to_long(last_syncs.get(class_label))
+        return {"model": class_label, "fields": dict, 'last_sync': last_sync}
     else:
         return None
+
+
+def _convert_datetime_to_long(dtime):
+    return time.mktime(dtime.timetuple()) if dtime else None
 
 
 def _get_value(fields, field):
     attribute = fields.get(field.name)
     if isinstance(field, DateTimeField) or isinstance(field, DateField):
-        return datetime.datetime.fromtimestamp(attribute) if attribute else None
+        return _convert_long_to_datetime(attribute)
     return attribute
+
+
+def _convert_long_to_datetime(date_as_long):
+    return datetime.datetime.fromtimestamp(date_as_long) if date_as_long else None
 
 
 def _get_field_name(field):
@@ -200,16 +212,27 @@ def persist(structure):
                 fields[field_name] = persist(value)
         query_set = model_class.objects.filter(uuid=fields.get('uuid'))
         kwargs = {_get_field_name(f): _get_value(fields, f) for f in model_class._meta.fields if f.name in fields.keys()}
-        # model_fields = [f.name for f in model_class._meta.fields]
-        # kwargs = {f_name: val for f_name, val in structure.get('fields').items() if f_name in model_fields}
         persisted_obj = query_set.first()
         if persisted_obj:
-            kwargs['id'] = persisted_obj.id
-        if not query_set.update(**kwargs):
+            if _changed_since_last_synchronization(fields, structure):
+                kwargs['id'] = persisted_obj.id
+                query_set.update(**kwargs)
+            return persisted_obj.id
+        else:
             del kwargs['id']
             created_obj = model_class.objects.create(**kwargs)
             return created_obj.id
-        else:
-            return persisted_obj.id
     else:
         return None
+
+
+def _changed_since_last_synchronization(fields, structure):
+    last_sync = _convert_long_to_datetime(structure.get('last_sync'))
+    changed = _convert_long_to_datetime(fields.get('changed'))
+    if not last_sync:
+        print('true')
+    if not changed:
+        print('true')
+    if changed and last_sync and changed > last_sync:
+        print('true')
+    return not last_sync or not changed or changed > last_sync
