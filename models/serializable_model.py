@@ -207,21 +207,23 @@ def persist(structure):
     model_class = apps.get_model(structure.get('model'))
     if structure:
         fields = structure.get('fields')
-        for field_name, value in fields.items():
-            if isinstance(value, dict):
-                fields[field_name] = persist(value)
         query_set = model_class.objects.filter(uuid=fields.get('uuid'))
-        kwargs = {_get_field_name(f): _get_value(fields, f) for f in model_class._meta.fields if f.name in fields.keys()}
         persisted_obj = query_set.first()
-        if persisted_obj:
-            if _changed_since_last_synchronization(fields, structure):
+        if _changed_since_last_synchronization(fields, structure) or not persisted_obj:
+            for field_name, value in fields.items():
+                if isinstance(value, dict):
+                    fields[field_name] = persist(value)
+            kwargs = {_get_field_name(f): _get_value(fields, f) for f in model_class._meta.fields if f.name in fields.keys()}
+            if persisted_obj:
                 kwargs['id'] = persisted_obj.id
                 query_set.update(**kwargs)
-            return persisted_obj.id
+                return persisted_obj.id
+            else:
+                del kwargs['id']
+                created_obj = model_class.objects.create(**kwargs)
+                return created_obj.id
         else:
-            del kwargs['id']
-            created_obj = model_class.objects.create(**kwargs)
-            return created_obj.id
+            return persisted_obj.id
     else:
         return None
 
@@ -229,10 +231,4 @@ def persist(structure):
 def _changed_since_last_synchronization(fields, structure):
     last_sync = _convert_long_to_datetime(structure.get('last_sync'))
     changed = _convert_long_to_datetime(fields.get('changed'))
-    if not last_sync:
-        print('true')
-    if not changed:
-        print('true')
-    if changed and last_sync and changed > last_sync:
-        print('true')
     return not last_sync or not changed or changed > last_sync
