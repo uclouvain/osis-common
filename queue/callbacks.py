@@ -24,7 +24,6 @@
 #
 ##############################################################################
 import json
-from django.core import serializers
 from django.core.exceptions import FieldDoesNotExist
 
 
@@ -48,19 +47,9 @@ def __user_field_in_model(object):
         return False
 
 
-def insert_or_update(json_data):
+def process_message(json_data):
     from osis_common.models import serializable_model
-    json_data = json.loads(json_data.decode("utf-8"))
-    serialized_objects = json_data['serialized_objects']
-    deserialized_objects = serializers.deserialize('json', serialized_objects, ignorenonexistent=True)
-    if json_data['to_delete']:
-        for deser_object in deserialized_objects:
-            try:
-                super(serializable_model.SerializableModel, deser_object.object).delete()
-            except AssertionError:
-                # In case the object doesn't exist (object can't be deleted)
-                pass
-    else:
-        for deser_object in deserialized_objects:
-            deser_object.object = add_user_field_to_object_if_possible(deser_object.object)
-            super(serializable_model.SerializableModel, deser_object.object).save()
+    data = json.loads(json_data.decode("utf-8"))
+    body = serializable_model.unwrap_serialization(data)
+    if body:
+        serializable_model.persist(body)
