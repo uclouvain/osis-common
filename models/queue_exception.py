@@ -23,26 +23,11 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-import logging
 from django.db import models
 from django.contrib.postgres.fields import JSONField
-from django.contrib import admin
+from django.contrib import admin, messages
 from osis_common.queue import queue_sender
-from django.conf import settings
 from pika.exceptions import ChannelClosed, ConnectionClosed
-
-
-LOGGER = logging.getLogger(settings.DEFAULT_LOGGER)
-
-
-def resend_messages_to_queue(modeladmin, request, queryset):
-    for q_exception in queryset:
-        try:
-            queue_sender.send_message(q_exception.queue_name, q_exception.message)
-            q_exception.delete()
-            LOGGER.info('Message resent.')
-        except (ChannelClosed, ConnectionClosed):
-            LOGGER.exception('QueueServer is not installed or not launched')
 
 
 class QueueExceptionAdmin(admin.ModelAdmin):
@@ -52,7 +37,18 @@ class QueueExceptionAdmin(admin.ModelAdmin):
     readonly_fields = ('queue_name', 'exception_title', 'creation_date', 'message', 'exception', )
     ordering = ['-creation_date']
     search_fields = ['queue_name', 'exception_title']
-    actions = [resend_messages_to_queue]
+    actions = ['resend_messages_to_queue']
+
+    def resend_messages_to_queue(self, request, queryset):
+        for q_exception in queryset:
+            try:
+                queue_sender.send_message(q_exception.queue_name, q_exception.message)
+                q_exception.delete()
+            except (ChannelClosed, ConnectionClosed):
+                self.message_user(request,
+                                  'Message %s not sent to %s.' % (q_exception.pk, q_exception.queue_name),
+                                  level=messages.ERROR)
+        self.message_user(request, "Messages sent.", level=messages.SUCCESS)
 
 
 class QueueException(models.Model):
