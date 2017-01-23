@@ -26,12 +26,18 @@
 import logging
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
+from django.db import models, IntegrityError
+from django.db.models import DateTimeField, DateField
 from django.core import serializers
 import uuid
 from pika.exceptions import ChannelClosed, ConnectionClosed
 from osis_common.models.exception import MultipleModelsSerializationException
 from osis_common.queue import queue_sender
+import json
+import datetime
+from django.utils.encoding import force_text
+from django.apps import apps
+import time
 
 LOGGER = logging.getLogger(settings.DEFAULT_LOGGER)
 
@@ -62,8 +68,9 @@ class SerializableModel(models.Model):
 
         if hasattr(settings, 'QUEUES'):
             try:
+                ser_obj = serialize(self)
                 queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
-                                          format_data_for_migration([self]))
+                                          wrap_serialization(ser_obj))
             except (ChannelClosed, ConnectionClosed):
                 LOGGER.exception('QueueServer is not installed or not launched')
 
@@ -71,8 +78,9 @@ class SerializableModel(models.Model):
         super(SerializableModel, self).delete(*args, **kwargs)
         if hasattr(settings, 'QUEUES'):
             try:
+                ser_obj = serialize(self)
                 queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
-                                          format_data_for_migration([self], to_delete=True))
+                                          wrap_serialization(ser_obj, to_delete=True))
             except (ChannelClosed, ConnectionClosed):
                 LOGGER.exception('QueueServer is not installed or not launched')
 
@@ -93,6 +101,7 @@ class SerializableModel(models.Model):
             return None
 
 
+# To be deleted
 def format_data_for_migration(objects, to_delete=False):
     """
     Format data to fit to a specific structure.
@@ -104,6 +113,7 @@ def format_data_for_migration(objects, to_delete=False):
     return {'serialized_objects': serialize_objects(objects), 'to_delete': to_delete}
 
 
+# To be deleted
 def serialize_objects(objects, format='json'):
     """
     Serialize all objects given by parameter.
@@ -123,3 +133,102 @@ def serialize_objects(objects, format='json'):
                                  fields=[field.name for field in model_class._meta.fields if field.name != 'user'],
                                  use_natural_foreign_keys=True,
                                  use_natural_primary_keys=True)
+
+
+def wrap_serialization(body, to_delete=False):
+    wrapped_body = {"body": body}
+
+    if to_delete:
+        wrapped_body["to_delete"] = True
+
+    return wrapped_body
+
+
+def unwrap_serialization(wrapped_serialization):
+    if wrapped_serialization.get("to_delete"):
+        body = wrapped_serialization.get('body')
+        model_class = apps.get_model(body.get('model'))
+        fields = body.get('fields')
+        model_class.objects.filter(uuid=fields.get('uuid')).delete()
+        return None
+    else:
+        return wrapped_serialization.get("body")
+
+
+def serialize(obj, last_syncs=None):
+    if obj:
+        dict = {}
+        for f in obj.__class__._meta.fields:
+            attribute = getattr(obj, f.name)
+            if f.is_relation:
+                if isinstance(attribute, SerializableModel):
+                    dict[f.name] = serialize(attribute, last_syncs=last_syncs)
+            else:
+                try:
+                    json.dumps(attribute)
+                    dict[f.name] = attribute
+                except TypeError:
+                    if isinstance(f, DateTimeField) or isinstance(f, DateField):
+                        dt = attribute
+                        dict[f.name] = _convert_datetime_to_long(dt)
+                    else:
+                        dict[f.name] = force_text(attribute)
+        class_label = obj.__class__._meta.label
+        last_sync = None
+        if last_syncs:
+            last_sync = _convert_datetime_to_long(last_syncs.get(class_label))
+        return {"model": class_label, "fields": dict, 'last_sync': last_sync}
+    else:
+        return None
+
+
+def _convert_datetime_to_long(dtime):
+    return time.mktime(dtime.timetuple()) if dtime else None
+
+
+def _get_value(fields, field):
+    attribute = fields.get(field.name)
+    if isinstance(field, DateTimeField) or isinstance(field, DateField):
+        return _convert_long_to_datetime(attribute)
+    return attribute
+
+
+def _convert_long_to_datetime(date_as_long):
+    return datetime.datetime.fromtimestamp(date_as_long) if date_as_long else None
+
+
+def _get_field_name(field):
+    if field.is_relation:
+        return '{}_id'.format(field.name)
+    return field.name
+
+
+def persist(structure):
+    model_class = apps.get_model(structure.get('model'))
+    if structure:
+        fields = structure.get('fields')
+        query_set = model_class.objects.filter(uuid=fields.get('uuid'))
+        persisted_obj = query_set.first()
+        if _changed_since_last_synchronization(fields, structure) or not persisted_obj:
+            for field_name, value in fields.items():
+                if isinstance(value, dict):
+                    fields[field_name] = persist(value)
+            kwargs = {_get_field_name(f): _get_value(fields, f) for f in model_class._meta.fields if f.name in fields.keys()}
+            if persisted_obj:
+                kwargs['id'] = persisted_obj.id
+                query_set.update(**kwargs)
+                return persisted_obj.id
+            else:
+                del kwargs['id']
+                created_obj = model_class.objects.create(**kwargs)
+                return created_obj.id
+        else:
+            return persisted_obj.id
+    else:
+        return None
+
+
+def _changed_since_last_synchronization(fields, structure):
+    last_sync = _convert_long_to_datetime(structure.get('last_sync'))
+    changed = _convert_long_to_datetime(fields.get('changed'))
+    return not last_sync or not changed or changed > last_sync
