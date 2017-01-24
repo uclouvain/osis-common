@@ -220,7 +220,7 @@ def persist(structure):
                 return persisted_obj.id
             else:
                 del kwargs['id']
-                created_obj = model_class.objects.create(**kwargs)
+                created_obj = model_class.objects.bulk_create([model_class(**kwargs)])
                 return created_obj.id
         else:
             return persisted_obj.id
