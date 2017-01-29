@@ -39,7 +39,7 @@ ex migration of person from osis:
 """
 from django.apps import apps
 from pika.exceptions import ChannelClosed, ConnectionClosed
-from osis_common.models.serializable_model import format_data_for_migration
+from osis_common.models.serializable_model import serialize, wrap_serialization
 from osis_common.queue import queue_sender
 from django.conf import settings
 
@@ -64,10 +64,11 @@ def migrate_model(app_label_models):
                     continue
                 objects = Model.objects.all()
                 print('    Count of objects to send : {}'.format(str(len(objects))))
-                for object in objects:
+                for entity in objects:
                     try:
+                        ser_obj = serialize(entity)
                         queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
-                                                  format_data_for_migration([object]))
+                                                  wrap_serialization(ser_obj))
                     except (ChannelClosed, ConnectionClosed):
                         print('QueueServer is not installed or not launched')
     else:
