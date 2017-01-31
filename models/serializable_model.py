@@ -220,9 +220,9 @@ def persist(structure):
                 return persisted_obj.id
             else:
                 del kwargs['id']
-                model_class.objects.bulk_create([model_class(**kwargs)])
-                ids = model_class.objects.filter(uuid=kwargs.get('uuid')).values_list('id', flat=True)
-                return ids[0]
+                obj = model_class(**kwargs)
+                super(SerializableModel, obj).save()
+                return obj.id
         else:
             return persisted_obj.id
     else:
