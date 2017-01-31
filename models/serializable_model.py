@@ -26,12 +26,13 @@
 import logging
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models, IntegrityError
+from django.db import models
 from django.db.models import DateTimeField, DateField
 from django.core import serializers
 import uuid
 from pika.exceptions import ChannelClosed, ConnectionClosed
-from osis_common.models.exception import MultipleModelsSerializationException
+from osis_common.models.exception import MultipleModelsSerializationException, \
+    MigrationPersistanceError
 from osis_common.queue import queue_sender
 import json
 import datetime
@@ -222,7 +223,11 @@ def persist(structure):
                 del kwargs['id']
                 obj = model_class(**kwargs)
                 super(SerializableModel, obj).save()
-                return obj.id
+                obj_id = obj.id
+                if obj_id:
+                    return obj_id
+                else:
+                    raise MigrationPersistanceError
         else:
             return persisted_obj.id
     else:

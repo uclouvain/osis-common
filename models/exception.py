@@ -32,3 +32,10 @@ class MultipleModelsSerializationException(Exception):
         super(MultipleModelsSerializationException, self).__init__(message)
         self.errors = errors
 
+
+class MigrationPersistanceError(Exception):
+    def __init__(self, errors=None):
+        message = _('migration_persistence_error')
+        super(MigrationPersistanceError, self).__init__(message)
+        self.errors = errors
+
