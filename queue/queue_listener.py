@@ -25,7 +25,7 @@
 ##############################################################################
 import json
 import traceback
-from django.conf import settings
+
 
 import pika
 import uuid
@@ -36,6 +36,7 @@ import logging
 from osis_common.models.queue_exception import QueueException
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
+queue_exception_logger = logging.getLogger(settings.QUEUE_EXCEPTION_LOGGER)
 
 
 class ScoresSheetClient(object):
@@ -95,18 +96,20 @@ def listen_queue_synchronously(queue_name, callback, counter=3):
             callback(body)
         except Exception as e:
             trace = traceback.format_exc()
-            json_data = json.loads(body.decode("utf-8"))
-            queue_exception = QueueException(queue_name=queue_name,
-                                             message=json_data,
-                                             exception_title=type(e).__name__,
-                                             exception=trace)
+            logger.error(trace)
             try:
-                queue_exception.save()
+                json_data = json.loads(body.decode("utf-8"))
+                queue_exception = QueueException(queue_name=queue_name,
+                                                 message=json_data,
+                                                 exception_title=type(e).__name__,
+                                                 exception=trace)
+                queue_exception_logger.error(queue_exception.to_exception_log())
             except Exception:
                 trace = traceback.format_exc()
                 logger.error(trace)
         finally:
-            channel.basic_ack(delivery_tag=method_frame.delivery_tag)
+            if channel is not None and not channel.is_closed:
+                channel.basic_ack(delivery_tag=method_frame.delivery_tag)
 
     if counter == 0:
         return # Stop the function

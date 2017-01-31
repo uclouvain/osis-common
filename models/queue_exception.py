@@ -60,3 +60,12 @@ class QueueException(models.Model):
 
     def __str__(self):
         return self.exception_title
+
+    def to_exception_log(self):
+        return 'QName: {}\n\nDate: {}\n\nExceptionTitle: {}\n\nException: {}\n\nMessage: {}\n\n'.format(
+            str(self.queue_name),
+            str(self.creation_date),
+            str(self.exception_title),
+            str(self.exception),
+            str(self.message)
+        )
