@@ -25,6 +25,8 @@
 ##############################################################################
 import json
 from django.core.exceptions import FieldDoesNotExist
+from psycopg2._psycopg import OperationalError, InterfaceError
+from django.db import connection
 
 
 def add_user_field_to_object_if_possible(object):
@@ -52,4 +54,16 @@ def process_message(json_data):
     data = json.loads(json_data.decode("utf-8"))
     body = serializable_model.unwrap_serialization(data)
     if body:
-        serializable_model.persist(body)
+        try:
+            serializable_model.persist(body)
+        # except OperationalError:
+        #     connection.rollback()
+        #     process_message(json_data)
+        # except InterfaceError as exc:
+        #     db_conn = psycopg2.connect('default')
+        #     cursor = db_conn.cursor()
+        #     cursor.close()
+        except (OperationalError, InterfaceError):
+            connection.close()
+            process_message(json_data)
+
