@@ -24,9 +24,18 @@
 #
 ##############################################################################
 import json
+import traceback
+import logging
+
+from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist
 from psycopg2._psycopg import OperationalError, InterfaceError
 from django.db import connection
+
+from osis_common.models.queue_exception import QueueException
+
+logger = logging.getLogger(settings.DEFAULT_LOGGER)
+queue_exception_logger = logging.getLogger(settings.QUEUE_EXCEPTION_LOGGER)
 
 
 def add_user_field_to_object_if_possible(object):
@@ -56,14 +65,28 @@ def process_message(json_data):
     if body:
         try:
             serializable_model.persist(body)
-        # except OperationalError:
-        #     connection.rollback()
-        #     process_message(json_data)
-        # except InterfaceError as exc:
-        #     db_conn = psycopg2.connect('default')
-        #     cursor = db_conn.cursor()
-        #     cursor.close()
-        except (OperationalError, InterfaceError):
+        except (OperationalError, InterfaceError) as ep:
+            trace = traceback.format_exc()
+            try:
+                data = json.loads(json_data.decode("utf-8"))
+                queue_exception = QueueException(queue_name=settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_CONSUME'),
+                                                 message=data,
+                                                 exception_title='[Catched and retried] - {}'.format(type(ep).__name__),
+                                                 exception=trace)
+                queue_exception_logger.error(queue_exception.to_exception_log())
+            except Exception:
+                logger.error(trace)
             connection.close()
             process_message(json_data)
+        except Exception as e:
+            trace = traceback.format_exc()
+            try:
+                data = json.loads(json_data.decode("utf-8"))
+                queue_exception = QueueException(queue_name=settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_CONSUME'),
+                                                 message=data,
+                                                 exception_title=type(e).__name__,
+                                                 exception=trace)
+                queue_exception_logger.error(queue_exception.to_exception_log())
+            except Exception:
+                logger.error(trace)
 
