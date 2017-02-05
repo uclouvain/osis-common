@@ -29,7 +29,8 @@ import logging
 
 from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist
-from psycopg2._psycopg import OperationalError, InterfaceError
+from psycopg2._psycopg import OperationalError as PsycopOperationalError, InterfaceError as  PsycopInterfaceError
+from django.db.utils import OperationalError as DjangoOperationalError, InterfaceError as DjangoInterfaceError
 from django.db import connection
 
 from osis_common.models.queue_exception import QueueException
@@ -65,7 +66,7 @@ def process_message(json_data):
     if body:
         try:
             serializable_model.persist(body)
-        except (OperationalError, InterfaceError) as ep:
+        except (PsycopOperationalError, PsycopInterfaceError, DjangoOperationalError, DjangoInterfaceError) as ep:
             trace = traceback.format_exc()
             try:
                 data = json.loads(json_data.decode("utf-8"))
@@ -76,6 +77,8 @@ def process_message(json_data):
                 queue_exception_logger.error(queue_exception.to_exception_log())
             except Exception:
                 logger.error(trace)
+                log_trace = traceback.format_exc()
+                logger.warning('Error during queue logging :\n {}'.format(log_trace))
             connection.close()
             process_message(json_data)
         except Exception as e:
@@ -89,4 +92,6 @@ def process_message(json_data):
                 queue_exception_logger.error(queue_exception.to_exception_log())
             except Exception:
                 logger.error(trace)
+                log_trace = traceback.format_exc()
+                logger.warning('Error during queue logging :\n {}'.format(log_trace))
 
