@@ -61,8 +61,8 @@ def __user_field_in_model(object):
 
 def process_message(json_data):
     from osis_common.models import serializable_model
-    data = json.loads(json_data.decode("utf-8"))
-    body = serializable_model.unwrap_serialization(data)
+    json_data_dict = json.loads(json_data.decode("utf-8"))
+    body = serializable_model.unwrap_serialization(json_data_dict)
     if body:
         try:
             serializable_model.persist(body)
@@ -78,7 +78,7 @@ def process_message(json_data):
             except Exception:
                 logger.error(trace)
                 log_trace = traceback.format_exc()
-                logger.warning('Error during queue logging :\n {}'.format(log_trace))
+                logger.warning('Error during queue logging and retry:\n {}'.format(log_trace))
             connection.close()
             process_message(json_data)
         except Exception as e:
