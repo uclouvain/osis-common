@@ -23,7 +23,3 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-
-from osis_common.queue import callbacks
-from osis_common.queue import queue_listener
-from osis_common.queue import queue_sender

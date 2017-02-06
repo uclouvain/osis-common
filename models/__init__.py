@@ -23,5 +23,3 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from osis_common.models import document_file
-from osis_common.models import serializable_model
