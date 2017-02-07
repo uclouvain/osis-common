@@ -62,36 +62,36 @@ def __user_field_in_model(object):
 def process_message(json_data):
     from osis_common.models import serializable_model
     json_data_dict = json.loads(json_data.decode("utf-8"))
-    body = serializable_model.unwrap_serialization(json_data_dict)
-    if body:
-        try:
+    try:
+        body = serializable_model.unwrap_serialization(json_data_dict)
+        if body:
             serializable_model.persist(body)
-        except (PsycopOperationalError, PsycopInterfaceError, DjangoOperationalError, DjangoInterfaceError) as ep:
-            trace = traceback.format_exc()
-            try:
-                data = json.loads(json_data.decode("utf-8"))
-                queue_exception = QueueException(queue_name=settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_CONSUME'),
-                                                 message=data,
-                                                 exception_title='[Catched and retried] - {}'.format(type(ep).__name__),
-                                                 exception=trace)
-                queue_exception_logger.error(queue_exception.to_exception_log())
-            except Exception:
-                logger.error(trace)
-                log_trace = traceback.format_exc()
-                logger.warning('Error during queue logging and retry:\n {}'.format(log_trace))
-            connection.close()
-            process_message(json_data)
-        except Exception as e:
-            trace = traceback.format_exc()
-            try:
-                data = json.loads(json_data.decode("utf-8"))
-                queue_exception = QueueException(queue_name=settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_CONSUME'),
-                                                 message=data,
-                                                 exception_title=type(e).__name__,
-                                                 exception=trace)
-                queue_exception_logger.error(queue_exception.to_exception_log())
-            except Exception:
-                logger.error(trace)
-                log_trace = traceback.format_exc()
-                logger.warning('Error during queue logging :\n {}'.format(log_trace))
+    except (PsycopOperationalError, PsycopInterfaceError, DjangoOperationalError, DjangoInterfaceError) as ep:
+        trace = traceback.format_exc()
+        try:
+            data = json.loads(json_data.decode("utf-8"))
+            queue_exception = QueueException(queue_name=settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_CONSUME'),
+                                             message=data,
+                                             exception_title='[Catched and retried] - {}'.format(type(ep).__name__),
+                                             exception=trace)
+            queue_exception_logger.error(queue_exception.to_exception_log())
+        except Exception:
+            logger.error(trace)
+            log_trace = traceback.format_exc()
+            logger.warning('Error during queue logging and retry:\n {}'.format(log_trace))
+        connection.close()
+        process_message(json_data)
+    except Exception as e:
+        trace = traceback.format_exc()
+        try:
+            data = json.loads(json_data.decode("utf-8"))
+            queue_exception = QueueException(queue_name=settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_CONSUME'),
+                                             message=data,
+                                             exception_title=type(e).__name__,
+                                             exception=trace)
+            queue_exception_logger.error(queue_exception.to_exception_log())
+        except Exception:
+            logger.error(trace)
+            log_trace = traceback.format_exc()
+            logger.warning('Error during queue logging :\n {}'.format(log_trace))
 

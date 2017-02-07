@@ -24,16 +24,22 @@
 #
 ##############################################################################
 import json
+import logging
+from unittest import skip
+from django.conf import settings
 from django.test import TestCase
-from osis_common.queue.callbacks import insert_or_update
+from osis_common.queue.callbacks import process_message
 from osis_common.tests.models_for_tests.serializable_tests_models import ModelWithUser, ModelWithoutUser
+
+
+logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
 
 def get_object_json(model_name='modelwithuser', to_delete=False):
     data_json = json.dumps(
         {
             'to_delete': to_delete,
-            'serialized_objects': __get_serialized_objects(model_name)
+            'body': __get_serialized_objects(model_name)
         }
     )
     return bytearray(data_json, "utf-8")
@@ -48,13 +54,27 @@ def __get_serialized_objects(model_name):
 
 
 def __get_serialized_objects_with_user():
-    return '[{"model": "tests.modelwithuser", ' \
-        '"fields": {"uuid": "c03a1839-6eb3-4565-b256-e0aea5ec8437","name": "With User"}}]'
+    return {
+        "model": "tests.modelwithuser",
+        "fields":
+            {
+                "id": 1,
+                "uuid": "c03a1839-6eb3-4565-b256-e0aea5ec8437",
+                "name": "With User"
+            }
+    }
 
 
 def __get_serialized_objects_without_user():
-    return '[{"model": "tests.modelwithoutuser", ' \
-           '"fields": {"uuid": "daf86b06-b784-4e02-9131-3098da60506c","name": "Without User"}}]'
+    return {
+        "model": "tests.modelwithoutuser",
+        "fields":
+            {
+                "id": 2,
+                "uuid": "daf86b06-b784-4e02-9131-3098da60506c",
+                "name": "Without User"
+            }
+    }
 
 
 def get_object(model_name, name, uuid, user=None):
@@ -65,12 +85,12 @@ def get_object(model_name, name, uuid, user=None):
     return None
 
 
-class TestInsertOrUpdate(TestCase):
+class ProcessMessage(TestCase):
 
     def test_insert_model(self):
         model = ModelWithUser.find_by_name('With User')
         self.assertIsNone(model)
-        insert_or_update(get_object_json())
+        process_message(get_object_json())
         model = ModelWithUser.find_by_name('With User')
         self.assertIsNotNone(model)
         self.assertIsNone(model.user)
@@ -80,7 +100,7 @@ class TestInsertOrUpdate(TestCase):
         model.save()
         model = ModelWithUser.find_by_name('With User')
         self.assertIsNotNone(model)
-        insert_or_update(get_object_json(to_delete=True))
+        process_message(get_object_json(to_delete=True))
         model = ModelWithUser.find_by_name('With User')
         self.assertIsNone(model)
 
@@ -92,7 +112,7 @@ class TestInsertOrUpdate(TestCase):
         model_id = model_without_user.id
         model_without_user = ModelWithoutUser.find_by_id(id=model_id)
         self.assertEqual(model_without_user.name, 'Without User Before Update')
-        insert_or_update(get_object_json(model_name='modelwithoutuser'))
+        process_message(get_object_json(model_name='modelwithoutuser'))
         model_without_user = ModelWithoutUser.find_by_id(id=model_id)
         self.assertEqual(model_without_user.name, 'Without User')
 
@@ -106,7 +126,7 @@ class TestInsertOrUpdate(TestCase):
         model_with_user = ModelWithUser.find_by_id(id=model_id)
         self.assertEqual(model_with_user.name, 'With User Undefined')
         self.assertEqual(model_with_user.user, 'user1')
-        insert_or_update(get_object_json(model_name='modelwithuser'))
+        process_message(get_object_json(model_name='modelwithuser'))
         model_with_user = ModelWithUser.find_by_id(id=model_id)
         self.assertEqual(model_with_user.name, 'With User')
         self.assertEqual(model_with_user.user, 'user1')
@@ -120,7 +140,7 @@ class TestInsertOrUpdate(TestCase):
         model_with_user = ModelWithUser.find_by_id(id=model_id)
         self.assertEqual(model_with_user.name, 'With User Undefined')
         self.assertIsNone(model_with_user.user)
-        insert_or_update(get_object_json(model_name='modelwithuser'))
+        process_message(get_object_json(model_name='modelwithuser'))
         model_with_user = ModelWithUser.find_by_id(id=model_id)
         self.assertEqual(model_with_user.name, 'With User')
         self.assertIsNone(model_with_user.user)
