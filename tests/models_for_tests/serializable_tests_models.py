@@ -32,6 +32,9 @@ class ModelWithUser(SerializableModel):
     user = CharField(max_length=30, null=True)
     name = CharField(max_length=30, unique=True)
 
+    def __str__(self):
+        return '{} - {} - {}'.format(self.name, self.user, self.uuid)
+
     @classmethod
     def find_by_name(cls,name):
         try:
@@ -49,6 +52,9 @@ class ModelWithUser(SerializableModel):
 
 class ModelWithoutUser(SerializableModel):
     name = CharField(max_length=30, unique=True)
+
+    def __str__(self):
+        return '{} - {} - {}'.format(self.name, self.user, self.uuid)
 
     @classmethod
     def find_by_name(self,name):
