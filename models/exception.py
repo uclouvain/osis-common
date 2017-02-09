@@ -38,4 +38,3 @@ class MigrationPersistanceError(Exception):
         message = _('migration_persistence_error')
         super(MigrationPersistanceError, self).__init__(message)
         self.errors = errors
-
