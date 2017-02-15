@@ -25,6 +25,7 @@
 ##############################################################################
 import logging
 from django.conf import settings
+from django.contrib import admin, messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import DateTimeField, DateField
@@ -57,6 +58,24 @@ class SerializableModelManager(models.Manager):
 
     def get_queryset(self):
         return SerializableQuerySet(self.model, using=self._db)
+
+
+class SerializableModelAdmin(admin.ModelAdmin):
+    actions = ['resend_messages_to_queue']
+
+    def resend_messages_to_queue(self, request, queryset):
+        counter = 0
+        for record in queryset:
+            try:
+                ser_obj = serialize(record)
+                queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
+                                          wrap_serialization(ser_obj))
+                counter += 1
+            except (ChannelClosed, ConnectionClosed):
+                self.message_user(request,
+                                  'Message %s not sent to %s.' % (record.pk, record.queue_name),
+                                  level=messages.ERROR)
+        self.message_user(request, "{} message(s) sent.".format(counter), level=messages.SUCCESS)
 
 
 class SerializableModel(models.Model):
