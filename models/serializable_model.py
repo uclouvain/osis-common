@@ -162,8 +162,11 @@ def serialize(obj, last_syncs=None):
         for f in obj.__class__._meta.fields:
             attribute = getattr(obj, f.name)
             if f.is_relation:
-                if isinstance(attribute, SerializableModel):
-                    dict[f.name] = serialize(attribute, last_syncs=last_syncs)
+                try:
+                    if attribute and getattr(attribute, 'uuid'):
+                        dict[f.name] = serialize(attribute, last_syncs=last_syncs)
+                except AttributeError:
+                    pass
             else:
                 try:
                     json.dumps(attribute)
@@ -222,7 +225,7 @@ def persist(structure):
             else:
                 del kwargs['id']
                 obj = model_class(**kwargs)
-                super(SerializableModel, obj).save()
+                super(SerializableModel, obj).save(force_insert=True)
                 obj_id = obj.id
                 if obj_id:
                     return obj_id

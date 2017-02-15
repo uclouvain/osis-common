@@ -28,7 +28,7 @@ from django.test.testcases import TestCase
 from osis_common.models.exception import MultipleModelsSerializationException
 from osis_common.models.serializable_model import serialize_objects, format_data_for_migration
 from osis_common.tests.models_for_tests.serializable_tests_models import ModelWithoutUser, \
-    ModelWithUser
+    ModelWithUser, ModelNotSerializable
 
 
 class TestSerializeObject(TestCase):
@@ -64,6 +64,11 @@ class TestSerializeObject(TestCase):
         serialized_model = serialized_object[0].get('model')
         self.assertEqual('Without User', serialized_fields.get('name'))
         self.assertEqual('tests.modelwithoutuser', serialized_model)
+
+    def test_contains_uuid_field(self):
+        self.assertTrue(getattr(self.model_with_user, 'uuid'))
+        obj = ModelNotSerializable()
+        self.assertRaises(AttributeError, getattr, obj, 'uuid')
 
 
 class TestFormatDataForMigration(TestCase):
