@@ -211,30 +211,43 @@ def persist(structure):
     model_class = apps.get_model(structure.get('model'))
     if structure:
         fields = structure.get('fields')
+        for field_name, value in fields.items():
+            if isinstance(value, dict):
+                fields[field_name] = persist(value)
         query_set = model_class.objects.filter(uuid=fields.get('uuid'))
         persisted_obj = query_set.first()
-        if _changed_since_last_synchronization(fields, structure) or not persisted_obj:
-            for field_name, value in fields.items():
-                if isinstance(value, dict):
-                    fields[field_name] = persist(value)
-            kwargs = {_get_field_name(f): _get_value(fields, f) for f in model_class._meta.fields if f.name in fields.keys()}
-            if persisted_obj:
-                kwargs['id'] = persisted_obj.id
-                query_set.update(**kwargs)
-                return persisted_obj.id
+        if not persisted_obj:
+            obj_id = _make_insert(fields, model_class)
+            if obj_id:
+                return obj_id
             else:
-                del kwargs['id']
-                obj = model_class(**kwargs)
-                super(SerializableModel, obj).save(force_insert=True)
-                obj_id = obj.id
-                if obj_id:
-                    return obj_id
-                else:
-                    raise MigrationPersistanceError
+                raise MigrationPersistanceError
+        elif _changed_since_last_synchronization(fields, structure):
+            return _make_update(fields, model_class, persisted_obj, query_set)
         else:
             return persisted_obj.id
     else:
         return None
+
+
+def _make_update(fields, model_class, persisted_obj, query_set):
+    kwargs = _build_kwargs(fields, model_class)
+    kwargs['id'] = persisted_obj.id
+    query_set.update(**kwargs)
+    return persisted_obj.id
+
+
+def _make_insert(fields, model_class):
+    kwargs = _build_kwargs(fields, model_class)
+    del kwargs['id']
+    obj = model_class(**kwargs)
+    super(SerializableModel, obj).save(force_insert=True)
+    obj_id = obj.id
+    return obj_id
+
+
+def _build_kwargs(fields, model_class):
+    return {_get_field_name(f): _get_value(fields, f) for f in model_class._meta.fields if f.name in fields.keys()}
 
 
 def _changed_since_last_synchronization(fields, structure):
