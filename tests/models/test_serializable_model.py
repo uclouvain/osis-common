@@ -23,10 +23,11 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+import re
 import json
 from django.test.testcases import TestCase
 from osis_common.models.exception import MultipleModelsSerializationException
-from osis_common.models.serializable_model import serialize_objects, format_data_for_migration
+from osis_common.models.serializable_model import serialize_objects, format_data_for_migration, SerializableModel
 from osis_common.tests.models_for_tests.serializable_tests_models import ModelWithoutUser, \
     ModelWithUser, ModelNotSerializable
 
@@ -69,6 +70,12 @@ class TestSerializeObject(TestCase):
         self.assertTrue(getattr(self.model_with_user, 'uuid'))
         obj = ModelNotSerializable()
         self.assertRaises(AttributeError, getattr, obj, 'uuid')
+
+    def test__str__uuid(self):
+        serializable_model = SerializableModel()
+        # serializable_model.save()
+        result = re.match('[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}', '{}'.format(serializable_model))
+        self.assertIsNotNone(result)
 
 
 class TestFormatDataForMigration(TestCase):

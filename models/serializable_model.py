@@ -108,13 +108,13 @@ class SerializableModel(models.Model):
         return [self.uuid]
 
     def __str__(self):
-        return self.uuid
+        return "{}".format(self.uuid)
 
     class Meta:
         abstract = True
 
     @classmethod
-    def find_by_uuid(cls,uuid):
+    def find_by_uuid(cls, uuid):
         try:
             return cls.objects.get(uuid=uuid)
         except ObjectDoesNotExist:
@@ -155,6 +155,36 @@ def serialize_objects(objects, format='json'):
                                  use_natural_primary_keys=True)
 
 
+def serialize(obj, last_syncs=None):
+    if obj:
+        fields = {}
+        for f in obj.__class__._meta.fields:
+            attribute = getattr(obj, f.name)
+            if f.is_relation:
+                try:
+                    if attribute and getattr(attribute, 'uuid'):
+                        fields[f.name] = serialize(attribute, last_syncs=last_syncs)
+                except AttributeError:
+                    pass
+            else:
+                try:
+                    json.dumps(attribute)
+                    fields[f.name] = attribute
+                except TypeError:
+                    if isinstance(f, DateTimeField) or isinstance(f, DateField):
+                        dt = attribute
+                        fields[f.name] = _convert_datetime_to_long(dt)
+                    else:
+                        fields[f.name] = force_text(attribute)
+        class_label = obj.__class__._meta.label
+        last_sync = None
+        if last_syncs:
+            last_sync = _convert_datetime_to_long(last_syncs.get(class_label))
+        return {"model": class_label, "fields": fields, 'last_sync': last_sync}
+    else:
+        return None
+
+
 def wrap_serialization(body, to_delete=False):
     wrapped_body = {"body": body}
 
@@ -173,57 +203,6 @@ def unwrap_serialization(wrapped_serialization):
         return None
     else:
         return wrapped_serialization.get("body")
-
-
-def serialize(obj, last_syncs=None):
-    if obj:
-        dict = {}
-        for f in obj.__class__._meta.fields:
-            attribute = getattr(obj, f.name)
-            if f.is_relation:
-                try:
-                    if attribute and getattr(attribute, 'uuid'):
-                        dict[f.name] = serialize(attribute, last_syncs=last_syncs)
-                except AttributeError:
-                    pass
-            else:
-                try:
-                    json.dumps(attribute)
-                    dict[f.name] = attribute
-                except TypeError:
-                    if isinstance(f, DateTimeField) or isinstance(f, DateField):
-                        dt = attribute
-                        dict[f.name] = _convert_datetime_to_long(dt)
-                    else:
-                        dict[f.name] = force_text(attribute)
-        class_label = obj.__class__._meta.label
-        last_sync = None
-        if last_syncs:
-            last_sync = _convert_datetime_to_long(last_syncs.get(class_label))
-        return {"model": class_label, "fields": dict, 'last_sync': last_sync}
-    else:
-        return None
-
-
-def _convert_datetime_to_long(dtime):
-    return time.mktime(dtime.timetuple()) if dtime else None
-
-
-def _get_value(fields, field):
-    attribute = fields.get(field.name)
-    if isinstance(field, DateTimeField) or isinstance(field, DateField):
-        return _convert_long_to_datetime(attribute)
-    return attribute
-
-
-def _convert_long_to_datetime(date_as_long):
-    return datetime.datetime.fromtimestamp(date_as_long) if date_as_long else None
-
-
-def _get_field_name(field):
-    if field.is_relation:
-        return '{}_id'.format(field.name)
-    return field.name
 
 
 def persist(structure):
@@ -247,6 +226,27 @@ def persist(structure):
             return persisted_obj.id
     else:
         return None
+
+
+def _convert_datetime_to_long(dtime):
+    return time.mktime(dtime.timetuple()) if dtime else None
+
+
+def _get_value(fields, field):
+    attribute = fields.get(field.name)
+    if isinstance(field, DateTimeField) or isinstance(field, DateField):
+        return _convert_long_to_datetime(attribute)
+    return attribute
+
+
+def _convert_long_to_datetime(date_as_long):
+    return datetime.datetime.fromtimestamp(date_as_long) if date_as_long else None
+
+
+def _get_field_name(field):
+    if field.is_relation:
+        return '{}_id'.format(field.name)
+    return field.name
 
 
 def _make_update(fields, model_class, persisted_obj, query_set):
