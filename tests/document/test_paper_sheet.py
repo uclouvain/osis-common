@@ -128,6 +128,14 @@ class TestPaperSheet(TestCase):
         except voluptuous_error.Invalid as e:
             self.assertIsInstance(e.errors[0], voluptuous_error.SequenceTypeInvalid)
 
+    def test_check_pdf_generation(self):
+        data = getRightData()
+        http_response = paper_sheet.build_response(data)
+        self.assertEqual(http_response.status_code, 200)
+        self.assertIsNotNone(http_response.content)
+        self.assertEqual(http_response['content-type'], 'application/pdf')
+
+
 def getRightData() :
     #Return a valid template data
     return {
