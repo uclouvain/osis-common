@@ -34,6 +34,7 @@ from django.db.utils import OperationalError as DjangoOperationalError, Interfac
 from django.db import connection
 
 from osis_common.models.queue_exception import QueueException
+from osis_common.queue import queue_deserializer
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 queue_exception_logger = logging.getLogger(settings.QUEUE_EXCEPTION_LOGGER)
@@ -60,12 +61,9 @@ def __user_field_in_model(object):
 
 
 def process_message(json_data):
-    from osis_common.models import serializable_model
     json_data_dict = json.loads(json_data.decode("utf-8"))
     try:
-        body = serializable_model.unwrap_serialization(json_data_dict)
-        if body:
-            serializable_model.persist(body)
+        queue_deserializer.deserialize(json_data_dict)
     except (PsycopOperationalError, PsycopInterfaceError, DjangoOperationalError, DjangoInterfaceError) as ep:
         trace = traceback.format_exc()
         try:
