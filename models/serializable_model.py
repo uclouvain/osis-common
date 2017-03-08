@@ -172,7 +172,8 @@ def _delete_instance_by_uuid(cls, uuid):
 def _persist(cls, data_to_persist, last_sync=None):
     for field_name, value in data_to_persist.items():
         if isinstance(value, dict):
-            data_to_persist[field_name] = _persist(value.get('model'), value)
+            model_class = apps.get_model(value.get('model'))
+            data_to_persist[field_name] = _persist(model_class, value.get('fields'), value.get('last_sync'))
 
     query_set = cls.objects.filter(uuid=data_to_persist.get('uuid'))
     if query_set.count() == 0:
