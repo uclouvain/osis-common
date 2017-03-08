@@ -76,7 +76,7 @@ class SerializableModelAdmin(admin.ModelAdmin):
         self.message_user(request, "{} message(s) sent.".format(counter), level=messages.SUCCESS)
 
 
-class SerializableModel(models.Model):
+class  SerializableModel(models.Model):
     objects = SerializableModelManager()
 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
