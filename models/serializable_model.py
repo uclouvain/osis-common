@@ -86,7 +86,7 @@ class SerializableModel(models.Model):
         return [self.uuid]
 
     def __str__(self):
-        return self.uuid
+        return "{}".format(self.uuid)
 
     class Meta:
         abstract = True
