@@ -23,4 +23,5 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from . import serializable_tests_models
+# from . import serializable_tests_models
+

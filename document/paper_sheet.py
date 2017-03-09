@@ -36,7 +36,6 @@ from reportlab.lib import colors
 from django.utils.translation import ugettext_lazy as _
 import datetime
 
-from base import models as mdl
 
 PAGE_SIZE = A4
 MARGIN_SIZE = 15 * mm
@@ -45,13 +44,12 @@ STUDENTS_PER_PAGE = 24
 DATE_FORMAT = "%d/%m/%Y"
 
 
-def print_notes(list_exam_enrollment, tutor=None):
+def print_notes(data):
     """
     Create a multi-page document
-    :param list_exam_enrollment: List of examEnrollments to print on the PDF.
+    :param data: all data context for PDF generation.
     :param tutor: If the user who's asking for the PDF is a Tutor, this var is assigned to the user linked to the tutor.
     """
-    data = mdl.exam_enrollment.scores_sheet_data(list_exam_enrollment, tutor=tutor)
     try:
         validate_data_structure(data)
         return build_response(data)
@@ -172,15 +170,16 @@ def _build_styles():
 def _data_to_pdf_content(json_data):
     styles = _build_styles()
     content = []
+    justification_legend = json_data['justification_legend']
     for learn_unit_year in json_data['learning_unit_years']:
         for program in learn_unit_year['programs']:
             nb_students = len(program['enrollments'])
             for enrollments_by_pdf_page in chunks(program['enrollments'], STUDENTS_PER_PAGE):
-                content.extend(_build_page_content(enrollments_by_pdf_page, learn_unit_year, nb_students, program, styles))
+                content.extend(_build_page_content(enrollments_by_pdf_page, learn_unit_year, nb_students, program, styles,justification_legend))
     return content
 
 
-def _build_page_content(enrollments_by_pdf_page, learn_unit_year, nb_students, program, styles):
+def _build_page_content(enrollments_by_pdf_page, learn_unit_year, nb_students, program, styles, justification_legend):
     page_content = []
     # 1. Write addresses & programs info
     # We add first a blank line
@@ -191,7 +190,7 @@ def _build_page_content(enrollments_by_pdf_page, learn_unit_year, nb_students, p
     page_content.append(_build_exam_enrollments_table(enrollments_by_pdf_page, styles))
     # 3. Write Legend
     page_content.extend(_build_deadline_and_signature_content(program['deadline']))
-    page_content.append(_build_legend_block(learn_unit_year['decimal_scores']))
+    page_content.append(_build_legend_block(learn_unit_year['decimal_scores'], justification_legend))
     # 4. New Page
     page_content.append(PageBreak())
     return page_content
@@ -372,8 +371,8 @@ def _build_signature_paragraph():
     return paragraph_signature
 
 
-def _build_legend_block(decimal_scores):
-    legend_text = _('justification_legend') % mdl.exam_enrollment.justification_label_authorized()
+def _build_legend_block(decimal_scores, justification_legend):
+    legend_text = justification_legend
     legend_text += "<br/>%s" % (str(_('score_legend') % "0 - 20"))
     if decimal_scores:
         legend_text += "<br/><font color=red>%s</font>" % _('authorized_decimal_for_this_activity')
