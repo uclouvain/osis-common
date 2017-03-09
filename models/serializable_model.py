@@ -42,6 +42,7 @@ from osis_common import signals
 
 LOGGER = logging.getLogger(settings.DEFAULT_LOGGER)
 
+
 class SerializableQuerySet(models.QuerySet):
     # Called in case of bulk delete
     # Override this function is important to force to call the delete() function of a model's instance
@@ -76,7 +77,7 @@ class SerializableModelAdmin(admin.ModelAdmin):
         self.message_user(request, "{} message(s) sent.".format(counter), level=messages.SUCCESS)
 
 
-class  SerializableModel(models.Model):
+class SerializableModel(models.Model):
     objects = SerializableModelManager()
 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
@@ -91,7 +92,7 @@ class  SerializableModel(models.Model):
         abstract = True
 
     @classmethod
-    def find_by_uuid(cls,uuid):
+    def find_by_uuid(cls, uuid):
         try:
             return cls.objects.get(uuid=uuid)
         except ObjectDoesNotExist:
@@ -100,7 +101,6 @@ class  SerializableModel(models.Model):
     def save(self, *args, **kwargs):
         super(SerializableModel, self).save(*args, **kwargs)
         signals.send_to_queue.send(sender=self.__class__, instance=self, to_delete=False)
-
 
     def delete(self, *args, **kwargs):
         super(SerializableModel, self).delete(*args, **kwargs)
@@ -139,7 +139,6 @@ def serialize_objects(objects, format='json'):
                                  fields=[field.name for field in model_class._meta.fields if field.name != 'user'],
                                  use_natural_foreign_keys=True,
                                  use_natural_primary_keys=True)
-
 
 
 ##################################
