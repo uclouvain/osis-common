@@ -24,7 +24,7 @@
 #
 ##############################################################################
 from io import BytesIO
-from voluptuous import Schema, Required, All, Url, error as voluptuous_error
+from voluptuous import Schema, Required, All, Url, Length, error as voluptuous_error
 from django.http import HttpResponse
 from django.conf import settings
 from reportlab.lib.pagesizes import A4
@@ -64,7 +64,7 @@ def get_data_schema():
         Required("publication_date"): str,
         Required("justification_legend"): str,
         Required("tutor_global_id"): str,
-        Required("learning_unit_years"): [
+        Required("learning_unit_years"): All([
             {
                  Required("session_number"): int,
                  Required("title"): str,
@@ -96,7 +96,7 @@ def get_data_schema():
                      Required("last_name"): str
                  }
              }
-        ]
+        ], Length(min=1), extra=True)
     }, extra=True)
 
 def validate_data_structure(data) :
