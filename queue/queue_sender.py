@@ -36,14 +36,10 @@ logger = logging.getLogger(settings.DEFAULT_LOGGER)
 def get_connection():
     credentials = pika.PlainCredentials(settings.QUEUES.get('QUEUE_USER'),
                                         settings.QUEUES.get('QUEUE_PASSWORD'))
-    try:
-        return pika.BlockingConnection(pika.ConnectionParameters(settings.QUEUES.get('QUEUE_URL'),
-                                                                 settings.QUEUES.get('QUEUE_PORT'),
-                                                                 settings.QUEUES.get('QUEUE_CONTEXT_ROOT'),
-                                                                 credentials))
-    except exceptions.ConnectionClosed:
-        logger.info("The queuing server is not available.")
-        return None
+    return pika.BlockingConnection(pika.ConnectionParameters(settings.QUEUES.get('QUEUE_URL'),
+                                                             settings.QUEUES.get('QUEUE_PORT'),
+                                                             settings.QUEUES.get('QUEUE_CONTEXT_ROOT'),
+                                                             credentials))
 
 
 def get_channel(connection, queue_name):
@@ -73,28 +69,24 @@ def send_message(queue_name, message, connection=None, channel=None):
     if channel and not connection:
         raise Exception('Please give the connection from which you opened the channel given by parameter')
 
-    connection_open = False
-    channel_open = False
-
+    #Get connection [Raise exception if no connection]
     if not connection or connection.is_closed:
         connection = get_connection()
-        if connection:
-            connection_open = True
+
+    #Get channel
     if not channel or channel.is_closed:
         channel = get_channel(connection, queue_name)
-        if channel:
-            channel_open = True
 
-    if channel and not channel.is_closed:
-        try:
-            channel.basic_publish(exchange='',
-                                  routing_key=queue_name,
-                                  body=json.dumps(message),
-                                  properties=pika.BasicProperties(content_type='application/json', delivery_mode=2))
-        except Exception:
-            logger.exception("Exception in queue")
-        finally:
-            if channel and channel_open:
-                channel.close()
-            if connection and connection_open:
-                connection.close()
+    # Turn on delivery confirmations
+    channel.confirm_delivery()
+
+    try:
+        channel.basic_publish(exchange='',
+                              routing_key=queue_name,
+                              body=json.dumps(message),
+                              properties=pika.BasicProperties(content_type='application/json', delivery_mode=2))
+    finally:
+        if channel and channel.is_open:
+            channel.close()
+        if connection and connection.is_open:
+            connection.close()

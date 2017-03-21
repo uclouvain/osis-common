@@ -44,7 +44,7 @@ class QueueExceptionAdmin(admin.ModelAdmin):
             try:
                 queue_sender.send_message(q_exception.queue_name, q_exception.message)
                 q_exception.delete()
-            except (ChannelClosed, ConnectionClosed):
+            except Exception:
                 self.message_user(request,
                                   'Message %s not sent to %s.' % (q_exception.pk, q_exception.queue_name),
                                   level=messages.ERROR)

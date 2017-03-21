@@ -39,6 +39,9 @@ import json
 import datetime
 from django.utils.encoding import force_text
 from django.apps import apps
+from osis_common.models import message_queue_cache
+from osis_common.models.message_queue_cache import MessageQueueCache
+
 import time
 
 LOGGER = logging.getLogger(settings.DEFAULT_LOGGER)
@@ -71,7 +74,7 @@ class SerializableModelAdmin(admin.ModelAdmin):
                 queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
                                           wrap_serialization(ser_obj))
                 counter += 1
-            except (ChannelClosed, ConnectionClosed):
+            except Exception:
                 self.message_user(request,
                                   'Message %s not sent to %s.' % (record.pk, record.queue_name),
                                   level=messages.ERROR)
@@ -111,11 +114,17 @@ class SerializableModel(models.Model):
 
 
 def send_to_queue(instance, to_delete=False):
+    queue_name = settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE')
+    serialized_instance = wrap_serialization(serialize(instance), to_delete)
+
     try:
-        ser_obj = serialize(instance)
-        queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
-                                  wrap_serialization(ser_obj, to_delete))
-    except (ChannelClosed, ConnectionClosed):
+        # Try to resend message present in cache
+        message_queue_cache.retry_all_cached_messages()
+        # Send current message
+        queue_sender.send_message(queue_name, serialized_instance)
+    except Exception:
+        # Save current message queue cache database for retry later
+        MessageQueueCache.objects.create(queue=queue_name, data=serialized_instance)
         LOGGER.exception('QueueServer is not installed or not launched')
 
 

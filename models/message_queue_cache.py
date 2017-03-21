@@ -26,6 +26,7 @@
 from django.db import models
 from django.contrib import admin
 from django.contrib.postgres.fields import JSONField
+from osis_common.queue import queue_sender
 
 
 class MessageQueueCacheAdmin(admin.ModelAdmin):
@@ -39,3 +40,14 @@ class MessageQueueCache(models.Model):
 
     def __str__(self):
         return self.subject
+
+
+def get_messages_to_retry():
+    return MessageQueueCache.objects.order_by('changed')
+
+
+def retry_all_cached_messages():
+    messages_to_retry = get_messages_to_retry().values()
+    for message in messages_to_retry:
+        queue_sender.send_message(message.get('queue'), message.get('data'))
+        MessageQueueCache.objects.filter(pk=message.get('id')).delete()

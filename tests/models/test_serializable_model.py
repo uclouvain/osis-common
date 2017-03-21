@@ -25,7 +25,10 @@
 ##############################################################################
 import re
 import json
-from django.test.testcases import TestCase
+from copy import deepcopy
+from django.conf import settings
+from django.test.testcases import TestCase, override_settings
+from osis_common.models import message_queue_cache
 from osis_common.models.exception import MultipleModelsSerializationException
 from osis_common.models.serializable_model import serialize_objects, format_data_for_migration, SerializableModel
 from osis_common.tests.models_for_tests.serializable_tests_models import ModelWithoutUser, \
@@ -33,7 +36,6 @@ from osis_common.tests.models_for_tests.serializable_tests_models import ModelWi
 
 
 class TestSerializeObject(TestCase):
-
     @classmethod
     def setUpTestData(cls):
         cls.model_with_user = ModelWithUser(user='user1', name='With User')
@@ -78,8 +80,65 @@ class TestSerializeObject(TestCase):
         self.assertIsNotNone(result)
 
 
-class TestFormatDataForMigration(TestCase):
+class TestMessageQueueCache(TestCase):
+    def test_message_queue_cache_no_insert(self):
+        queue_settings = settings.QUEUES
+        ModelWithoutUser.objects.create(name='Dummy')
+        message_queued = message_queue_cache.get_messages_to_retry()
+        self.assertEqual(0, message_queued.count())
 
+    def test_message_queue_cache_insert(self):
+        queue_settings = deepcopy(settings.QUEUES)
+        queue_settings['QUEUE_URL'] = "dummy-url"
+        with override_settings(QUEUES=queue_settings):
+            ModelWithoutUser.objects.create(name='Dummy')
+            message_queued = message_queue_cache.get_messages_to_retry()
+            self.assertEqual(1, message_queued.count())
+
+    def test_message_queue_cache_order(self):
+        queue_settings = deepcopy(settings.QUEUES)
+        queue_settings['QUEUE_URL'] = "dummy-url"
+        with override_settings(QUEUES=queue_settings):
+            user_1 = ModelWithoutUser.objects.create(name='user_1')
+            ModelWithoutUser.objects.create(name='user_2')
+            user_3 = ModelWithoutUser.objects.create(name='user_3')
+            message_queued = message_queue_cache.get_messages_to_retry()
+            self.assertEqual(3, message_queued.count())
+            first_message = message_queued.first().data['body']['fields']
+            latest_message = message_queued.last().data['body']['fields']
+            self.assertEqual(user_1.id, first_message.get('id'))
+            self.assertEqual(str(user_1.uuid), first_message.get('uuid'))
+            self.assertEqual(user_3.id, latest_message.get('id'))
+            self.assertEqual(str(user_3.uuid), latest_message.get('uuid'))
+
+    def test_save_after_seed_message_queue_cache(self):
+        queue_name = settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE')
+        queue_settings = deepcopy(settings.QUEUES)
+        queue_settings['QUEUE_URL'] = "dummy-url"
+        with override_settings(QUEUES=queue_settings):
+            # Seed message queue cache database
+            message_queue_cache.MessageQueueCache.objects.create(queue=queue_name, data={'test': True})
+            message_queue_cache.MessageQueueCache.objects.create(queue=queue_name, data={'test_2': True})
+            message_queue_cache.MessageQueueCache.objects.create(queue=queue_name, data={'test_3': True})
+            # Create Model
+            ModelWithoutUser.objects.create(name='Dummy')
+            self.assertEqual(4, message_queue_cache.get_messages_to_retry().count())
+
+    def test_save_after_seed_message_queue_cache(self):
+        queue_name = settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE')
+        # Seed message queue cache database
+        message_queue_cache.MessageQueueCache.objects.create(queue=queue_name, data={'body':{'model': 'test_1', 'fields': {'test': True}}})
+        message_queue_cache.MessageQueueCache.objects.create(queue=queue_name, data={'body':{'model': 'test_2', 'fields': {'test': True}}})
+        message_queue_cache.MessageQueueCache.objects.create(queue=queue_name, data={'body':{'model': 'test_3', 'fields': {'test': True}}})
+        self.assertEqual(3, message_queue_cache.get_messages_to_retry().count())
+        # Create Model
+        ModelWithoutUser.objects.create(name='Dummy')
+        self.assertEqual(0, message_queue_cache.get_messages_to_retry().count())
+
+
+
+
+class TestFormatDataForMigration(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.model_with_user = ModelWithUser(user='user1', name='With User')
