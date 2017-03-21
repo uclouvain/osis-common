@@ -146,7 +146,7 @@ def getRightData() :
         'tutor_global_id': '',
         'learning_unit_years': [{
             'session_number': 1,
-            'coordinator': {
+            'scores_responsible': {
                 'address': {
                     'city': 'Louvain-la-Neuve',
                     'postal_code': '1348',
