@@ -86,7 +86,7 @@ def get_data_schema():
                       }]
                     }
                  ],
-                 Required("coordinator"): {
+                 Required("scores_responsible"): {
                      Required("address"): {
                          Required("city"): str,
                          Required("postal_code"): str,
@@ -225,7 +225,7 @@ def _students_table_header():
 
 
 def _build_header_addresses_block(learning_unit_year, program, styles):
-    header_address_structure = [[_build_header_coordinator_address(learning_unit_year, styles),
+    header_address_structure = [[_build_header_scores_responsible_address(learning_unit_year, styles),
                                  _build_header_secretariat_address_block(program, styles)]]
     table_header = Table(header_address_structure, colWidths='*')
     table_header.setStyle(TableStyle([
@@ -236,30 +236,30 @@ def _build_header_addresses_block(learning_unit_year, program, styles):
     return table_header
 
 
-def _build_header_coordinator_address(learning_unit_year, styles):
-    coordinator = learning_unit_year["coordinator"]
-    address = coordinator['address']
-    return [[Paragraph(_get_coordinator_title_text(), styles["Normal"])],
-            [Paragraph(_get_coordinator_text(coordinator), styles["Normal"])],
-            [Paragraph(_get_coordinator_location_text(address), styles["Normal"])],
-            [Paragraph(_get_coordinator_city_text(address), styles["Normal"])]]
+def _build_header_scores_responsible_address(learning_unit_year, styles):
+    scores_responsible = learning_unit_year["scores_responsible"]
+    address = scores_responsible['address']
+    return [[Paragraph(_get_scores_responsible_title_text(), styles["Normal"])],
+            [Paragraph(_get_scores_responsible_text(scores_responsible), styles["Normal"])],
+            [Paragraph(_get_scores_responsible_location_text(address), styles["Normal"])],
+            [Paragraph(_get_scores_responsible_city_text(address), styles["Normal"])]]
 
 
-def _get_coordinator_city_text(address):
+def _get_scores_responsible_city_text(address):
     return '{} {}'.format(address['postal_code'] or '', address['city'] or '')
 
 
-def _get_coordinator_location_text(address):
+def _get_scores_responsible_location_text(address):
     return '{}'.format(address['location'] or '')
 
 
-def _get_coordinator_title_text():
-    return '<b>{} :</b>'.format(_('learning_unit_responsible'))
+def _get_scores_responsible_title_text():
+    return '<b>{} :</b>'.format(_('SCORES_RESPONSIBLE'))
 
 
-def _get_coordinator_text(coordinator):
-    if coordinator:
-        return '{} {}'.format(coordinator['last_name'], coordinator['first_name'])
+def _get_scores_responsible_text(scores_responsible):
+    if scores_responsible:
+        return '{} {}'.format(scores_responsible['last_name'], scores_responsible['first_name'])
     return '{}'.format(_('none'))
 
 
