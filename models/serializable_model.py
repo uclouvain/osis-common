@@ -85,24 +85,13 @@ class SerializableModel(models.Model):
 
     def save(self, *args, **kwargs):
         super(SerializableModel, self).save(*args, **kwargs)
-
         if hasattr(settings, 'QUEUES'):
-            try:
-                ser_obj = serialize(self)
-                queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
-                                          wrap_serialization(ser_obj))
-            except (ChannelClosed, ConnectionClosed):
-                LOGGER.exception('QueueServer is not installed or not launched')
+            send_to_queue(self)
 
     def delete(self, *args, **kwargs):
         super(SerializableModel, self).delete(*args, **kwargs)
         if hasattr(settings, 'QUEUES'):
-            try:
-                ser_obj = serialize(self)
-                queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
-                                          wrap_serialization(ser_obj, to_delete=True))
-            except (ChannelClosed, ConnectionClosed):
-                LOGGER.exception('QueueServer is not installed or not launched')
+            send_to_queue(self)
 
     def natural_key(self):
         return [self.uuid]
@@ -119,6 +108,15 @@ class SerializableModel(models.Model):
             return cls.objects.get(uuid=uuid)
         except ObjectDoesNotExist:
             return None
+
+
+def send_to_queue(instance, to_delete=False):
+    try:
+        ser_obj = serialize(instance)
+        queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
+                                  wrap_serialization(ser_obj, to_delete))
+    except (ChannelClosed, ConnectionClosed):
+        LOGGER.exception('QueueServer is not installed or not launched')
 
 
 # To be deleted
