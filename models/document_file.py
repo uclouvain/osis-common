@@ -29,7 +29,7 @@ from osis_common.models import serializable_model
 
 
 class DocumentFileAdmin(admin.ModelAdmin):
-    list_display = ('file_name', 'content_type', 'description', 'update_by', 'creation_date', 'size')
+    list_display = ('uuid', 'file_name', 'content_type', 'description', 'update_by', 'creation_date', 'size')
     fieldsets = ((None, {'fields': ('file_name', 'content_type', 'creation_date', 'storage_duration', 'file',
                                     'description', 'update_by', 'size')}),)
     readonly_fields = ('creation_date',)
@@ -60,6 +60,10 @@ class DocumentFile(serializable_model.SerializableModel):
     update_by = models.CharField(max_length=254, default='system', db_index=True)
     application_name = models.CharField(max_length=100, null=True, blank=True)
     size = models.IntegerField(null=True, blank=True)
+
+    def save(self):
+        self.file.name = str(self.uuid)
+        super(DocumentFile, self).save()
 
     def __str__(self):
         return self.file_name
