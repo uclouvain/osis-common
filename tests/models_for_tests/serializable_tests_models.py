@@ -24,7 +24,7 @@
 #
 ##############################################################################
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models.fields import CharField
+from django.db.models.fields import CharField, DateField, DateTimeField
 from osis_common.models.serializable_model import SerializableModel
 from django.db import models
 
@@ -55,7 +55,7 @@ class ModelWithoutUser(SerializableModel):
     name = CharField(max_length=30, unique=True)
 
     def __str__(self):
-        return '{} - {} - {}'.format(self.name, self.user, self.uuid)
+        return '{} - {} - {}'.format(self.name, self.uuid)
 
     @classmethod
     def find_by_name(self,name):
@@ -69,6 +69,50 @@ class ModelWithoutUser(SerializableModel):
         try:
             return ModelWithoutUser.objects.get(id=id)
         except ObjectDoesNotExist:
+            return None
+
+
+class ModelWithDate(SerializableModel):
+    name = CharField(max_length=30, unique=True)
+    date = DateField()
+
+    def __str__(self):
+        return '{} - {} - {}'.format(self.name, self.uuid)
+
+    @classmethod
+    def find_by_name(self, name):
+        try:
+            return ModelWithDate.objects.get(name=name)
+        except ModelWithDate.DoesNotExist:
+            return None
+
+    @classmethod
+    def find_by_id(cls, id):
+        try:
+            return ModelWithDate.objects.get(id=id)
+        except ModelWithDate.DoesNotExist:
+            return None
+
+
+class ModelWithDateTime(SerializableModel):
+    name = CharField(max_length=30, unique=True)
+    date = DateTimeField()
+
+    def __str__(self):
+        return '{} - {} - {}'.format(self.name, self.uuid)
+
+    @classmethod
+    def find_by_name(self, name):
+        try:
+            return ModelWithDateTime.objects.get(name=name)
+        except ModelWithDateTime.DoesNotExist:
+            return None
+
+    @classmethod
+    def find_by_id(cls, id):
+        try:
+            return ModelWithDateTime.objects.get(id=id)
+        except ModelWithDateTime.DoesNotExist:
             return None
 
 
