@@ -39,3 +39,9 @@ msgstr "Date non communiquée"
 
 msgid "score"
 msgstr "Note"
+
+msgid "override_sublclass_error"
+msgstr "La classe {subclass_name} n'est pas une sous-classe"
+
+msgid "override_method_error"
+msgstr "La fonction {function_name} n'est pas une fonction d'une super classe de {subclass_name} [{super_classes_names}]"
