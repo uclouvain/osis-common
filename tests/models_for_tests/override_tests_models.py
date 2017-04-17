@@ -34,21 +34,21 @@ class ClassToOverride:
 
 class NotASubClass:
 
-    @override()
+    @override(ClassToOverride)
     def method_to_override(self, args):
         pass
 
 
 class WrongOverrideMethod(ClassToOverride):
 
-    @override()
+    @override(ClassToOverride)
     def foo(self, args):
         pass
 
 
 class GoodOverrideChild(ClassToOverride):
 
-    @override()
+    @override(ClassToOverride)
     def method_to_override(self, args):
         pass
 

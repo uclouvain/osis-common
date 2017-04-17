@@ -30,7 +30,7 @@ from osis_common.decorators import override
 
 class InstalledAppsTestRunner(DiscoverRunner):
 
-    @override()
+    @override(DiscoverRunner)
     def build_suite(self, test_labels=None, extra_tests=None, **kwargs):
         if not test_labels:
             test_labels = settings.APPS_TO_TEST

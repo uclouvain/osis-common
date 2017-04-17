@@ -27,12 +27,12 @@ import functools
 from osis_common.models.exception import OverrideSubClassError, OverrideMethodError
 
 
-def override():
+def override(SuperClass):
     """This decorator can be use to ensure that an override method really exists in the superClass"""
     def method(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            if not args[0].__class__.__bases__:
+            if SuperClass not in args[0].__class__.__bases__:
                 raise OverrideSubClassError(args[0].__class__.__name__)
             if not _check_super_class_method(args[0].__class__.__bases__, func.__name__):
                 raise OverrideMethodError(func.__name__,

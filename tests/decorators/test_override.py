@@ -26,9 +26,9 @@
 from django.conf import settings
 from django.test.testcases import TestCase
 from osis_common.decorators.override import _check_super_class_method
-from osis_common.models.exception import OverrideMethodError
+from osis_common.models.exception import OverrideMethodError, OverrideSubClassError
 from osis_common.tests.models_for_tests.override_tests_models import WrongOverrideMethod, \
-    GoodOverrideChild, ClassToOverride
+    GoodOverrideChild, ClassToOverride, NotASubClass
 import logging
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
@@ -36,8 +36,12 @@ logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
 class TestOverrideDecorator(TestCase):
 
+    def test_not_A_subclass(self):
+        with self.assertRaises(OverrideSubClassError):
+            NotASubClass().method_to_override('args')
+
     def test_wrong_method_override(self):
-        with self.assertRaises(OverrideMethodError) as e:
+        with self.assertRaises(OverrideMethodError):
             WrongOverrideMethod().foo('args')
 
     def test_override_decorator_ok(self):
