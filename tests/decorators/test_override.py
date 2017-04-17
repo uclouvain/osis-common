@@ -25,9 +25,9 @@
 ##############################################################################
 from django.conf import settings
 from django.test.testcases import TestCase
-from osis_common.decorators.override import _clean_base_classes, _check_super_class_method
-from osis_common.models.exception import OverrideSubClassError, OverrideMethodError
-from osis_common.tests.models_for_tests.override_tests_models import NotASubClass, WrongOverrideMethod, \
+from osis_common.decorators.override import _check_super_class_method
+from osis_common.models.exception import OverrideMethodError
+from osis_common.tests.models_for_tests.override_tests_models import WrongOverrideMethod, \
     GoodOverrideChild, ClassToOverride
 import logging
 
@@ -36,22 +36,12 @@ logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
 class TestOverrideDecorator(TestCase):
 
-    def test_wrong_subclass(self):
-        with self.assertRaises(OverrideSubClassError) as e:
-            NotASubClass().method_to_override('arg')
-
     def test_wrong_method_override(self):
         with self.assertRaises(OverrideMethodError) as e:
             WrongOverrideMethod().foo('args')
 
     def test_override_decorator_ok(self):
         GoodOverrideChild().method_to_override('args')
-
-    def test_clean_base_classes_not_empty(self):
-        self.assertTrue(_clean_base_classes(WrongOverrideMethod().__class__.__bases__))
-
-    def test_clean_base_test_classes_empty(self):
-        self.assertFalse(_clean_base_classes(NotASubClass().__class__.__bases__))
 
     def test_check_super_class_method_valid(self):
         self.assertTrue(_check_super_class_method(GoodOverrideChild().__class__.__bases__,
