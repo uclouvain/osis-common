@@ -156,6 +156,7 @@ def getRightData() :
                 'last_name': 'Toubeau'
             },
             'programs': [{
+                'deadline': '',
                 'deliberation_date': 'Non communiquée',
                 'acronym': 'CHIM1BA',
                 'address': {
@@ -172,43 +173,37 @@ def getRightData() :
                     'first_name': 'Géraldine',
                     'last_name': 'Chanteux',
                     'justification': '',
-                    'score': '14',
-                    'deadline': ''
+                    'score': '14'
                 }, {
                     'registration_id': '17151400',
                     'first_name': 'Jordan',
                     'last_name': 'Crutzen',
                     'justification': 'Tricherie',
-                    'score': '',
-                    'deadline': ''
+                    'score': ''
                 }, {
                     'registration_id': '11661500',
                     'first_name': 'Emmerance',
                     'last_name': 'Gillon',
                     'justification': 'Tricherie',
-                    'score': '',
-                    'deadline': ''
+                    'score': ''
                 }, {
                     'registration_id': '37641300',
                     'first_name': 'Sharon',
                     'last_name': 'Hubert',
                     'justification': 'Tricherie',
-                    'score': '',
-                    'deadline': ''
+                    'score': ''
                 }, {
                     'registration_id': '04501500',
                     'first_name': 'Corentin',
                     'last_name': 'Pochet',
                     'justification': 'Tricherie',
-                    'score': '',
-                    'deadline': ''
+                    'score': ''
                 }, {
                     'registration_id': '02771400',
                     'first_name': 'Maria',
                     'last_name': 'Shoueiry',
                     'justification': 'Note manquante',
-                    'score': '',
-                    'deadline': ''
+                    'score': ''
                 }]
             }],
             'title': 'English: reading and listening comprehension of scientific texts - C',

@@ -188,8 +188,8 @@ def _build_page_content(enrollments_by_pdf_page, learn_unit_year, nb_students, p
     page_content.extend(_build_program_block_content(learn_unit_year, nb_students, program, styles))
     # 2. Adding the complete table of examEnrollments to the PDF sheet
     page_content.append(_build_exam_enrollments_table(enrollments_by_pdf_page, styles))
-    page_content.extend(_build_signature_content())
     # 3. Write Legend
+    page_content.extend(_build_signature_content())
     page_content.append(_build_legend_block(learn_unit_year['decimal_scores'], justification_legend))
     # 4. New Page
     page_content.append(PageBreak())
