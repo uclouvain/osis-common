@@ -39,3 +39,9 @@ msgstr "Date not passed"
 
 msgid "score"
 msgstr "Score"
+
+msgid "override_sublclass_error"
+msgstr "{subclass_name} is not a sub-class"
+
+msgid "override_method_error"
+msgstr "{function_name} is not a function of a super-class of {subclass_name} [{super_classes_names}]"
