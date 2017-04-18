@@ -188,7 +188,7 @@ def _build_page_content(enrollments_by_pdf_page, learn_unit_year, nb_students, p
     page_content.extend(_build_program_block_content(learn_unit_year, nb_students, program, styles))
     # 2. Adding the complete table of examEnrollments to the PDF sheet
     page_content.append(_build_exam_enrollments_table(enrollments_by_pdf_page, styles))
-    page_content.append(Paragraph('''<para spaceb=10>&nbsp;</para>''', ParagraphStyle('normal')))
+    page_content.extend(_build_signature_content())
     # 3. Write Legend
     page_content.append(_build_legend_block(learn_unit_year['decimal_scores'], justification_legend))
     # 4. New Page
@@ -345,22 +345,12 @@ def _get_academic_year_text(learning_unit_year):
                                             learning_unit_year['session_number'])
 
 
-def _build_deadline_and_signature_content(end_date):
+def _build_signature_content():
     return [
-        _build_deadline_note_paragraph(end_date),
         Paragraph('''<para spaceb=5> &nbsp; </para>''', ParagraphStyle('normal')),
         _build_signature_paragraph(),
         Paragraph(''' <para spaceb=2> &nbsp; </para> ''', ParagraphStyle('normal'))
     ]
-
-
-def _build_deadline_note_paragraph(end_date):
-    style = ParagraphStyle('info')
-    style.fontSize = 10
-    style.alignment = TA_LEFT
-    if not end_date:
-        end_date = '(%s)' % _('date_not_passed')
-    return Paragraph(_("return_doc_to_administrator") % end_date, style)
 
 
 def _build_signature_paragraph():
