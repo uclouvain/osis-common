@@ -39,7 +39,7 @@ import datetime
 
 PAGE_SIZE = A4
 MARGIN_SIZE = 15 * mm
-COLS_WIDTH = [20*mm, 55*mm, 45*mm, 15*mm, 40*mm]
+COLS_WIDTH = [20*mm, 35*mm, 35*mm, 15*mm, 35*mm, 35*mm]
 STUDENTS_PER_PAGE = 24
 DATE_FORMAT = "%d/%m/%Y"
 
@@ -73,7 +73,6 @@ def get_data_schema():
                  Required("decimal_scores"): bool,
                  Required("programs"): [
                     {
-                      Required("deadline"): str,
                       Required("deliberation_date"): str,
                       Required("acronym"): str,
                       Required("address"): {},
@@ -82,7 +81,8 @@ def get_data_schema():
                           Required("first_name"): str,
                           Required("last_name"): str,
                           Required("justification"): str,
-                          Required("score"): str
+                          Required("score"): str,
+                          Required("deadline"): str
                       }]
                     }
                  ],
@@ -189,7 +189,7 @@ def _build_page_content(enrollments_by_pdf_page, learn_unit_year, nb_students, p
     # 2. Adding the complete table of examEnrollments to the PDF sheet
     page_content.append(_build_exam_enrollments_table(enrollments_by_pdf_page, styles))
     # 3. Write Legend
-    page_content.extend(_build_deadline_and_signature_content(program['deadline']))
+    page_content.extend(_build_signature_content())
     page_content.append(_build_legend_block(learn_unit_year['decimal_scores'], justification_legend))
     # 4. New Page
     page_content.append(PageBreak())
@@ -204,7 +204,8 @@ def _build_exam_enrollments_table(enrollments_by_pdf_page, styles):
                                Paragraph(enrollment["last_name"], styles['Normal']),
                                Paragraph(enrollment["first_name"], styles['Normal']),
                                enrollment["score"],
-                               Paragraph(_(enrollment["justification"]), styles['Normal'])])
+                               Paragraph(_(enrollment["justification"]), styles['Normal']),
+                               enrollment["deadline"]])
     table = Table(students_table, COLS_WIDTH, repeatRows=1)
     table.setStyle(TableStyle([
         ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.black),
@@ -220,7 +221,9 @@ def _students_table_header():
              '''%s''' % _('lastname'),
              '''%s''' % _('firstname'),
              '''%s''' % _('score'),
-             '''%s''' % _('justification')]]
+             '''%s''' % _('justification'),
+             '''%s''' % _('end_date')
+             ]]
     return data
 
 
@@ -342,22 +345,12 @@ def _get_academic_year_text(learning_unit_year):
                                             learning_unit_year['session_number'])
 
 
-def _build_deadline_and_signature_content(end_date):
+def _build_signature_content():
     return [
-        _build_deadline_note_paragraph(end_date),
         Paragraph('''<para spaceb=5> &nbsp; </para>''', ParagraphStyle('normal')),
         _build_signature_paragraph(),
         Paragraph(''' <para spaceb=2> &nbsp; </para> ''', ParagraphStyle('normal'))
     ]
-
-
-def _build_deadline_note_paragraph(end_date):
-    style = ParagraphStyle('info')
-    style.fontSize = 10
-    style.alignment = TA_LEFT
-    if not end_date:
-        end_date = '(%s)' % _('date_not_passed')
-    return Paragraph(_("return_doc_to_administrator") % end_date, style)
 
 
 def _build_signature_paragraph():
