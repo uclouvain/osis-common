@@ -28,6 +28,9 @@ msgstr "Only objects from the same models are allowed"
 msgid "students"
 msgstr "students"
 
+msgid "student"
+msgstr "student"
+
 msgid "printing_date"
 msgstr "Printing date"
 

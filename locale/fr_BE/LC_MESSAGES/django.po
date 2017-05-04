@@ -28,6 +28,9 @@ msgstr "Tous les objets doivent appartenir au même modèle"
 msgid "students"
 msgstr "étudiants"
 
+msgid "student"
+msgstr "étudiant"
+
 msgid "printing_date"
 msgstr "Date d'impression"
 
