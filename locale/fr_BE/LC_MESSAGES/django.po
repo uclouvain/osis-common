@@ -28,14 +28,20 @@ msgstr "Tous les objets doivent appartenir au même modèle"
 msgid "students"
 msgstr "étudiants"
 
-msgid "printing_date"
-msgstr "Date d'impression"
+msgid "student"
+msgstr "étudiant"
+
+msgid "creation_date"
+msgstr "Date de creation"
 
 msgid "not_passed"
 msgstr "Non communiquée"
 
 msgid "date_not_passed"
 msgstr "Date non communiquée"
+
+msgid "submit_date"
+msgstr "Date de remise"
 
 msgid "score"
 msgstr "Note"
@@ -45,3 +51,6 @@ msgstr "La classe {subclass_name} n'est pas une sous-classe"
 
 msgid "override_method_error"
 msgstr "La fonction {function_name} n'est pas une fonction d'une super classe de {subclass_name} [{super_classes_names}]"
+
+msgid "warn_user_data_can_change"
+msgstr "Les données présentes sur ce document correspondent à l'état du système en date du %s et sont susceptibles d'évoluer"

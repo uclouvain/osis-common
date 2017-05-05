@@ -24,7 +24,7 @@
 #
 ##############################################################################
 from io import BytesIO
-from voluptuous import Schema, Required, All, Url, Length, error as voluptuous_error
+from voluptuous import Schema, Any, Required, All, Url, Length, error as voluptuous_error
 from django.http import HttpResponse
 from django.conf import settings
 from reportlab.lib.pagesizes import A4
@@ -34,7 +34,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.lib import colors
 from django.utils.translation import ugettext_lazy as _
-import datetime
+from django.utils import timezone
 
 
 PAGE_SIZE = A4
@@ -78,8 +78,8 @@ def get_data_schema():
                       Required("address"): {},
                       Required("enrollments"): [{
                           Required("registration_id"): str,
-                          Required("first_name"): str,
-                          Required("last_name"): str,
+                          Required("first_name"): Any(str,None),
+                          Required("last_name"): Any(str,None),
                           Required("justification"): str,
                           Required("score"): str,
                           Required("deadline"): str
@@ -92,8 +92,8 @@ def get_data_schema():
                          Required("postal_code"): str,
                          Required("location"): str
                      },
-                     Required("first_name"): str,
-                     Required("last_name"): str
+                     Required("first_name"): Any(str,None),
+                     Required("last_name"): Any(str, None)
                  }
              }
         ], Length(min=1), extra=True)
@@ -222,7 +222,7 @@ def _students_table_header():
              '''%s''' % _('firstname'),
              '''%s''' % _('score'),
              '''%s''' % _('justification'),
-             '''%s''' % _('end_date')
+             '''%s''' % _('submit_date')
              ]]
     return data
 
@@ -328,7 +328,7 @@ def _get_program_text(nb_students, program):
     return '''<b>{} : {} </b>({} {})'''.format(_('program'),
                                                program['acronym'],
                                                nb_students,
-                                               _('students'))
+                                               _('students') if nb_students > 1 else _('student'))
 
 
 def _get_learning_unit_year_text(learning_unit_year):
@@ -365,6 +365,9 @@ def _build_signature_paragraph():
 
 
 def _build_legend_block(decimal_scores, justification_legend):
+    creation_date = timezone.now()
+    creation_date = creation_date.strftime(DATE_FORMAT)
+
     legend_text = justification_legend
     legend_text += "<br/>%s" % (str(_('score_legend') % "0 - 20"))
     if decimal_scores:
@@ -374,6 +377,9 @@ def _build_legend_block(decimal_scores, justification_legend):
 
     legend_text += '''<br/> %s : <a href="%s"><font color=blue><u>%s</u></font></a>''' \
                    % (_("in_accordance_to_regulation"), _("link_to_RGEE"), _("link_to_RGEE"))
+
+    legend_text += "<br/><font color=red>%s</font>" % str(_('warn_user_data_can_change') % creation_date)
+
     return Paragraph('''<para> %s </para>''' % legend_text, _build_legend_block_style())
 
 
@@ -389,9 +395,9 @@ def _build_legend_block_style():
 
 
 def _write_footer(canvas, doc, styles):
-    printing_date = datetime.datetime.now()
-    printing_date = printing_date.strftime(DATE_FORMAT)
-    pageinfo = "%s : %s" % (_('printing_date'), printing_date)
+    creation_date = timezone.now()
+    creation_date = creation_date.strftime(DATE_FORMAT)
+    pageinfo = "%s : %s" % (_('creation_date'), creation_date)
     footer = Paragraph(''' <para align=right>Page %d - %s </para>''' % (doc.page, pageinfo), styles['Normal'])
     w, h = footer.wrap(doc.width, doc.bottomMargin)
     footer.drawOn(canvas, doc.leftMargin, h)
