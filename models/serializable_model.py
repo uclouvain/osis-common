@@ -23,23 +23,25 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+import uuid
 import logging
+import json
+import datetime
+import time
+
 from django.conf import settings
 from django.contrib import admin, messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import DateTimeField, DateField
 from django.core import serializers
-import uuid
-from pika.exceptions import ChannelClosed, ConnectionClosed
-from osis_common.models.exception import MultipleModelsSerializationException, \
-    MigrationPersistanceError
-from osis_common.queue import queue_sender
-import json
-import datetime
 from django.utils.encoding import force_text
 from django.apps import apps
-import time
+
+from pika.exceptions import ChannelClosed, ConnectionClosed
+from osis_common.models.exception import MultipleModelsSerializationException, MigrationPersistanceError
+from osis_common.queue import queue_sender
+
 
 LOGGER = logging.getLogger(settings.DEFAULT_LOGGER)
 
