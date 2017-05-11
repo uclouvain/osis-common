@@ -28,14 +28,20 @@ msgstr "Only objects from the same models are allowed"
 msgid "students"
 msgstr "students"
 
-msgid "printing_date"
-msgstr "Printing date"
+msgid "student"
+msgstr "student"
+
+msgid "creation_date"
+msgstr "Creation date"
 
 msgid "not_passed"
 msgstr "Not passed"
 
 msgid "date_not_passed"
 msgstr "Date not passed"
+
+msgid "submit_date"
+msgstr "Submit data"
 
 msgid "score"
 msgstr "Score"
@@ -45,3 +51,6 @@ msgstr "{subclass_name} is not a sub-class"
 
 msgid "override_method_error"
 msgstr "{function_name} is not a function of a super-class of {subclass_name} [{super_classes_names}]"
+
+msgid "warn_user_data_can_change"
+msgstr "The data presented on this document correspond to the state of the system dated %s and are likely to evolve"
