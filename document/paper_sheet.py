@@ -152,7 +152,7 @@ def _write_header(canvas, doc, styles):
     a = Image(settings.LOGO_INSTITUTION_URL, width=15*mm, height=20*mm)
     p = Paragraph('''<para align=center>
                         <font size=16>%s</font>
-                    </para>''' % (_('scores_transcript')), styles["BodyText"])
+                    </para>''' % (_('scores_sheet')), styles["BodyText"])
 
     data_header = [[a, '%s' % _('ucl_denom_location'), p], ]
     t_header = Table(data_header, [30*mm, 100*mm, 50*mm])

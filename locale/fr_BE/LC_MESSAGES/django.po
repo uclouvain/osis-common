@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 msgid "message_content_error"
-msgstr "Acun messages n'a été envoyés en raison d'une erreur dans le contenu du message"
+msgstr "Aucun messages n'a été envoyés en raison d'une erreur dans le contenu du message"
 
 msgid "template_error"
 msgstr "Aucun message n'a été envoyé : le modèle de message {} n'existe pas."
@@ -54,3 +54,84 @@ msgstr "La fonction {function_name} n'est pas une fonction d'une super classe de
 
 msgid "warn_user_data_can_change"
 msgstr "Les données présentes sur ce document correspondent à l'état du système en date du %s et sont susceptibles d'évoluer"
+
+msgid "scores_sheet"
+msgstr "Feuille de notes"
+
+msgid "ucl_denom_location"
+msgstr "Université catholique de Louvain"
+
+msgid "ABSENCE_JUSTIFIED"
+msgstr "Absence justifiée"
+
+msgid "ABSENCE_UNJUSTIFIED"
+msgstr "Absence injustifiée"
+
+msgid "CHEATING"
+msgstr "Tricherie"
+
+msgid "SCORE_MISSING"
+msgstr "Note manquante"
+
+msgid "registration_number"
+msgstr "Noma"
+
+msgid "lastname"
+msgstr "Nom"
+
+msgid "firstname"
+msgstr "Prénom"
+
+msgid "justification"
+msgstr "Justification"
+
+msgid "SCORES_RESPONSIBLE"
+msgstr "Responsable de notes"
+
+msgid "none"
+msgstr "Aucun"
+
+msgid "email"
+msgstr "Email"
+
+msgid "phone"
+msgstr "Téléphone"
+
+msgid "fax"
+msgstr "Fax"
+
+msgid "program"
+msgstr "Programme"
+
+msgid "deliberation_date"
+msgstr "Date de délibération"
+
+msgid "academic_year"
+msgstr "Année académique"
+
+msgid "done_at"
+msgstr "Fait à"
+
+msgid "the"
+msgstr "le"
+
+msgid "signature"
+msgstr "Signature"
+
+msgid "justification_legend"
+msgstr "Légende pour le champ 'Justification': %s"
+
+msgid "score_legend"
+msgstr "Légende pour le champ 'Note chiffrée': %s (0=Cote de présence)"
+
+msgid "authorized_decimal_for_this_activity"
+msgstr "Les notes décimales sont autorisées pour ce cours"
+
+msgid "unauthorized_decimal_for_this_activity"
+msgstr "Attention : décimales non autorisées pour ce cours"
+
+msgid "in_accordance_to_regulation"
+msgstr "Conformément aux articles 104, 109 et 111 RGEE (Règlement Général des Examens) disponible au lien suivant"
+
+msgid "link_to_RGEE"
+msgstr "https://uclouvain.be/fr/decouvrir/rgee.html"
