@@ -53,7 +53,7 @@ def print_notes(data):
     try:
         validate_data_structure(data)
         return build_response(data)
-    except voluptuous_error.Invalid:
+    except voluptuous_error.Invalid as e:
         return build_error_response()
 
 
@@ -78,8 +78,8 @@ def get_data_schema():
                       Required("address"): {},
                       Required("enrollments"): [{
                           Required("registration_id"): str,
-                          Required("first_name"): Any(str,None),
-                          Required("last_name"): Any(str,None),
+                          Required("first_name", default=''): Any(None,str),
+                          Required("last_name", default=''): Any(None, str),
                           Required("justification"): str,
                           Required("score"): str,
                           Required("deadline"): str
@@ -92,8 +92,8 @@ def get_data_schema():
                          Required("postal_code"): str,
                          Required("location"): str
                      },
-                     Required("first_name"): Any(str,None),
-                     Required("last_name"): Any(str, None)
+                     Required("first_name", default=''): Any(None, str),
+                     Required("last_name", default=''): Any(None, str)
                  }
              }
         ], Length(min=1), extra=True)
@@ -199,10 +199,13 @@ def _build_page_content(enrollments_by_pdf_page, learn_unit_year, nb_students, p
 def _build_exam_enrollments_table(enrollments_by_pdf_page, styles):
     students_table = _students_table_header()
     for enrollment in enrollments_by_pdf_page:
+        student_last_name = enrollment["last_name"] if enrollment["last_name"] else ""
+        student_first_name = enrollment["first_name"] if enrollment["first_name"] else ""
+
         # 1. Append the examEnrollment to the table 'students_table'
         students_table.append([enrollment["registration_id"],
-                               Paragraph(enrollment["last_name"], styles['Normal']),
-                               Paragraph(enrollment["first_name"], styles['Normal']),
+                               Paragraph(student_last_name, styles['Normal']),
+                               Paragraph(student_first_name, styles['Normal']),
                                enrollment["score"],
                                Paragraph(_(enrollment["justification"]), styles['Normal']),
                                enrollment["deadline"]])
@@ -262,7 +265,9 @@ def _get_scores_responsible_title_text():
 
 def _get_scores_responsible_text(scores_responsible):
     if scores_responsible:
-        return '{} {}'.format(scores_responsible['last_name'], scores_responsible['first_name'])
+        last_name = scores_responsible["last_name"] if scores_responsible['last_name'] else ""
+        first_name = scores_responsible["first_name"] if scores_responsible['first_name'] else ""
+        return '{} {}'.format(last_name, first_name)
     return '{}'.format(_('none'))
 
 
