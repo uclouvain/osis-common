@@ -54,3 +54,81 @@ msgstr "{function_name} is not a function of a super-class of {subclass_name} [{
 
 msgid "warn_user_data_can_change"
 msgstr "The data presented on this document correspond to the state of the system dated %s and are likely to evolve"
+
+msgid "scores_sheet"
+msgstr "Score sheet"
+
+msgid "ucl_denom_location"
+msgstr "Université catholique de Louvain"
+
+msgid "ABSENCE_JUSTIFIED"
+msgstr "Justified absence"
+
+msgid "ABSENCE_UNJUSTIFIED"
+msgstr "Unjustified Absence"
+
+msgid "CHEATING"
+msgstr "Cheating"
+
+msgid "SCORE_MISSING"
+msgstr "Score missing"
+
+msgid "registration_number"
+msgstr "Registration number"
+
+msgid "lastname"
+msgstr "Lastname"
+
+msgid "firstname"
+msgstr "Firstname"
+
+msgid "justification"
+msgstr "Justification"
+
+msgid "SCORES_RESPONSIBLE"
+msgstr "Scores responsible"
+
+msgid "none"
+msgstr "None"
+
+msgid "email"
+msgstr "Email"
+
+msgid "phone"
+msgstr "Phone"
+
+msgid "fax"
+msgstr "Fax"
+
+msgid "program"
+msgstr "Program"
+
+msgid "deliberation_date"
+msgstr "Deliberation date"
+
+msgid "academic_year"
+msgstr "Academic year"
+
+msgid "done_at"
+msgstr "Done at"
+
+msgid "the"
+msgstr "the"
+
+msgid "justification_legend"
+msgstr "Justification legend: %s"
+
+msgid "score_legend"
+msgstr "Score legend: %s (0=Score of presence)"
+
+msgid "authorized_decimal_for_this_activity"
+msgstr "Decimals authorized for this learning unit"
+
+msgid "unauthorized_decimal_for_this_activity"
+msgstr "Unauthorized decimal for this learning unit"
+
+msgid "in_accordance_to_regulation"
+msgstr "In accordance to regulation's rules 104, 109 and 111. Complete rules avalaible here"
+
+msgid "link_to_RGEE"
+msgstr "https://www.uclouvain.be/enseignement-reglements.html"
