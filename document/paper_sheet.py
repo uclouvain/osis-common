@@ -53,7 +53,7 @@ def print_notes(data):
     try:
         validate_data_structure(data)
         return build_response(data)
-    except voluptuous_error.Invalid as e:
+    except voluptuous_error.Invalid:
         return build_error_response()
 
 
