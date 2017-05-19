@@ -74,7 +74,7 @@ msgid "SCORE_MISSING"
 msgstr "Score missing"
 
 msgid "registration_number"
-msgstr "Registration number"
+msgstr "Reg. No."
 
 msgid "lastname"
 msgstr "Lastname"
