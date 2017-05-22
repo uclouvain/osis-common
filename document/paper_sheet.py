@@ -99,13 +99,15 @@ def get_data_schema():
         ], Length(min=1), extra=True)
     }, extra=True)
 
-def validate_data_structure(data) :
+
+def validate_data_structure(data):
     s = get_data_schema()
     return s(data)
 
-def build_error_response() :
-    #Return internal server error
+
+def build_error_response():
     return HttpResponse(status=500)
+
 
 def build_response(data):
     filename = "%s.pdf" % _('scores_sheet')
@@ -114,6 +116,7 @@ def build_response(data):
     pdf = build_pdf(data)
     response.write(pdf)
     return response
+
 
 def build_pdf(data):
     buffer = BytesIO()
@@ -129,10 +132,12 @@ def build_pdf(data):
     buffer.close()
     return pdf
 
+
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
     for i in range(0, len(l), n):
         yield l[i:i + n]
+
 
 def _write_header_and_footer(canvas, doc):
     """
@@ -147,6 +152,7 @@ def _write_header_and_footer(canvas, doc):
     _write_footer(canvas, doc, styles)
     # Release the canvas
     canvas.restoreState()
+
 
 def _write_header(canvas, doc, styles):
     a = Image(settings.LOGO_INSTITUTION_URL, width=15*mm, height=20*mm)
@@ -175,7 +181,8 @@ def _data_to_pdf_content(json_data):
         for program in learn_unit_year['programs']:
             nb_students = len(program['enrollments'])
             for enrollments_by_pdf_page in chunks(program['enrollments'], STUDENTS_PER_PAGE):
-                content.extend(_build_page_content(enrollments_by_pdf_page, learn_unit_year, nb_students, program, styles,justification_legend))
+                content.extend(_build_page_content(enrollments_by_pdf_page, learn_unit_year, nb_students, program,
+                                                   styles, justification_legend))
     return content
 
 
@@ -215,7 +222,6 @@ def _build_exam_enrollments_table(enrollments_by_pdf_page, styles):
         ('BOX', (0, 0), (-1, -1), 0.25, colors.black),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey)]))
-
     return table
 
 
