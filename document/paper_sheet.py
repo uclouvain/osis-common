@@ -170,16 +170,15 @@ def _build_styles():
 def _data_to_pdf_content(json_data):
     styles = _build_styles()
     content = []
-    justification_legend = json_data['justification_legend']
     for learn_unit_year in json_data['learning_unit_years']:
         for program in learn_unit_year['programs']:
             nb_students = len(program['enrollments'])
             for enrollments_by_pdf_page in chunks(program['enrollments'], STUDENTS_PER_PAGE):
-                content.extend(_build_page_content(enrollments_by_pdf_page, learn_unit_year, nb_students, program, styles,justification_legend))
+                content.extend(_build_page_content(enrollments_by_pdf_page, learn_unit_year, nb_students, program, styles))
     return content
 
 
-def _build_page_content(enrollments_by_pdf_page, learn_unit_year, nb_students, program, styles, justification_legend):
+def _build_page_content(enrollments_by_pdf_page, learn_unit_year, nb_students, program, styles):
     page_content = []
     # 1. Write addresses & programs info
     # We add first a blank line
@@ -190,7 +189,7 @@ def _build_page_content(enrollments_by_pdf_page, learn_unit_year, nb_students, p
     page_content.append(_build_exam_enrollments_table(enrollments_by_pdf_page, styles))
     # 3. Write Legend
     page_content.extend(_build_signature_content())
-    page_content.append(_build_legend_block(learn_unit_year['decimal_scores'], justification_legend))
+    page_content.append(_build_legend_block(learn_unit_year['decimal_scores']))
     # 4. New Page
     page_content.append(PageBreak())
     return page_content
@@ -369,7 +368,7 @@ def _build_signature_paragraph():
     return paragraph_signature
 
 
-def _build_legend_block(decimal_scores, justification_legend):
+def _build_legend_block(decimal_scores):
     creation_date = timezone.now()
     creation_date = creation_date.strftime(DATE_FORMAT)
 
