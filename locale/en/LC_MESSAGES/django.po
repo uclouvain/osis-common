@@ -116,6 +116,9 @@ msgid "the"
 msgstr "the"
 
 msgid "justification_legend"
+msgstr "Justification legend: %s"
+
+msgid "justification_legend_pdf"
 msgstr "Justification legend: A=Absent, T=Cheating"
 
 msgid "score_legend"

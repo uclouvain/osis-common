@@ -119,6 +119,9 @@ msgid "signature"
 msgstr "Signature"
 
 msgid "justification_legend"
+msgstr "Légende pour le champ 'Justification': %s"
+
+msgid "justification_legend_pdf"
 msgstr "Légende pour le champ 'Justification': A=Absent, T=Tricherie"
 
 msgid "score_legend"
