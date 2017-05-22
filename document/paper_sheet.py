@@ -372,7 +372,7 @@ def _build_legend_block(decimal_scores):
     creation_date = timezone.now()
     creation_date = creation_date.strftime(DATE_FORMAT)
 
-    legend_text = str(_('justification_legend'))
+    legend_text = str(_('justification_legend_pdf'))
     legend_text += "<br/>%s" % (str(_('score_legend') % "0 - 20"))
     if decimal_scores:
         legend_text += "<br/><font color=red>%s</font>" % _('authorized_decimal_for_this_activity')
