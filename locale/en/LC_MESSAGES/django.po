@@ -74,7 +74,7 @@ msgid "SCORE_MISSING"
 msgstr "Score missing"
 
 msgid "registration_number"
-msgstr "Registration number"
+msgstr "Reg. No."
 
 msgid "lastname"
 msgstr "Lastname"
@@ -116,7 +116,7 @@ msgid "the"
 msgstr "the"
 
 msgid "justification_legend"
-msgstr "Justification legend: %s"
+msgstr "Justification legend: A=Absent, T=Cheating"
 
 msgid "score_legend"
 msgstr "Score legend: %s (0=Score of presence)"
