@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 msgid "message_content_error"
-msgstr "Aucun messages n'a été envoyés en raison d'une erreur dans le contenu du message"
+msgstr "Aucun email n'a été envoyé à cause d'un problème technique."
 
 msgid "template_error"
 msgstr "Aucun message n'a été envoyé : le modèle de message {} n'existe pas."

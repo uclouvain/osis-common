@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 msgid "message_content_error"
-msgstr "No messages were sent because of message content failure."
+msgstr "No email has been sent because a technical error occured."
 
 msgid "template_error"
 msgstr "No messages were sent : the message template {} does not exist."
