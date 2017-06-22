@@ -31,7 +31,7 @@ from django.utils import timezone
 
 class ApplicationNoticeFactory(factory.DjangoModelFactory):
     class Meta:
-        model = 'base.ApplicationNotice'
+        model = 'osis_common.ApplicationNotice'
 
     subject = factory.Sequence(lambda n: 'Application Notice - %d' % n)
     notice = factory.LazyAttribute(lambda obj: 'Fake description of application notice %s' % obj.subject)
