@@ -32,7 +32,7 @@ msgid "student"
 msgstr "étudiant"
 
 msgid "creation_date"
-msgstr "Date de creation"
+msgstr "Date de création"
 
 msgid "not_passed"
 msgstr "Non communiquée"
