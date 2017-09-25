@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
+import django.contrib.postgres.fields.jsonb
 
 
 class Migration(migrations.Migration):
@@ -20,6 +21,15 @@ class Migration(migrations.Migration):
                 ('notice', models.TextField()),
                 ('start_publish', models.DateTimeField()),
                 ('stop_publish', models.DateTimeField()),
+            ],
+        ),
+        migrations.CreateModel(
+            name='MessageQueueCache',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('queue', models.CharField(max_length=255)),
+                ('data', django.contrib.postgres.fields.jsonb.JSONField()),
+                ('changed', models.DateTimeField(auto_now_add=True)),
             ],
         ),
     ]
