@@ -70,15 +70,16 @@ class SerializableModelAdmin(admin.ModelAdmin):
     def resend_messages_to_queue(self, request, queryset):
         if hasattr(settings, 'QUEUES') and settings.QUEUES:
             counter = 0
+            queue_name = settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE')
             for record in queryset:
                 try:
                     ser_obj = serialize(record)
-                    queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
+                    queue_sender.send_message(queue_name,
                                               wrap_serialization(ser_obj))
                     counter += 1
                 except (ChannelClosed, ConnectionClosed):
                     self.message_user(request,
-                                      'Message %s not sent to %s.' % (record.pk, record.queue_name),
+                                      'Message %s not sent to %s.' % (record.pk, queue_name),
                                       level=messages.ERROR)
             self.message_user(request, "{} message(s) sent.".format(counter), level=messages.SUCCESS)
         else:

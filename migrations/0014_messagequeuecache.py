@@ -3,23 +3,23 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
+import django.contrib.postgres.fields.jsonb
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('osis_common', '0012_queueexception'),
+        ('osis_common', '0013_applicationnotice'),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ApplicationNotice',
+            name='MessageQueueCache',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('subject', models.CharField(max_length=255)),
-                ('notice', models.TextField()),
-                ('start_publish', models.DateTimeField()),
-                ('stop_publish', models.DateTimeField()),
+                ('queue', models.CharField(max_length=255)),
+                ('data', django.contrib.postgres.fields.jsonb.JSONField()),
+                ('changed', models.DateTimeField(auto_now_add=True)),
             ],
         ),
     ]
