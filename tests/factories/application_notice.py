@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 ##############################################################################
 #
 #    OSIS stands for Open Student Information System. It's an application
@@ -16,7 +15,7 @@
 #
 #    This program is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 #    GNU General Public License for more details.
 #
 #    A copy of this license - GNU General Public License - is available
@@ -24,34 +23,20 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from django.conf import settings
+import datetime
+import factory
+import factory.fuzzy
+from django.utils import timezone
 
-from django.test import SimpleTestCase
-import osis_common.scripts.sort_po_files as sort_po_files
-import os
 
+class ApplicationNoticeFactory(factory.DjangoModelFactory):
+    class Meta:
+        model = 'osis_common.ApplicationNotice'
 
-class SortPoCase(SimpleTestCase):
-    def test1(self):
-        self.maxDiff = None
-        # Initialize script
-        dir_path = os.path.join(settings.BASE_DIR,"osis_common/tests/ressources/")
-
-        sort_po_files.filename_to_be_sorted = "sort_po_test.po"
-        sort_po_files.filename_sorted = "sort_po_test_sorted.po"
-
-        sort_po_files.sort_po_file(dir_path)
-
-        f_expected = open(dir_path + "sort_po_expected.po", "r")
-        string_expected = f_expected.read()
-        f_expected.close()
-
-        f_actual = open(dir_path + "sort_po_test_sorted.po", "r")
-        string_actual = f_actual.read()
-        f_actual.close()
-
-        self.assertEqual(string_actual, string_expected)
-
-        # Remove files
-        os.remove(dir_path + sort_po_files.filename_sorted)
+    subject = factory.Sequence(lambda n: 'Application Notice - %d' % n)
+    notice = factory.LazyAttribute(lambda obj: 'Fake description of application notice %s' % obj.subject)
+    start_publish = factory.LazyAttribute(lambda obj: datetime.datetime(timezone.now().year, 1, 1,
+                                                                        tzinfo=timezone.get_current_timezone()))
+    stop_publish = factory.LazyAttribute(lambda obj: datetime.datetime(timezone.now().year+1, 12, 30,
+                                                                       tzinfo=timezone.get_current_timezone()))
 

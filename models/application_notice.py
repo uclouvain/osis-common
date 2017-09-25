@@ -23,34 +23,30 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from django.utils.translation import ugettext_lazy as _
+from django.db import models
+from django.contrib import admin
+from django.utils import timezone
 
 
-class MultipleModelsSerializationException(Exception):
-    def __init__(self, errors=None):
-        message = _('must_give_only_one_model')
-        super(MultipleModelsSerializationException, self).__init__(message)
-        self.errors = errors
+class ApplicationNoticeAdmin(admin.ModelAdmin):
+    list_display = ('subject','notice','start_publish','stop_publish')
+    fieldsets = ((None, {'fields': ('subject','notice','start_publish','stop_publish')}),)
 
 
-class MigrationPersistanceError(Exception):
-    def __init__(self, errors=None):
-        message = _('migration_persistence_error')
-        super(MigrationPersistanceError, self).__init__(message)
-        self.errors = errors
+class ApplicationNotice(models.Model):
+    subject = models.CharField(max_length=255)
+    notice = models.TextField()
+    start_publish = models.DateTimeField()
+    stop_publish = models.DateTimeField()
 
 
-class OverrideSubClassError(Exception):
-    def __init__(self, subclass_name, errors=None):
-        message = _('override_sublclass_error').format(subclass_name=subclass_name)
-        super(OverrideSubClassError, self).__init__(message)
-        self.errors = errors
+def find_current_notice():
+    samples = ApplicationNotice.objects.filter(stop_publish__gt=timezone.now(),
+                                               start_publish__lt=timezone.now()).first()
+    return samples
 
 
-class OverrideMethodError(Exception):
-    def __init__(self, function_name, super_classes_names, subclass_name, errors=None):
-        message = _('override_method_error').format(function_name=function_name,
-                                                    subclass_name=subclass_name,
-                                                    super_classes_names=super_classes_names)
-        super(OverrideMethodError, self).__init__(message)
-        self.errors = errors
+
+
+
+

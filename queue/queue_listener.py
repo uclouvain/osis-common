@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2016 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2017 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -37,44 +37,6 @@ from osis_common.models.queue_exception import QueueException
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 queue_exception_logger = logging.getLogger(settings.QUEUE_EXCEPTION_LOGGER)
-
-
-class ScoresSheetClient(object):
-    def __init__(self):
-        self.paper_sheet_queue = settings.QUEUES.get('QUEUES_NAME').get('PAPER_SHEET')
-        credentials = pika.PlainCredentials(settings.QUEUES.get('QUEUE_USER'),
-                                            settings.QUEUES.get('QUEUE_PASSWORD'))
-        self.connection = pika.BlockingConnection(pika.ConnectionParameters(settings.QUEUES.get('QUEUE_URL'),
-                                                                            settings.QUEUES.get('QUEUE_PORT'),
-                                                                            settings.QUEUES.get('QUEUE_CONTEXT_ROOT'),
-                                                                            credentials))
-
-        self.channel = self.connection.channel()
-
-        result = self.channel.queue_declare(exclusive=True, durable=True)
-        self.callback_queue = result.method.queue
-
-        self.channel.basic_consume(self.on_response, no_ack=True,
-                                   queue=self.callback_queue)
-
-    def on_response(self, ch, method, props, body):
-        if self.corr_id == props.correlation_id:
-            self.response = body
-
-    def call(self, n):
-        self.response = None
-        self.corr_id = str(uuid.uuid4())
-        self.channel.basic_publish(exchange='',
-                                   routing_key=self.paper_sheet_queue,
-                                   properties=pika.BasicProperties(
-                                         reply_to=self.callback_queue,
-                                         correlation_id=self.corr_id,
-                                         content_type='application/json',
-                                         ),
-                                   body=str(n))
-        while self.response is None:
-            self.connection.process_data_events()
-        return self.response
 
 
 class SynchronousConsumerThread(threading.Thread):

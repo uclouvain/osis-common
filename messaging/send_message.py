@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2016 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2017 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ from django.utils import translation
 
 import logging
 
-logger = logging.getLogger(settings.DEFAULT_LOGGER)
+logger = logging.getLogger(settings.SEND_MAIL_LOGGER)
 
 
 def _get_all_lang_templates(templates_refs):
@@ -240,7 +240,11 @@ def send_messages(message_content):
     template_base_data = message_content.get('template_base_data', None)
     subject_data = message_content.get('subject_data', None)
     attachment = message_content.get('attachment', None)
-    if not (html_template_ref and receivers):
+    if not html_template_ref:
+        logger.error("No html template found in message content; no message/mail has been sent.")
+        return _('message_content_error')
+    if not receivers:
+        logger.warning("No receivers found ; no message/mail has been sent.")
         return _('message_content_error')
     html_message_templates, txt_message_templates = _get_all_lang_templates([html_template_ref,
                                                                              txt_template_ref])

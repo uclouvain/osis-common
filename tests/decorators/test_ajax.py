@@ -23,34 +23,25 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from django.utils.translation import ugettext_lazy as _
+from django.test import TestCase, RequestFactory
+from django.core.exceptions import PermissionDenied
+
+from osis_common.decorators.ajax import ajax_required
 
 
-class MultipleModelsSerializationException(Exception):
-    def __init__(self, errors=None):
-        message = _('must_give_only_one_model')
-        super(MultipleModelsSerializationException, self).__init__(message)
-        self.errors = errors
+@ajax_required
+def test_view(request):
+    return True
 
 
-class MigrationPersistanceError(Exception):
-    def __init__(self, errors=None):
-        message = _('migration_persistence_error')
-        super(MigrationPersistanceError, self).__init__(message)
-        self.errors = errors
+class TestAjaxRequiredDecorator(TestCase):
+    def setUp(self):
+        self.request_factory = RequestFactory()
 
+    def test_request_is_not_ajax(self):
+        a_request = self.request_factory.get('/')
+        self.assertRaises(PermissionDenied, test_view, a_request)
 
-class OverrideSubClassError(Exception):
-    def __init__(self, subclass_name, errors=None):
-        message = _('override_sublclass_error').format(subclass_name=subclass_name)
-        super(OverrideSubClassError, self).__init__(message)
-        self.errors = errors
-
-
-class OverrideMethodError(Exception):
-    def __init__(self, function_name, super_classes_names, subclass_name, errors=None):
-        message = _('override_method_error').format(function_name=function_name,
-                                                    subclass_name=subclass_name,
-                                                    super_classes_names=super_classes_names)
-        super(OverrideMethodError, self).__init__(message)
-        self.errors = errors
+    def test_request_is_ajax(self):
+        a_request = self.request_factory.get('/', HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+        self.assertTrue(test_view(a_request))

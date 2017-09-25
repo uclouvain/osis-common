@@ -23,34 +23,32 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from django.utils.translation import ugettext_lazy as _
+from osis_common.decorators import override
 
 
-class MultipleModelsSerializationException(Exception):
-    def __init__(self, errors=None):
-        message = _('must_give_only_one_model')
-        super(MultipleModelsSerializationException, self).__init__(message)
-        self.errors = errors
+class ClassToOverride:
+
+    def method_to_override(self, args):
+        pass
 
 
-class MigrationPersistanceError(Exception):
-    def __init__(self, errors=None):
-        message = _('migration_persistence_error')
-        super(MigrationPersistanceError, self).__init__(message)
-        self.errors = errors
+class NotASubClass:
+
+    @override(ClassToOverride)
+    def method_to_override(self, args):
+        pass
 
 
-class OverrideSubClassError(Exception):
-    def __init__(self, subclass_name, errors=None):
-        message = _('override_sublclass_error').format(subclass_name=subclass_name)
-        super(OverrideSubClassError, self).__init__(message)
-        self.errors = errors
+class WrongOverrideMethod(ClassToOverride):
+
+    @override(ClassToOverride)
+    def foo(self, args):
+        pass
 
 
-class OverrideMethodError(Exception):
-    def __init__(self, function_name, super_classes_names, subclass_name, errors=None):
-        message = _('override_method_error').format(function_name=function_name,
-                                                    subclass_name=subclass_name,
-                                                    super_classes_names=super_classes_names)
-        super(OverrideMethodError, self).__init__(message)
-        self.errors = errors
+class GoodOverrideChild(ClassToOverride):
+
+    @override(ClassToOverride)
+    def method_to_override(self, args):
+        pass
+

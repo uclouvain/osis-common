@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 ##############################################################################
 #
 #    OSIS stands for Open Student Information System. It's an application
@@ -25,33 +24,33 @@
 #
 ##############################################################################
 from django.conf import settings
+from django.test.testcases import TestCase
+from osis_common.decorators.override import _check_super_class_method
+from osis_common.models.exception import OverrideMethodError, OverrideSubClassError
+from osis_common.tests.models_for_tests.override_tests_models import WrongOverrideMethod, \
+    GoodOverrideChild, ClassToOverride, NotASubClass
+import logging
 
-from django.test import SimpleTestCase
-import osis_common.scripts.sort_po_files as sort_po_files
-import os
+logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
 
-class SortPoCase(SimpleTestCase):
-    def test1(self):
-        self.maxDiff = None
-        # Initialize script
-        dir_path = os.path.join(settings.BASE_DIR,"osis_common/tests/ressources/")
+class TestOverrideDecorator(TestCase):
 
-        sort_po_files.filename_to_be_sorted = "sort_po_test.po"
-        sort_po_files.filename_sorted = "sort_po_test_sorted.po"
+    def test_not_A_subclass(self):
+        with self.assertRaises(OverrideSubClassError):
+            NotASubClass().method_to_override('args')
 
-        sort_po_files.sort_po_file(dir_path)
+    def test_wrong_method_override(self):
+        with self.assertRaises(OverrideMethodError):
+            WrongOverrideMethod().foo('args')
 
-        f_expected = open(dir_path + "sort_po_expected.po", "r")
-        string_expected = f_expected.read()
-        f_expected.close()
+    def test_override_decorator_ok(self):
+        GoodOverrideChild().method_to_override('args')
 
-        f_actual = open(dir_path + "sort_po_test_sorted.po", "r")
-        string_actual = f_actual.read()
-        f_actual.close()
+    def test_check_super_class_method_valid(self):
+        self.assertTrue(_check_super_class_method(GoodOverrideChild().__class__.__bases__,
+                        ClassToOverride().method_to_override.__name__))
 
-        self.assertEqual(string_actual, string_expected)
-
-        # Remove files
-        os.remove(dir_path + sort_po_files.filename_sorted)
-
+    def test_check_super_class_method_wrong(self):
+        self.assertFalse(_check_super_class_method(WrongOverrideMethod().__class__.__bases__,
+                                                   WrongOverrideMethod().foo.__name__))

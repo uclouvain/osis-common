@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2016 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2017 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 #
 ##############################################################################
 from io import BytesIO
-from voluptuous import Schema, Required, All, Url, Length, error as voluptuous_error
+from voluptuous import Schema, Any, Required, All, Url, Length, error as voluptuous_error
 from django.http import HttpResponse
 from django.conf import settings
 from reportlab.lib.pagesizes import A4
@@ -34,12 +34,12 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.lib import colors
 from django.utils.translation import ugettext_lazy as _
-import datetime
+from django.utils import timezone
 
 
 PAGE_SIZE = A4
 MARGIN_SIZE = 15 * mm
-COLS_WIDTH = [20*mm, 55*mm, 45*mm, 15*mm, 40*mm]
+COLS_WIDTH = [20*mm, 35*mm, 35*mm, 15*mm, 35*mm, 35*mm]
 STUDENTS_PER_PAGE = 24
 DATE_FORMAT = "%d/%m/%Y"
 
@@ -73,39 +73,41 @@ def get_data_schema():
                  Required("decimal_scores"): bool,
                  Required("programs"): [
                     {
-                      Required("deadline"): str,
                       Required("deliberation_date"): str,
                       Required("acronym"): str,
                       Required("address"): {},
                       Required("enrollments"): [{
                           Required("registration_id"): str,
-                          Required("first_name"): str,
-                          Required("last_name"): str,
+                          Required("first_name", default=''): Any(None,str),
+                          Required("last_name", default=''): Any(None, str),
                           Required("justification"): str,
-                          Required("score"): str
+                          Required("score"): str,
+                          Required("deadline"): str
                       }]
                     }
                  ],
-                 Required("coordinator"): {
+                 Required("scores_responsible"): {
                      Required("address"): {
                          Required("city"): str,
                          Required("postal_code"): str,
                          Required("location"): str
                      },
-                     Required("first_name"): str,
-                     Required("last_name"): str
+                     Required("first_name", default=''): Any(None, str),
+                     Required("last_name", default=''): Any(None, str)
                  }
              }
         ], Length(min=1), extra=True)
     }, extra=True)
 
-def validate_data_structure(data) :
+
+def validate_data_structure(data):
     s = get_data_schema()
     return s(data)
 
-def build_error_response() :
-    #Return internal server error
+
+def build_error_response():
     return HttpResponse(status=500)
+
 
 def build_response(data):
     filename = "%s.pdf" % _('scores_sheet')
@@ -114,6 +116,7 @@ def build_response(data):
     pdf = build_pdf(data)
     response.write(pdf)
     return response
+
 
 def build_pdf(data):
     buffer = BytesIO()
@@ -129,10 +132,12 @@ def build_pdf(data):
     buffer.close()
     return pdf
 
+
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
     for i in range(0, len(l), n):
         yield l[i:i + n]
+
 
 def _write_header_and_footer(canvas, doc):
     """
@@ -148,11 +153,12 @@ def _write_header_and_footer(canvas, doc):
     # Release the canvas
     canvas.restoreState()
 
+
 def _write_header(canvas, doc, styles):
     a = Image(settings.LOGO_INSTITUTION_URL, width=15*mm, height=20*mm)
     p = Paragraph('''<para align=center>
                         <font size=16>%s</font>
-                    </para>''' % (_('scores_transcript')), styles["BodyText"])
+                    </para>''' % (_('scores_sheet')), styles["BodyText"])
 
     data_header = [[a, '%s' % _('ucl_denom_location'), p], ]
     t_header = Table(data_header, [30*mm, 100*mm, 50*mm])
@@ -170,16 +176,15 @@ def _build_styles():
 def _data_to_pdf_content(json_data):
     styles = _build_styles()
     content = []
-    justification_legend = json_data['justification_legend']
     for learn_unit_year in json_data['learning_unit_years']:
         for program in learn_unit_year['programs']:
             nb_students = len(program['enrollments'])
             for enrollments_by_pdf_page in chunks(program['enrollments'], STUDENTS_PER_PAGE):
-                content.extend(_build_page_content(enrollments_by_pdf_page, learn_unit_year, nb_students, program, styles,justification_legend))
+                content.extend(_build_page_content(enrollments_by_pdf_page, learn_unit_year, nb_students, program, styles))
     return content
 
 
-def _build_page_content(enrollments_by_pdf_page, learn_unit_year, nb_students, program, styles, justification_legend):
+def _build_page_content(enrollments_by_pdf_page, learn_unit_year, nb_students, program, styles):
     page_content = []
     # 1. Write addresses & programs info
     # We add first a blank line
@@ -189,8 +194,8 @@ def _build_page_content(enrollments_by_pdf_page, learn_unit_year, nb_students, p
     # 2. Adding the complete table of examEnrollments to the PDF sheet
     page_content.append(_build_exam_enrollments_table(enrollments_by_pdf_page, styles))
     # 3. Write Legend
-    page_content.extend(_build_deadline_and_signature_content(program['deadline']))
-    page_content.append(_build_legend_block(learn_unit_year['decimal_scores'], justification_legend))
+    page_content.extend(_build_signature_content())
+    page_content.append(_build_legend_block(learn_unit_year['decimal_scores']))
     # 4. New Page
     page_content.append(PageBreak())
     return page_content
@@ -199,19 +204,22 @@ def _build_page_content(enrollments_by_pdf_page, learn_unit_year, nb_students, p
 def _build_exam_enrollments_table(enrollments_by_pdf_page, styles):
     students_table = _students_table_header()
     for enrollment in enrollments_by_pdf_page:
+        student_last_name = enrollment["last_name"] if enrollment["last_name"] else ""
+        student_first_name = enrollment["first_name"] if enrollment["first_name"] else ""
+
         # 1. Append the examEnrollment to the table 'students_table'
         students_table.append([enrollment["registration_id"],
-                               Paragraph(enrollment["last_name"], styles['Normal']),
-                               Paragraph(enrollment["first_name"], styles['Normal']),
+                               Paragraph(student_last_name, styles['Normal']),
+                               Paragraph(student_first_name, styles['Normal']),
                                enrollment["score"],
-                               Paragraph(_(enrollment["justification"]), styles['Normal'])])
+                               Paragraph(_(enrollment["justification"]), styles['Normal']),
+                               enrollment["deadline"]])
     table = Table(students_table, COLS_WIDTH, repeatRows=1)
     table.setStyle(TableStyle([
         ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.black),
         ('BOX', (0, 0), (-1, -1), 0.25, colors.black),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey)]))
-
     return table
 
 
@@ -220,12 +228,14 @@ def _students_table_header():
              '''%s''' % _('lastname'),
              '''%s''' % _('firstname'),
              '''%s''' % _('score'),
-             '''%s''' % _('justification')]]
+             '''%s''' % _('justification'),
+             '''%s''' % _('submit_date')
+             ]]
     return data
 
 
 def _build_header_addresses_block(learning_unit_year, program, styles):
-    header_address_structure = [[_build_header_coordinator_address(learning_unit_year, styles),
+    header_address_structure = [[_build_header_scores_responsible_address(learning_unit_year, styles),
                                  _build_header_secretariat_address_block(program, styles)]]
     table_header = Table(header_address_structure, colWidths='*')
     table_header.setStyle(TableStyle([
@@ -236,30 +246,32 @@ def _build_header_addresses_block(learning_unit_year, program, styles):
     return table_header
 
 
-def _build_header_coordinator_address(learning_unit_year, styles):
-    coordinator = learning_unit_year["coordinator"]
-    address = coordinator['address']
-    return [[Paragraph(_get_coordinator_title_text(), styles["Normal"])],
-            [Paragraph(_get_coordinator_text(coordinator), styles["Normal"])],
-            [Paragraph(_get_coordinator_location_text(address), styles["Normal"])],
-            [Paragraph(_get_coordinator_city_text(address), styles["Normal"])]]
+def _build_header_scores_responsible_address(learning_unit_year, styles):
+    scores_responsible = learning_unit_year["scores_responsible"]
+    address = scores_responsible['address']
+    return [[Paragraph(_get_scores_responsible_title_text(), styles["Normal"])],
+            [Paragraph(_get_scores_responsible_text(scores_responsible), styles["Normal"])],
+            [Paragraph(_get_scores_responsible_location_text(address), styles["Normal"])],
+            [Paragraph(_get_scores_responsible_city_text(address), styles["Normal"])]]
 
 
-def _get_coordinator_city_text(address):
+def _get_scores_responsible_city_text(address):
     return '{} {}'.format(address['postal_code'] or '', address['city'] or '')
 
 
-def _get_coordinator_location_text(address):
+def _get_scores_responsible_location_text(address):
     return '{}'.format(address['location'] or '')
 
 
-def _get_coordinator_title_text():
-    return '<b>{} :</b>'.format(_('learning_unit_responsible'))
+def _get_scores_responsible_title_text():
+    return '<b>{} :</b>'.format(_('SCORES_RESPONSIBLE'))
 
 
-def _get_coordinator_text(coordinator):
-    if coordinator:
-        return '{} {}'.format(coordinator['last_name'], coordinator['first_name'])
+def _get_scores_responsible_text(scores_responsible):
+    if scores_responsible:
+        last_name = scores_responsible["last_name"] if scores_responsible['last_name'] else ""
+        first_name = scores_responsible["first_name"] if scores_responsible['first_name'] else ""
+        return '{} {}'.format(last_name, first_name)
     return '{}'.format(_('none'))
 
 
@@ -325,7 +337,7 @@ def _get_program_text(nb_students, program):
     return '''<b>{} : {} </b>({} {})'''.format(_('program'),
                                                program['acronym'],
                                                nb_students,
-                                               _('students'))
+                                               _('students') if nb_students > 1 else _('student'))
 
 
 def _get_learning_unit_year_text(learning_unit_year):
@@ -342,22 +354,12 @@ def _get_academic_year_text(learning_unit_year):
                                             learning_unit_year['session_number'])
 
 
-def _build_deadline_and_signature_content(end_date):
+def _build_signature_content():
     return [
-        _build_deadline_note_paragraph(end_date),
         Paragraph('''<para spaceb=5> &nbsp; </para>''', ParagraphStyle('normal')),
         _build_signature_paragraph(),
         Paragraph(''' <para spaceb=2> &nbsp; </para> ''', ParagraphStyle('normal'))
     ]
-
-
-def _build_deadline_note_paragraph(end_date):
-    style = ParagraphStyle('info')
-    style.fontSize = 10
-    style.alignment = TA_LEFT
-    if not end_date:
-        end_date = '(%s)' % _('date_not_passed')
-    return Paragraph(_("return_doc_to_administrator") % end_date, style)
 
 
 def _build_signature_paragraph():
@@ -371,8 +373,11 @@ def _build_signature_paragraph():
     return paragraph_signature
 
 
-def _build_legend_block(decimal_scores, justification_legend):
-    legend_text = justification_legend
+def _build_legend_block(decimal_scores):
+    creation_date = timezone.now()
+    creation_date = creation_date.strftime(DATE_FORMAT)
+
+    legend_text = str(_('justification_legend_pdf'))
     legend_text += "<br/>%s" % (str(_('score_legend') % "0 - 20"))
     if decimal_scores:
         legend_text += "<br/><font color=red>%s</font>" % _('authorized_decimal_for_this_activity')
@@ -381,6 +386,9 @@ def _build_legend_block(decimal_scores, justification_legend):
 
     legend_text += '''<br/> %s : <a href="%s"><font color=blue><u>%s</u></font></a>''' \
                    % (_("in_accordance_to_regulation"), _("link_to_RGEE"), _("link_to_RGEE"))
+
+    legend_text += "<br/><font color=red>%s</font>" % str(_('warn_user_data_can_change') % creation_date)
+
     return Paragraph('''<para> %s </para>''' % legend_text, _build_legend_block_style())
 
 
@@ -396,9 +404,9 @@ def _build_legend_block_style():
 
 
 def _write_footer(canvas, doc, styles):
-    printing_date = datetime.datetime.now()
-    printing_date = printing_date.strftime(DATE_FORMAT)
-    pageinfo = "%s : %s" % (_('printing_date'), printing_date)
+    creation_date = timezone.now()
+    creation_date = creation_date.strftime(DATE_FORMAT)
+    pageinfo = "%s : %s" % (_('creation_date'), creation_date)
     footer = Paragraph(''' <para align=right>Page %d - %s </para>''' % (doc.page, pageinfo), styles['Normal'])
     w, h = footer.wrap(doc.width, doc.bottomMargin)
     footer.drawOn(canvas, doc.leftMargin, h)

@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2016 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2017 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -23,26 +23,27 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+import uuid
 import logging
+import json
+import datetime
+import time
+
 from django.conf import settings
 from django.contrib import admin, messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import DateTimeField, DateField
 from django.core import serializers
-import uuid
-from pika.exceptions import ChannelClosed, ConnectionClosed
-from osis_common.models.exception import MultipleModelsSerializationException, \
-    MigrationPersistanceError
-from osis_common.queue import queue_sender
-import json
-import datetime
 from django.utils.encoding import force_text
 from django.apps import apps
 from osis_common.models import message_queue_cache
 from osis_common.models.message_queue_cache import MessageQueueCache
 
-import time
+from pika.exceptions import ChannelClosed, ConnectionClosed
+from osis_common.models.exception import MultipleModelsSerializationException, MigrationPersistanceError
+from osis_common.queue import queue_sender
+
 
 LOGGER = logging.getLogger(settings.DEFAULT_LOGGER)
 
@@ -67,18 +68,23 @@ class SerializableModelAdmin(admin.ModelAdmin):
     actions = ['resend_messages_to_queue']
 
     def resend_messages_to_queue(self, request, queryset):
-        counter = 0
-        for record in queryset:
-            try:
-                ser_obj = serialize(record)
-                queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
-                                          wrap_serialization(ser_obj))
-                counter += 1
-            except Exception:
-                self.message_user(request,
-                                  'Message %s not sent to %s.' % (record.pk, record.queue_name),
-                                  level=messages.ERROR)
-        self.message_user(request, "{} message(s) sent.".format(counter), level=messages.SUCCESS)
+        if hasattr(settings, 'QUEUES') and settings.QUEUES:
+            counter = 0
+            for record in queryset:
+                try:
+                    ser_obj = serialize(record)
+                    queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
+                                              wrap_serialization(ser_obj))
+                    counter += 1
+                except (ChannelClosed, ConnectionClosed):
+                    self.message_user(request,
+                                      'Message %s not sent to %s.' % (record.pk, record.queue_name),
+                                      level=messages.ERROR)
+            self.message_user(request, "{} message(s) sent.".format(counter), level=messages.SUCCESS)
+        else:
+            self.message_user(request,
+                              'No messages sent. No queues defined',
+                              level=messages.ERROR)
 
 
 class SerializableModel(models.Model):
@@ -122,7 +128,7 @@ def send_to_queue(instance, to_delete=False):
         message_queue_cache.retry_all_cached_messages()
         # Send current message
         queue_sender.send_message(queue_name, serialized_instance)
-    except Exception:
+    except (ChannelClosed, ConnectionClosed):
         # Save current message queue cache database for retry later
         MessageQueueCache.objects.create(queue=queue_name, data=serialized_instance)
         LOGGER.exception('QueueServer is not installed or not launched')
