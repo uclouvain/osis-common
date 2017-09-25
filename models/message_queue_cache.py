@@ -39,7 +39,7 @@ class MessageQueueCache(models.Model):
     changed = models.DateTimeField(auto_now_add=True)  # Insert date
 
     def __str__(self):
-        return self.subject
+        return "{} - {}".format(self.queue, self.changed)
 
 
 def get_messages_to_retry():
