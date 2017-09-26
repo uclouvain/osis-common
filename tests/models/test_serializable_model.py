@@ -136,8 +136,6 @@ class TestMessageQueueCache(TestCase):
         self.assertEqual(0, message_queue_cache.get_messages_to_retry().count())
 
 
-
-
 class TestFormatDataForMigration(TestCase):
     @classmethod
     def setUpTestData(cls):
