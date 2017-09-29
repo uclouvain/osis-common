@@ -47,7 +47,7 @@ def get_messages_to_retry():
 
 
 def retry_all_cached_messages():
-    messages_to_retry = get_messages_to_retry().values()
+    messages_to_retry = get_messages_to_retry()
     for message in messages_to_retry:
-        queue_sender.send_message(message.get('queue'), message.get('data'))
-        MessageQueueCache.objects.filter(pk=message.get('id')).delete()
+        queue_sender.send_message(message.queue, message.data)
+        message.delete()
