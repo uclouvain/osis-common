@@ -37,6 +37,8 @@ from django.db.models import DateTimeField, DateField
 from django.core import serializers
 from django.utils.encoding import force_text
 from django.apps import apps
+from osis_common.models import message_queue_cache
+from osis_common.models.message_queue_cache import MessageQueueCache
 
 from pika.exceptions import ChannelClosed, ConnectionClosed
 from osis_common.models.exception import MultipleModelsSerializationException, MigrationPersistanceError
@@ -68,15 +70,16 @@ class SerializableModelAdmin(admin.ModelAdmin):
     def resend_messages_to_queue(self, request, queryset):
         if hasattr(settings, 'QUEUES') and settings.QUEUES:
             counter = 0
+            queue_name = settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE')
             for record in queryset:
                 try:
                     ser_obj = serialize(record)
-                    queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
+                    queue_sender.send_message(queue_name,
                                               wrap_serialization(ser_obj))
                     counter += 1
                 except (ChannelClosed, ConnectionClosed):
                     self.message_user(request,
-                                      'Message %s not sent to %s.' % (record.pk, record.queue_name),
+                                      'Message %s not sent to %s.' % (record.pk, queue_name),
                                       level=messages.ERROR)
             self.message_user(request, "{} message(s) sent.".format(counter), level=messages.SUCCESS)
         else:
@@ -92,24 +95,13 @@ class SerializableModel(models.Model):
 
     def save(self, *args, **kwargs):
         super(SerializableModel, self).save(*args, **kwargs)
-
-        if hasattr(settings, 'QUEUES') and settings.QUEUES:
-            try:
-                ser_obj = serialize(self)
-                queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
-                                          wrap_serialization(ser_obj))
-            except (ChannelClosed, ConnectionClosed):
-                LOGGER.exception('QueueServer is not installed or not launched')
+        if hasattr(settings, 'QUEUES'):
+            send_to_queue(self)
 
     def delete(self, *args, **kwargs):
         super(SerializableModel, self).delete(*args, **kwargs)
-        if hasattr(settings, 'QUEUES') and settings.QUEUES:
-            try:
-                ser_obj = serialize(self)
-                queue_sender.send_message(settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE'),
-                                          wrap_serialization(ser_obj, to_delete=True))
-            except (ChannelClosed, ConnectionClosed):
-                LOGGER.exception('QueueServer is not installed or not launched')
+        if hasattr(settings, 'QUEUES'):
+            send_to_queue(self)
 
     def natural_key(self):
         return [self.uuid]
@@ -126,6 +118,21 @@ class SerializableModel(models.Model):
             return cls.objects.get(uuid=uuid)
         except ObjectDoesNotExist:
             return None
+
+
+def send_to_queue(instance, to_delete=False):
+    queue_name = settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE')
+    serialized_instance = wrap_serialization(serialize(instance), to_delete)
+
+    try:
+        # Try to resend message present in cache
+        message_queue_cache.retry_all_cached_messages()
+        # Send current message
+        queue_sender.send_message(queue_name, serialized_instance)
+    except (ChannelClosed, ConnectionClosed):
+        # Save current message queue cache database for retry later
+        MessageQueueCache.objects.create(queue=queue_name, data=serialized_instance)
+        LOGGER.exception('QueueServer is not installed or not launched')
 
 
 # To be deleted
