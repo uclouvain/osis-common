@@ -95,12 +95,12 @@ class SerializableModel(models.Model):
 
     def save(self, *args, **kwargs):
         super(SerializableModel, self).save(*args, **kwargs)
-        if hasattr(settings, 'QUEUES'):
+        if hasattr(settings, 'QUEUES') and settings.QUEUES:
             send_to_queue(self)
 
     def delete(self, *args, **kwargs):
         super(SerializableModel, self).delete(*args, **kwargs)
-        if hasattr(settings, 'QUEUES'):
+        if hasattr(settings, 'QUEUES') and settings.QUEUES:
             send_to_queue(self)
 
     def natural_key(self):
