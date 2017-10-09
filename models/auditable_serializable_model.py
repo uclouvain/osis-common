@@ -39,6 +39,7 @@ from django.utils.encoding import force_text
 from django.apps import apps
 from osis_common.models import message_queue_cache
 from osis_common.models.message_queue_cache import MessageQueueCache
+from osis_common.models.serializable_model import serializable_model_post_change
 
 from pika.exceptions import ChannelClosed, ConnectionClosed
 from osis_common.models.exception import MultipleModelsSerializationException, MigrationPersistanceError
@@ -48,7 +49,7 @@ from osis_common.queue import queue_sender
 LOGGER = logging.getLogger(settings.DEFAULT_LOGGER)
 
 
-class SerializableQuerySet(models.QuerySet):
+class AuditableSerializableQuerySet(models.QuerySet):
     # Called in case of bulk delete
     # Override this function is important to force to call the delete() function of a model's instance
     def delete(self, *args, **kwargs):
@@ -56,15 +57,15 @@ class SerializableQuerySet(models.QuerySet):
             obj.delete()
 
 
-class SerializableModelManager(models.Manager):
+class AuditableSerializableModelManager(models.Manager):
     def get_by_natural_key(self, uuid):
         return self.get(uuid=uuid)
 
     def get_queryset(self):
-        return SerializableQuerySet(self.model, using=self._db)
+        return AuditableSerializableQuerySet(self.model, using=self._db).exclude(deleted=True)
 
 
-class SerializableModelAdmin(admin.ModelAdmin):
+class AuditableSerializableModelAdmin(admin.ModelAdmin):
     actions = ['resend_messages_to_queue']
 
     def resend_messages_to_queue(self, request, queryset):
@@ -88,17 +89,22 @@ class SerializableModelAdmin(admin.ModelAdmin):
                               level=messages.ERROR)
 
 
-class SerializableModel(models.Model):
-    objects = SerializableModelManager()
+class AuditableSerializableModel(models.Model):
+    objects = AuditableSerializableModelManager()
 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
+    deleted = models.BooleanField(null=False, blank=False, default=False)
+
+    def auditable_serializable_model_post_change(self):
+        if hasattr(settings, 'QUEUES') and settings.QUEUES:
+            send_to_queue(self)
 
     def save(self, *args, **kwargs):
-        super(SerializableModel, self).save(*args, **kwargs)
+        super(AuditableSerializableModel, self).save(*args, **kwargs)
         serializable_model_post_change(self)
 
     def delete(self, *args, **kwargs):
-        super(SerializableModel, self).delete(*args, **kwargs)
+        super(AuditableSerializableModel, self).delete(*args, **kwargs)
         serializable_model_post_change(self)
 
     def natural_key(self):
@@ -116,11 +122,6 @@ class SerializableModel(models.Model):
             return cls.objects.get(uuid=uuid)
         except ObjectDoesNotExist:
             return None
-
-
-def serializable_model_post_change(instance):
-    if hasattr(settings, 'QUEUES') and settings.QUEUES:
-        send_to_queue(instance)
 
 
 def send_to_queue(instance, to_delete=False):
@@ -277,7 +278,7 @@ def _make_insert(fields, model_class):
     kwargs = _build_kwargs(fields, model_class)
     del kwargs['id']
     obj = model_class(**kwargs)
-    super(SerializableModel, obj).save(force_insert=True)
+    super(AuditableSerializableModel, obj).save(force_insert=True)
     obj_id = obj.id
     return obj_id
 
