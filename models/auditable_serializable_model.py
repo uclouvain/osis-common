@@ -24,31 +24,13 @@
 #
 ##############################################################################
 import uuid
-import logging
-import json
-import datetime
-import time
 
-from django.conf import settings
-from django.contrib import admin, messages
+from django.contrib import admin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import DateTimeField, DateField
-from django.core import serializers
-from django.utils.encoding import force_text
-from django.apps import apps
-from osis_common.models import message_queue_cache
 from osis_common.models.auditable_model import auditable_model_post_save, auditable_model_post_delete
-from osis_common.models.message_queue_cache import MessageQueueCache
 from osis_common.models.serializable_model import serialize, serializable_model_post_save, \
     serializable_model_post_delete, serializable_model_resend_messages_to_queue, wrap_serialization
-
-from pika.exceptions import ChannelClosed, ConnectionClosed
-from osis_common.models.exception import MultipleModelsSerializationException, MigrationPersistanceError
-from osis_common.queue import queue_sender
-
-
-LOGGER = logging.getLogger(settings.DEFAULT_LOGGER)
 
 
 class AuditableSerializableQuerySet(models.QuerySet):
