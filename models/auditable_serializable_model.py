@@ -38,9 +38,10 @@ from django.core import serializers
 from django.utils.encoding import force_text
 from django.apps import apps
 from osis_common.models import message_queue_cache
+from osis_common.models.auditable_model import auditable_model_post_save, auditable_model_post_delete
 from osis_common.models.message_queue_cache import MessageQueueCache
-from osis_common.models.serializable_model import serialize, serializable_model_post_change, \
-    serializable_model_resend_messages_to_queue, wrap_serialization
+from osis_common.models.serializable_model import serialize, serializable_model_post_save, \
+    serializable_model_post_delete, serializable_model_resend_messages_to_queue, wrap_serialization
 
 from pika.exceptions import ChannelClosed, ConnectionClosed
 from osis_common.models.exception import MultipleModelsSerializationException, MigrationPersistanceError
@@ -81,11 +82,13 @@ class AuditableSerializableModel(models.Model):
 
     def save(self, *args, **kwargs):
         super(AuditableSerializableModel, self).save(*args, **kwargs)
-        serializable_model_post_change(self)
+        auditable_model_post_save(self)
+        serializable_model_post_save(self)
 
     def delete(self, *args, **kwargs):
         super(AuditableSerializableModel, self).delete(*args, **kwargs)
-        serializable_model_post_change(self)
+        auditable_model_post_delete(self)
+        serializable_model_post_delete(self)
 
     def natural_key(self):
         return [self.uuid]

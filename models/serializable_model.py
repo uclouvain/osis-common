@@ -99,11 +99,11 @@ class SerializableModel(models.Model):
 
     def save(self, *args, **kwargs):
         super(SerializableModel, self).save(*args, **kwargs)
-        serializable_model_post_change(self)
+        serializable_model_post_save(self)
 
     def delete(self, *args, **kwargs):
         super(SerializableModel, self).delete(*args, **kwargs)
-        serializable_model_post_change(self)
+        serializable_model_post_delete(self)
 
     def natural_key(self):
         return [self.uuid]
@@ -122,7 +122,21 @@ class SerializableModel(models.Model):
             return None
 
 
+def serializable_model_post_save(instance):
+    # This function is called in the save() method of SerializableModel and AuditableSerializableModel
+    # Any change made here will be applied to all models inheriting SerializableModel or AuditableSerializableModel
+    serializable_model_post_change(instance)
+
+
+def serializable_model_post_delete(instance):
+    # This function is called in the delete() method of SerializableModel and AuditableSerializableModel
+    # Any change made here will be applied to all models inheriting SerializableModel or AuditableSerializableModel
+    serializable_model_post_change(instance)
+
+
 def serializable_model_post_change(instance):
+    # This function is called in the save() and delete() methods of SerializableModel and AuditableSerializableModel
+    # Any change made here will be applied to all models inheriting SerializableModel or AuditableSerializableModel
     if hasattr(settings, 'QUEUES') and settings.QUEUES:
         send_to_queue(instance)
 

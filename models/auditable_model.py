@@ -51,12 +51,26 @@ class AuditableModel(models.Model):
 
     def save(self, *args, **kwargs):
         super(AuditableModel, self).save(*args, **kwargs)
+        auditable_model_post_save(self)
 
     def delete(self, *args, **kwargs):
         super(AuditableModel, self).delete(*args, **kwargs)
+        auditable_model_post_delete(self)
 
     def __str__(self):
         return "{}".format(self)
 
     class Meta:
         abstract = True
+
+
+def auditable_model_post_save(instance):
+    # This function is called in the save() method of AuditableModel and AuditableSerializableModel
+    # Any change made here will be applied to all models inheriting AuditableModel or AuditableSerializableModel
+    pass
+
+
+def auditable_model_post_delete(instance):
+    # This function is called in the delete() method of AuditableModel and AuditableSerializableModel
+    # Any change made here will be applied to all models inheriting AuditableModel or AuditableSerializableModel
+    pass
