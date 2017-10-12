@@ -68,24 +68,28 @@ class SerializableModelAdmin(admin.ModelAdmin):
     actions = ['resend_messages_to_queue']
 
     def resend_messages_to_queue(self, request, queryset):
-        if hasattr(settings, 'QUEUES') and settings.QUEUES:
-            counter = 0
-            queue_name = settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE')
-            for record in queryset:
-                try:
-                    ser_obj = serialize(record)
-                    queue_sender.send_message(queue_name,
-                                              wrap_serialization(ser_obj))
-                    counter += 1
-                except (ChannelClosed, ConnectionClosed):
-                    self.message_user(request,
-                                      'Message %s not sent to %s.' % (record.pk, queue_name),
-                                      level=messages.ERROR)
-            self.message_user(request, "{} message(s) sent.".format(counter), level=messages.SUCCESS)
-        else:
-            self.message_user(request,
-                              'No messages sent. No queues defined',
-                              level=messages.ERROR)
+        serializable_model_resend_messages_to_queue(self, request, queryset)
+
+
+def serializable_model_resend_messages_to_queue(self, request, queryset):
+    if hasattr(settings, 'QUEUES') and settings.QUEUES:
+        counter = 0
+        queue_name = settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE')
+        for record in queryset:
+            try:
+                ser_obj = serialize(record)
+                queue_sender.send_message(queue_name,
+                                          wrap_serialization(ser_obj))
+                counter += 1
+            except (ChannelClosed, ConnectionClosed):
+                self.message_user(request,
+                                  'Message %s not sent to %s.' % (record.pk, queue_name),
+                                  level=messages.ERROR)
+        self.message_user(request, "{} message(s) sent.".format(counter), level=messages.SUCCESS)
+    else:
+        self.message_user(request,
+                          'No messages sent. No queues defined',
+                          level=messages.ERROR)
 
 
 class SerializableModel(models.Model):
@@ -95,13 +99,11 @@ class SerializableModel(models.Model):
 
     def save(self, *args, **kwargs):
         super(SerializableModel, self).save(*args, **kwargs)
-        if hasattr(settings, 'QUEUES') and settings.QUEUES:
-            send_to_queue(self)
+        serializable_model_post_save(self)
 
     def delete(self, *args, **kwargs):
         super(SerializableModel, self).delete(*args, **kwargs)
-        if hasattr(settings, 'QUEUES') and settings.QUEUES:
-            send_to_queue(self)
+        serializable_model_post_delete(self)
 
     def natural_key(self):
         return [self.uuid]
@@ -118,6 +120,25 @@ class SerializableModel(models.Model):
             return cls.objects.get(uuid=uuid)
         except ObjectDoesNotExist:
             return None
+
+
+def serializable_model_post_save(instance):
+    # This function is called in the save() method of SerializableModel and AuditableSerializableModel
+    # Any change made here will be applied to all models inheriting SerializableModel or AuditableSerializableModel
+    serializable_model_post_change(instance)
+
+
+def serializable_model_post_delete(instance):
+    # This function is called in the delete() method of SerializableModel and AuditableSerializableModel
+    # Any change made here will be applied to all models inheriting SerializableModel or AuditableSerializableModel
+    serializable_model_post_change(instance)
+
+
+def serializable_model_post_change(instance):
+    # This function is called in the save() and delete() methods of SerializableModel and AuditableSerializableModel
+    # Any change made here will be applied to all models inheriting SerializableModel or AuditableSerializableModel
+    if hasattr(settings, 'QUEUES') and settings.QUEUES:
+        send_to_queue(instance)
 
 
 def send_to_queue(instance, to_delete=False):
