@@ -63,9 +63,14 @@ class AuditableSerializableModel(models.Model):
     deleted = models.BooleanField(null=False, blank=False, default=False)
 
     def save(self, *args, **kwargs):
-        super(AuditableSerializableModel, self).save(*args, **kwargs)
-        auditable_model_post_save(self)
-        serializable_model_post_save(self)
+        if self.deleted is True:
+            # For now, the only way to set deleted = True is to do it on the database.
+            # The ORM will receive this responsibility ONLY when the cascade delete can handle the deleted field.
+            raise AttributeError('The ORM cannot set `deleted` to True')
+        else:
+            super(AuditableSerializableModel, self).save(*args, **kwargs)
+            auditable_model_post_save(self)
+            serializable_model_post_save(self)
 
     def delete(self, *args, **kwargs):
         super(AuditableSerializableModel, self).delete(*args, **kwargs)
