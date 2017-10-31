@@ -73,9 +73,10 @@ class AuditableSerializableModel(models.Model):
             serializable_model_post_save(self)
 
     def delete(self, *args, **kwargs):
-        super(AuditableSerializableModel, self).delete(*args, **kwargs)
+        result = super(AuditableSerializableModel, self).delete(*args, **kwargs)
         auditable_model_post_delete(self)
         serializable_model_post_delete(self)
+        return result
 
     def natural_key(self):
         return [self.uuid]
