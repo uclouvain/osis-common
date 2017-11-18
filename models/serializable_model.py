@@ -102,8 +102,9 @@ class SerializableModel(models.Model):
         serializable_model_post_save(self)
 
     def delete(self, *args, **kwargs):
-        super(SerializableModel, self).delete(*args, **kwargs)
+        result = super(SerializableModel, self).delete(*args, **kwargs)
         serializable_model_post_delete(self)
+        return result
 
     def natural_key(self):
         return [self.uuid]
