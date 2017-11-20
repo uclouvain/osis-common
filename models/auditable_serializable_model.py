@@ -72,7 +72,6 @@ class AuditableSerializableModel(models.Model):
         serializable_model_post_delete(self)
         return result
 
-
     def natural_key(self):
         return [self.uuid]
 
