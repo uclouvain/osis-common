@@ -61,10 +61,8 @@ class AuditableModel(models.Model):
         auditable_model_post_save(self)
 
     def delete(self, *args, **kwargs):
-        # We do not want to detele the object, only change its deleted flag to True
-        # super(AuditableModel, self).delete(*args, **kwargs)
-        auditable_model_flag_delete(self)
-        del self
+        # Return the list of deleted objects
+        return auditable_model_flag_delete(self)
 
     class Meta:
         abstract = True
@@ -83,15 +81,14 @@ def auditable_model_flag_delete(instance):
     collector.collect([instance])
 
     nested_objects = collector.nested()
-    result = True
     try:
         with transaction.atomic():
             _update_deleted_flag_in_tree(nested_objects)
 
     except DatabaseError as e:
         logging.exception(str(e))
-        result = False
-    return result
+        raise e
+    return nested_objects
 
 
 def _update_deleted_flag_in_tree(node):
