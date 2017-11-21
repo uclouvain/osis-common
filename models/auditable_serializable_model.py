@@ -28,7 +28,7 @@ import uuid
 from django.contrib import admin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from osis_common.models.auditable_model import auditable_model_post_save, auditable_model_post_delete
+from osis_common.models.auditable_model import auditable_model_post_save, auditable_model_flag_delete
 from osis_common.models.serializable_model import serialize, serializable_model_post_save, \
     serializable_model_post_delete, serializable_model_resend_messages_to_queue, wrap_serialization
 
@@ -63,18 +63,12 @@ class AuditableSerializableModel(models.Model):
     deleted = models.BooleanField(null=False, blank=False, default=False)
 
     def save(self, *args, **kwargs):
-        if self.deleted is True:
-            # For now, the only way to set deleted = True is to do it on the database.
-            # The ORM will receive this responsibility ONLY when the cascade delete can handle the deleted field.
-            raise AttributeError('The ORM cannot set `deleted` to True')
-        else:
-            super(AuditableSerializableModel, self).save(*args, **kwargs)
-            auditable_model_post_save(self)
-            serializable_model_post_save(self)
+        super(AuditableSerializableModel, self).save(*args, **kwargs)
+        auditable_model_post_save(self)
+        serializable_model_post_save(self)
 
     def delete(self, *args, **kwargs):
-        result = super(AuditableSerializableModel, self).delete(*args, **kwargs)
-        auditable_model_post_delete(self)
+        result = auditable_model_flag_delete(self)
         serializable_model_post_delete(self)
         return result
 

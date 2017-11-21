@@ -23,8 +23,15 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+import logging
 from django.contrib import admin
-from django.db import models
+from django.contrib.admin.utils import NestedObjects
+from django.db import models, transaction
+from django.db.utils import DEFAULT_DB_ALIAS, DatabaseError
+from django.conf import settings
+
+
+logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
 
 class AuditableQuerySet(models.QuerySet):
@@ -50,20 +57,12 @@ class AuditableModel(models.Model):
     deleted = models.BooleanField(null=False, blank=False, default=False)
 
     def save(self, *args, **kwargs):
-        if self.deleted is True:
-            # For now, the only way to set deleted = True is to do it on the database.
-            # The ORM will receive this responsibility ONLY when the cascade delete can handle the deleted field.
-            raise AttributeError('The ORM cannot set `deleted` to True')
-        else:
-            super(AuditableModel, self).save(*args, **kwargs)
-            auditable_model_post_save(self)
+        super(AuditableModel, self).save(*args, **kwargs)
+        auditable_model_post_save(self)
 
     def delete(self, *args, **kwargs):
-        super(AuditableModel, self).delete(*args, **kwargs)
-        auditable_model_post_delete(self)
-
-    def __str__(self):
-        return "{}".format(self)
+        # Return the list of deleted objects
+        return auditable_model_flag_delete(self)
 
     class Meta:
         abstract = True
@@ -75,7 +74,33 @@ def auditable_model_post_save(instance):
     pass
 
 
-def auditable_model_post_delete(instance):
+def auditable_model_flag_delete(instance):
     # This function is called in the delete() method of AuditableModel and AuditableSerializableModel
     # Any change made here will be applied to all models inheriting AuditableModel or AuditableSerializableModel
-    pass
+    collector = NestedObjects(using=DEFAULT_DB_ALIAS)
+    collector.collect([instance])
+
+    nested_objects = collector.nested()
+    try:
+        with transaction.atomic():
+            _update_deleted_flag_in_tree(nested_objects)
+
+    except DatabaseError as e:
+        logging.exception(str(e))
+        raise e
+    return nested_objects
+
+
+def _update_deleted_flag_in_tree(node):
+    if isinstance(node, list):
+        for subnode in node:
+            _update_deleted_flag_in_tree(subnode)
+    else:
+        _update_deleted_flag(node, True)
+
+
+def _update_deleted_flag(node, flag_value):
+    if hasattr(node, 'deleted'):
+        node.deleted = flag_value
+        node.save()
+
