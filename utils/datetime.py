@@ -23,6 +23,8 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+import datetime
+
 from django.conf import settings
 from django.utils import timezone
 
@@ -31,3 +33,18 @@ def get_tzinfo():
     if settings.USE_TZ:
         return timezone.get_current_timezone()
     return None
+
+
+def strictly_ordered_dates(date_low, date_high):
+    if type(date_low) == type(date_high) and \
+            (isinstance(date_low, datetime.datetime) or isinstance(date_low, datetime.date)):
+        return date_low < date_high
+
+    elif isinstance(date_low, datetime.datetime) and isinstance(date_high, datetime.date):
+        return date_low.date() < date_high
+
+    elif isinstance(date_high, datetime.datetime) and isinstance(date_low, datetime.date):
+        return date_low < date_high.date()
+
+    else:
+        raise TypeError("Arguments should be datetime.datetime or datetime.date")
