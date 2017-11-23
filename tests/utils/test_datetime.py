@@ -29,7 +29,7 @@ import factory.fuzzy
 
 from django.test import TestCase
 
-from utils.datetime import get_tzinfo, strictly_ordered_dates
+from osis_common.utils.datetime import get_tzinfo, strictly_ordered_dates
 
 
 class DateTimeUtils(TestCase):
