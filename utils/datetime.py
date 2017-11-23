@@ -36,15 +36,14 @@ def get_tzinfo():
 
 
 def strictly_ordered_dates(date_low, date_high):
-    if type(date_low) == type(date_high) and \
-            (isinstance(date_low, datetime.datetime) or isinstance(date_low, datetime.date)):
-        return date_low < date_high
-
-    elif isinstance(date_low, datetime.datetime) and isinstance(date_high, datetime.date):
-        return date_low.date() < date_high
-
-    elif isinstance(date_high, datetime.datetime) and isinstance(date_low, datetime.date):
-        return date_low < date_high.date()
-
-    else:
+    if not (isinstance(date_low, datetime.date)
+            or isinstance(date_high, datetime.date)
+            or isinstance(date_high, datetime.datetime)
+            or isinstance(date_high, datetime.datetime)):
         raise TypeError("Arguments should be datetime.datetime or datetime.date")
+
+    if isinstance(date_low, datetime.date) or isinstance(date_high, datetime.date):
+        date_low = date_low.date() if isinstance(date_low, datetime.datetime) else date_low
+        date_high = date_high.date() if isinstance(date_high, datetime.datetime) else date_high
+
+    return date_low < date_high

@@ -59,9 +59,11 @@ class DateTimeUtils(TestCase):
 
     def test_strictly_ordered_dates_2_datetimes(self):
         self.assertTrue(strictly_ordered_dates(self.datetime_low, self.datetime_high))
+        self.assertFalse(strictly_ordered_dates(self.datetime_high, self.datetime_low))
 
     def test_strictly_ordered_dates_2_dates(self):
         self.assertTrue(strictly_ordered_dates(self.datetime_low.date(), self.datetime_high.date()))
+        self.assertFalse(strictly_ordered_dates(self.datetime_high.date(), self.datetime_low.date()))
 
     def test_strictly_ordered_dates_1_date_1_datetime(self):
         self.assertTrue(strictly_ordered_dates(self.datetime_low.date(), self.datetime_high))
