@@ -26,8 +26,11 @@
 import re
 import json
 from copy import deepcopy
+from unittest.mock import patch
+
 from django.conf import settings
 from django.test.testcases import TestCase, override_settings
+
 from osis_common.models import message_queue_cache
 from osis_common.models.exception import MultipleModelsSerializationException
 from osis_common.models.serializable_model import serialize_objects, format_data_for_migration, SerializableModel
@@ -52,7 +55,6 @@ class TestSerializeObject(TestCase):
     def test_serialization_with_user(self):
         objects_to_serialize = [self.model_with_user]
         serialized_object = json.loads(serialize_objects(objects_to_serialize))
-        # [{'fields': {'name': 'With User'}, 'pk': None, 'model': 'tests.modelwithuser'}]
         serialized_fields = serialized_object[0].get('fields')
         serialized_model = serialized_object[0].get('model')
         self.assertIsNone(serialized_fields.get('user'))
@@ -62,7 +64,6 @@ class TestSerializeObject(TestCase):
     def test_serialization_without_user(self):
         objects_to_serialize = [self.model_without_user]
         serialized_object = json.loads(serialize_objects(objects_to_serialize))
-        # [{'fields': {'name': 'Without User'}, 'pk': None, 'model': 'tests.modelwithoutuser'}]
         serialized_fields = serialized_object[0].get('fields')
         serialized_model = serialized_object[0].get('model')
         self.assertEqual('Without User', serialized_fields.get('name'))
@@ -75,14 +76,24 @@ class TestSerializeObject(TestCase):
 
     def test__str__uuid(self):
         serializable_model = SerializableModel()
-        # serializable_model.save()
         result = re.match('[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}', '{}'.format(serializable_model))
         self.assertIsNotNone(result)
+
+    @patch("osis_common.models.serializable_model.serializable_model_post_save", side_effect=None)
+    def test_save(self, mock_post_save):
+        self.model_with_user.save()
+        self.assertTrue(mock_post_save.called)
+
+    @patch("osis_common.models.serializable_model.serializable_model_post_delete", side_effect=None)
+    def test_delete(self, mock_post_delete):
+        self.model_with_user.save()
+        self.model_with_user.delete()
+        self.assertTrue(mock_post_delete.called)
+        mock_post_delete.assert_called_once_with(self.model_with_user, to_delete=True)
 
 
 class TestMessageQueueCache(TestCase):
     def test_message_queue_cache_no_insert(self):
-        queue_settings = settings.QUEUES
         ModelWithoutUser.objects.create(name='Dummy')
         message_queued = message_queue_cache.get_messages_to_retry()
         self.assertEqual(0, message_queued.count())
@@ -111,7 +122,7 @@ class TestMessageQueueCache(TestCase):
             self.assertEqual(user_3.id, latest_message.get('id'))
             self.assertEqual(str(user_3.uuid), latest_message.get('uuid'))
 
-    def test_save_after_seed_message_queue_cache(self):
+    def test_save_after_send_message_queue_cache(self):
         queue_name = settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE')
         queue_settings = deepcopy(settings.QUEUES)
         queue_settings['QUEUE_URL'] = "dummy-url"
@@ -124,7 +135,7 @@ class TestMessageQueueCache(TestCase):
             ModelWithoutUser.objects.create(name='Dummy')
             self.assertEqual(4, message_queue_cache.get_messages_to_retry().count())
 
-    def test_save_after_seed_message_queue_cache(self):
+    def test_save_after_send_message_queue_cache_with_body(self):
         queue_name = settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE')
         # Seed message queue cache database
         message_queue_cache.MessageQueueCache.objects.create(queue=queue_name, data={'body':{'model': 'test_1', 'fields': {'test': True}}})
