@@ -103,7 +103,7 @@ class SerializableModel(models.Model):
 
     def delete(self, *args, **kwargs):
         result = super(SerializableModel, self).delete(*args, **kwargs)
-        serializable_model_post_delete(self)
+        serializable_model_post_delete(self, to_delete=True)
         return result
 
     def natural_key(self):
@@ -129,17 +129,17 @@ def serializable_model_post_save(instance):
     serializable_model_post_change(instance)
 
 
-def serializable_model_post_delete(instance):
+def serializable_model_post_delete(instance, to_delete=False):
     # This function is called in the delete() method of SerializableModel and AuditableSerializableModel
     # Any change made here will be applied to all models inheriting SerializableModel or AuditableSerializableModel
-    serializable_model_post_change(instance)
+    serializable_model_post_change(instance, to_delete)
 
 
-def serializable_model_post_change(instance):
+def serializable_model_post_change(instance, to_delete=False):
     # This function is called in the save() and delete() methods of SerializableModel and AuditableSerializableModel
     # Any change made here will be applied to all models inheriting SerializableModel or AuditableSerializableModel
     if hasattr(settings, 'QUEUES') and settings.QUEUES:
-        send_to_queue(instance)
+        send_to_queue(instance, to_delete)
 
 
 def send_to_queue(instance, to_delete=False):
