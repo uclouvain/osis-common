@@ -42,3 +42,22 @@ def strictly_ordered_dates(date_low, date_high):
     date_low = date_low.date() if isinstance(date_low, datetime.datetime) else date_low
     date_high = date_high.date() if isinstance(date_high, datetime.datetime) else date_high
     return date_low < date_high
+
+
+def convert_date_to_datetime(value):
+    if isinstance(value, datetime.datetime):
+        return value
+    elif isinstance(value, datetime.date):
+        return datetime.datetime(value.year, value.month, value.day, tzinfo=get_tzinfo())
+    else:
+        return value
+
+
+def convert_datetime_to_date(value):
+    if isinstance(value, datetime.datetime):
+        value = timezone.localtime(value, get_tzinfo())
+        return datetime.date(value.year, value.month, value.day)
+    else:
+        return value
+
+
