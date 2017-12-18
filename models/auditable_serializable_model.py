@@ -29,8 +29,8 @@ from django.contrib import admin
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from osis_common.models.auditable_model import auditable_model_post_save, auditable_model_flag_delete
-from osis_common.models.serializable_model import serialize, serializable_model_post_save, \
-    serializable_model_post_delete, serializable_model_resend_messages_to_queue, wrap_serialization
+from osis_common.models.serializable_model import serializable_model_post_save,  serializable_model_post_delete,\
+    serializable_model_resend_messages_to_queue
 
 
 class AuditableSerializableQuerySet(models.QuerySet):
@@ -69,7 +69,7 @@ class AuditableSerializableModel(models.Model):
 
     def delete(self, *args, **kwargs):
         result = auditable_model_flag_delete(self)
-        serializable_model_post_delete(self)
+        serializable_model_post_delete(self, to_delete=True)
         return result
 
     def natural_key(self):
