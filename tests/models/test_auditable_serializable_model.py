@@ -26,17 +26,8 @@
 from unittest.mock import patch
 
 from django.test.testcases import TestCase
-from django.db.models.fields import CharField
 
-from osis_common.models.auditable_serializable_model import AuditableSerializableModel
-
-
-class AuditableModelWithUser(AuditableSerializableModel):
-    user = CharField(max_length=30, null=True)
-    name = CharField(max_length=30, unique=True)
-
-    def __str__(self):
-        return '{} - {} - {}'.format(self.name, self.user, self.uuid)
+from osis_common.tests.models_for_tests.serializable_tests_models import AuditableModelWithUser
 
 
 class TestAuditableSerializableObject(TestCase):
