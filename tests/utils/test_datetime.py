@@ -28,8 +28,10 @@ import factory
 import factory.fuzzy
 
 from django.test import TestCase
+from django.utils import timezone
 
-from osis_common.utils.datetime import get_tzinfo, strictly_ordered_dates
+from osis_common.utils.datetime import get_tzinfo, strictly_ordered_dates, convert_datetime_to_date, \
+    convert_date_to_datetime
 
 
 class DateTimeUtils(TestCase):
@@ -78,3 +80,16 @@ class DateTimeUtils(TestCase):
             strictly_ordered_dates(integer, integer)
         with self.assertRaises(TypeError):
             strictly_ordered_dates(text, text)
+
+    def test_convert_datetime_to_date(self):
+        today = datetime.datetime.today()
+        date_today = convert_datetime_to_date(today)
+        self.assertEqual(type(date_today), datetime.date)
+        self.assertEqual(date_today, today.date())
+
+    def test_convert_date_to_datetime(self):
+        today = datetime.datetime.today()
+        today_date = today.date()
+        today_datetime = convert_date_to_datetime(today_date)
+        self.assertEqual(type(today_datetime), datetime.datetime)
+
