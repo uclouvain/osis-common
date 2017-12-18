@@ -55,7 +55,8 @@ def convert_date_to_datetime(value):
 
 def convert_datetime_to_date(value):
     if isinstance(value, datetime.datetime):
-        value = timezone.localtime(value, get_tzinfo())
+        if value.tzinfo:
+            value = timezone.localtime(value, get_tzinfo())
         return datetime.date(value.year, value.month, value.day)
     else:
         return value
