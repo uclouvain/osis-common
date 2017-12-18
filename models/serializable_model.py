@@ -251,7 +251,7 @@ def persist(structure):
         query_set = model_class.objects.filter(uuid=fields.get('uuid'))
         persisted_obj = query_set.first()
         if not persisted_obj:
-            obj_id = _make_insert(fields, model_class)
+            obj_id = _make_insert(fields, model_class.__bases__[0], model_class)
             if obj_id:
                 return obj_id
             else:
@@ -292,11 +292,11 @@ def _make_update(fields, model_class, persisted_obj, query_set):
     return persisted_obj.id
 
 
-def _make_insert(fields, model_class):
+def _make_insert(fields, super_class, model_class):
     kwargs = _build_kwargs(fields, model_class)
     del kwargs['id']
     obj = model_class(**kwargs)
-    super(SerializableModel, obj).save(force_insert=True)
+    super(super_class, obj).save(force_insert=True)
     obj_id = obj.id
     return obj_id
 
