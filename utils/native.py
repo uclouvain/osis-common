@@ -35,8 +35,8 @@ from django.core.exceptions import PermissionDenied
 def execute(sql_command):
     results = []
     if sql_command:
-        if exact_words_of_list_in_string(get_forbidden_sql_keywords(), sql_command, False):
-            raise PermissionDenied("Forbidden")
+        if sql_command_contains_forbidden_keyword(sql_command):
+            raise PermissionDenied("SQL command contains forbidden SQL keyword")
 
         with connection.cursor() as cursor:
             sql_commands = sql_command.split(";")
@@ -50,6 +50,10 @@ def execute(sql_command):
                     except Exception as e:
                         results += [u'%d: %s\n> %s\n\n' % (count + 1, stripped_command, e)]
     return results
+
+
+def sql_command_contains_forbidden_keyword(sql_command):
+    return exact_words_of_list_in_string(get_forbidden_sql_keywords(), sql_command, False)
 
 
 def exact_words_of_list_in_string(words_list, string, case_sensitive=False):
