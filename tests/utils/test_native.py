@@ -23,10 +23,12 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+from django.db.utils import InternalError
 from django.core.exceptions import PermissionDenied
 from django.test import TestCase
 
 import factory.fuzzy
+from unittest import mock
 
 from osis_common.utils import native
 
@@ -67,19 +69,18 @@ class TestNativeUtils(TestCase):
             []
         )
 
-    def test_execute_authorized_request(self):
-        authorized_request = 'select * from base_person'
-        self.assertListEqual(
-            native.execute(authorized_request),
-            ['1: ' + authorized_request + '\n> []\n\n']
-        )
-
     def test_execute_unauthorized_request(self):
         forbidden_sql_keywords = native.get_forbidden_sql_keywords()
         for forbidden in forbidden_sql_keywords:
             with self.assertRaises(PermissionDenied):
                 unauthorized_request = _generate_fake_text_starting_with_keyword(forbidden)
                 native.execute(unauthorized_request)
+
+    @mock.patch('osis_common.utils.native.get_sql_data_management_readonly')
+    def test_execute_write_sql_with_readonly_flag(self, mock_sql_readonly):
+        mock_sql_readonly.return_value = True
+        with self.assertRaises(InternalError):
+            native.execute("UPDATE base_person set last_name='Toto'")
 
 
 def _generate_fake_text_starting_with_keyword(keyword):

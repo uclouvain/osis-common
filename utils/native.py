@@ -44,12 +44,19 @@ def execute(sql_command):
             for count, command in enumerate(sql_commands):
                 stripped_command = command.strip()
                 if stripped_command:
+                    if get_sql_data_management_readonly():
+                        stripped_command = get_sql_command_readonly(stripped_command)
+
                     try:
                         cursor.execute(stripped_command)
                         results += [u'%d: %s\n> %s\n\n' % (count + 1, stripped_command, cursor.fetchall())]
                     except Exception as e:
                         results += [u'%d: %s\n> %s\n\n' % (count + 1, stripped_command, e)]
     return results
+
+
+def get_sql_command_readonly(command):
+    return "BEGIN;SET TRANSACTION READ ONLY; " + command + " ;COMMIT;"
 
 
 def sql_command_contains_forbidden_keyword(sql_command):
@@ -67,3 +74,9 @@ def get_forbidden_sql_keywords():
     if hasattr(settings, 'FORBIDDEN_SQL_KEYWORDS'):
         return settings.FORBIDDEN_SQL_KEYWORDS
     return []
+
+
+def get_sql_data_management_readonly():
+    if hasattr(settings, 'SQL_DATA_MANAGEMENT_READONLY'):
+        return settings.SQL_DATA_MANAGEMENT_READONLY
+    return True
