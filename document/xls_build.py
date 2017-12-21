@@ -74,7 +74,7 @@ def _create_xls(parameters_dict):
         sheet_number = sheet_number + 1
 
     _build_worksheet_parameters(workbook, parameters_dict.get(USER_KEY), parameters_dict.get(LIST_DESCRIPTION_KEY))
-    response = HttpResponse(save_virtual_workbook(workbook), content_type='application/vnd.ms-excel')
+    response = HttpResponse(save_virtual_workbook(workbook), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=binary')
     response['Content-Disposition'] = "%s%s" % ("attachment; filename=", filename)
 
     return response
