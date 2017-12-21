@@ -195,10 +195,7 @@ def _is_checked_file_parameters_list(list_parameters):
 
 
 def _compare_dicts(expected_keys, list_parameters):
-    keys = list(list_parameters.keys())
-    if len((list(set(expected_keys).intersection(set(keys))))) != len(expected_keys):
-        return False
-    return True
+    return len((list(set(expected_keys).intersection(set(keys))))) == len(expected_keys)
 
 
 def _is_checked_worsheets_data(list_parameters):
