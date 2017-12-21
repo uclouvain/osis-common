@@ -138,3 +138,18 @@ msgstr "Conformément aux articles 104, 109 et 111 RGEE (Règlement général de
 
 msgid "link_to_RGEE"
 msgstr "https://uclouvain.be/fr/decouvrir/rgee.html"
+
+msgid "produce_xls"
+msgstr "Produire un excel avec la liste des résultats"
+
+msgid "produce_xls_lu"
+msgstr "Xls avec les activités"
+
+msgid "created_by"
+msgstr "Created by"
+
+msgid "true"
+msgstr "Vrai"
+
+msgid "false"
+msgstr "Faux"
