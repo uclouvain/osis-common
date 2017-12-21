@@ -195,6 +195,7 @@ def _is_checked_file_parameters_list(list_parameters):
 
 
 def _compare_dicts(expected_keys, list_parameters):
+    keys = list(list_parameters.keys())
     return len((list(set(expected_keys).intersection(set(keys))))) == len(expected_keys)
 
 
