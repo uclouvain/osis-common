@@ -135,3 +135,12 @@ msgstr "In accordance to regulation's rules 104, 109 and 111. Complete rules ava
 
 msgid "link_to_RGEE"
 msgstr "https://www.uclouvain.be/enseignement-reglements.html"
+
+msgid "created_by"
+msgstr "Created by"
+
+msgid "true"
+msgstr "True"
+
+msgid "false"
+msgstr "False"
