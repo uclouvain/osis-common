@@ -232,7 +232,7 @@ def _coloring_rows(ws, data):
 def _set_row_style(key, row_numbers, ws):
     for index, row in enumerate(ws.iter_rows()):
         for r in row_numbers:
-            if index == r - 1:
+            if index == r:
                 for cell in row:
                     cell.style = key
 
