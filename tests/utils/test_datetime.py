@@ -28,7 +28,6 @@ import factory
 import factory.fuzzy
 
 from django.test import TestCase
-from django.utils import timezone
 
 from osis_common.utils.datetime import get_tzinfo, strictly_ordered_dates, convert_datetime_to_date, \
     convert_date_to_datetime
