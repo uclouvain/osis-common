@@ -138,7 +138,7 @@ class MessagesTestCase(TestCase):
         return receiver1, receiver2, receiver3, receiver4, receiver5
 
     def __make_table(self):
-        table_headers = ('acronym', 'sessionn', 'registration_number',
+        table_headers = ('acronym', 'session_title', 'registration_number',
                          'lastname', 'firstname', 'score', 'documentation')
         table_data = self.__make_table_data()
         return create_table('enrollments', table_headers, table_data)
