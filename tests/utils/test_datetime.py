@@ -29,7 +29,7 @@ import factory.fuzzy
 
 from django.test import TestCase
 
-from osis_common.utils.datetime import get_tzinfo, strictly_ordered_dates, convert_datetime_to_date, \
+from osis_common.utils.datetime import get_tzinfo, is_in_chronological_order, convert_datetime_to_date, \
     convert_date_to_datetime
 
 
@@ -56,29 +56,37 @@ class DateTimeUtils(TestCase):
                                                                            datetimes[3].month,
                                                                            datetimes[3].day,
                                                                            tzinfo=get_tzinfo())
-                                                        ).fuzz()
+                                                         ).fuzz()
 
-    def test_strictly_ordered_dates_2_datetimes(self):
-        self.assertTrue(strictly_ordered_dates(self.datetime_low, self.datetime_high))
-        self.assertFalse(strictly_ordered_dates(self.datetime_high, self.datetime_low))
+    def test_is_in_chronological_order_2_datetimes(self):
+        self.assertTrue(is_in_chronological_order(self.datetime_low, self.datetime_high))
+        self.assertFalse(is_in_chronological_order(self.datetime_high, self.datetime_low))
 
-    def test_strictly_ordered_dates_2_dates(self):
-        self.assertTrue(strictly_ordered_dates(self.datetime_low.date(), self.datetime_high.date()))
-        self.assertFalse(strictly_ordered_dates(self.datetime_high.date(), self.datetime_low.date()))
+    def test_is_in_chronological_order_2_identical_datetimes(self):
+        now = datetime.datetime.now()
+        self.assertTrue(is_in_chronological_order(now, now))
 
-    def test_strictly_ordered_dates_1_date_1_datetime(self):
-        self.assertTrue(strictly_ordered_dates(self.datetime_low.date(), self.datetime_high))
-        self.assertTrue(strictly_ordered_dates(self.datetime_low, self.datetime_high.date()))
+    def test_is_in_chronological_order_2_dates(self):
+        self.assertTrue(is_in_chronological_order(self.datetime_low.date(), self.datetime_high.date()))
+        self.assertFalse(is_in_chronological_order(self.datetime_high.date(), self.datetime_low.date()))
 
-    def test_strictly_ordered_dates_bad_arguments_type(self):
+    def test_is_in_chronological_order_1_date_1_datetime(self):
+        self.assertTrue(is_in_chronological_order(self.datetime_low.date(), self.datetime_high))
+        self.assertTrue(is_in_chronological_order(self.datetime_low, self.datetime_high.date()))
+
+    def test_is_in_chronological_order_bad_arguments_type(self):
         text = factory.fuzzy.FuzzyText(length=12).fuzz()
         integer = factory.fuzzy.FuzzyInteger(0).fuzz()
         with self.assertRaises(TypeError):
-            strictly_ordered_dates(text, integer)
+            is_in_chronological_order(text, integer)
         with self.assertRaises(TypeError):
-            strictly_ordered_dates(integer, integer)
+            is_in_chronological_order(integer, integer)
         with self.assertRaises(TypeError):
-            strictly_ordered_dates(text, text)
+            is_in_chronological_order(text, text)
+
+    def test_is_in_chronological_order_case_dates_equality_not_accepted(self):
+        now = datetime.datetime.now()
+        self.assertFalse(is_in_chronological_order(now, now, accept_equality=False))
 
     def test_convert_datetime_to_date(self):
         today = datetime.datetime.today()
