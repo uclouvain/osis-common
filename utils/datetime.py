@@ -35,13 +35,19 @@ def get_tzinfo():
     return None
 
 
-def strictly_ordered_dates(date_low, date_high):
-    if not (isinstance(date_low, datetime.date) and isinstance(date_high, datetime.date)):
-        raise TypeError("Arguments should be datetime.datetime or datetime.date")
+def is_in_chronological_order(date_low, date_high, accept_equality=True):
+    date_low = _get_date_instance(date_low)
+    date_high = _get_date_instance(date_high)
+    if accept_equality:
+        return date_low <= date_high
+    else:
+        return date_low < date_high
 
-    date_low = date_low.date() if isinstance(date_low, datetime.datetime) else date_low
-    date_high = date_high.date() if isinstance(date_high, datetime.datetime) else date_high
-    return date_low < date_high
+
+def _get_date_instance(date):
+    if not (isinstance(date, datetime.date)):
+        raise TypeError("Arguments should be datetime.datetime or datetime.date")
+    return date.date() if isinstance(date, datetime.datetime) else date
 
 
 def convert_date_to_datetime(value):
