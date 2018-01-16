@@ -29,6 +29,7 @@ from django.contrib.admin.utils import NestedObjects
 from django.db import models, transaction
 from django.db.utils import DEFAULT_DB_ALIAS, DatabaseError
 from django.conf import settings
+from django.utils import timezone
 
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
@@ -44,7 +45,7 @@ class AuditableQuerySet(models.QuerySet):
 
 class AuditableModelManager(models.Manager):
     def get_queryset(self):
-        return AuditableQuerySet(self.model, using=self._db).exclude(deleted=True)
+        return AuditableQuerySet(self.model, using=self._db).filter(deleted__isnull=True)
 
 
 class AuditableModelAdmin(admin.ModelAdmin):
@@ -54,7 +55,7 @@ class AuditableModelAdmin(admin.ModelAdmin):
 class AuditableModel(models.Model):
     objects = AuditableModelManager()
 
-    deleted = models.BooleanField(null=False, blank=False, default=False)
+    deleted = models.DateTimeField(null=True, blank=True, default=None, db_index=True)
 
     def save(self, *args, **kwargs):
         super(AuditableModel, self).save(*args, **kwargs)
@@ -81,9 +82,10 @@ def auditable_model_flag_delete(instance):
     collector.collect([instance])
 
     nested_objects = collector.nested()
+    deleted_datetime = timezone.now()
     try:
         with transaction.atomic():
-            _update_deleted_flag_in_tree(nested_objects)
+            _update_deleted_flag_in_tree(nested_objects, deleted_datetime)
 
     except DatabaseError as e:
         logging.exception(str(e))
@@ -91,16 +93,16 @@ def auditable_model_flag_delete(instance):
     return nested_objects
 
 
-def _update_deleted_flag_in_tree(node):
+def _update_deleted_flag_in_tree(node, deleted_datetime):
     if isinstance(node, list):
         for subnode in node:
-            _update_deleted_flag_in_tree(subnode)
+            _update_deleted_flag_in_tree(subnode, deleted_datetime)
     else:
-        _update_deleted_flag(node, True)
+        _update_deleted_flag(node, deleted_datetime)
 
 
-def _update_deleted_flag(node, flag_value):
+def _update_deleted_flag(node, deleted_datetime):
     if hasattr(node, 'deleted'):
-        node.deleted = flag_value
+        node.deleted = deleted_datetime
         node.save()
 

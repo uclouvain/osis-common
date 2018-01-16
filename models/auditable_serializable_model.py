@@ -46,7 +46,7 @@ class AuditableSerializableModelManager(models.Manager):
         return self.get(uuid=uuid)
 
     def get_queryset(self):
-        return AuditableSerializableQuerySet(self.model, using=self._db).exclude(deleted=True)
+        return AuditableSerializableQuerySet(self.model, using=self._db).filter(deleted__isnull=True)
 
 
 class AuditableSerializableModelAdmin(admin.ModelAdmin):
@@ -60,7 +60,7 @@ class AuditableSerializableModel(models.Model):
     objects = AuditableSerializableModelManager()
 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
-    deleted = models.BooleanField(null=False, blank=False, default=False)
+    deleted = models.DateTimeField(null=True, blank=True, default=None, db_index=True)
 
     def save(self, *args, **kwargs):
         super(AuditableSerializableModel, self).save(*args, **kwargs)
