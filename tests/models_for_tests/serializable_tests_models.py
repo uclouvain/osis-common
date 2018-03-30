@@ -26,7 +26,6 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.fields import CharField
 
-from osis_common.models.auditable_serializable_model import AuditableSerializableModel
 from osis_common.models.serializable_model import SerializableModel
 from django.db import models
 
@@ -76,11 +75,3 @@ class ModelWithoutUser(SerializableModel):
 
 class ModelNotSerializable(models.Model):
     pass
-
-
-class AuditableModelWithUser(AuditableSerializableModel):
-    user = CharField(max_length=30, null=True)
-    name = CharField(max_length=30, unique=True)
-
-    def __str__(self):
-        return '{} - {} - {}'.format(self.name, self.user, self.uuid)
