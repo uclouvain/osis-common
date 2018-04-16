@@ -32,7 +32,7 @@ import time
 from django.conf import settings
 from django.contrib import admin, messages
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
+from django.db import models, transaction
 from django.db.models import DateTimeField, DateField
 from django.core import serializers
 from django.utils.encoding import force_text
@@ -99,11 +99,13 @@ class SerializableModel(models.Model):
 
     def save(self, *args, **kwargs):
         super(SerializableModel, self).save(*args, **kwargs)
-        serializable_model_post_save(self)
+        # Send message to queue only when transaction is commited
+        transaction.on_commit(lambda: serializable_model_post_save(self))
 
     def delete(self, *args, **kwargs):
         result = super(SerializableModel, self).delete(*args, **kwargs)
-        serializable_model_post_delete(self, to_delete=True)
+        # Send message to queue only when transaction is commited
+        transaction.on_commit(lambda: serializable_model_post_delete(self, to_delete=True))
         return result
 
     def natural_key(self):
