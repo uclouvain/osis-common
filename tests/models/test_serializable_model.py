@@ -29,7 +29,7 @@ from copy import deepcopy
 from unittest.mock import patch
 
 from django.conf import settings
-from django.test.testcases import TestCase, override_settings
+from django.test.testcases import TestCase, override_settings, TransactionTestCase
 
 from osis_common.models import message_queue_cache
 from osis_common.models.exception import MultipleModelsSerializationException
@@ -79,10 +79,16 @@ class TestSerializeObject(TestCase):
         result = re.match('[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}', '{}'.format(serializable_model))
         self.assertIsNotNone(result)
 
+
+class TestSerializeObjectOnCommit(TransactionTestCase):
+    def setUp(self):
+        self.model_with_user = ModelWithUser(user='user1', name='With User')
+
     @patch("osis_common.models.serializable_model.serializable_model_post_save", side_effect=None)
     def test_save(self, mock_post_save):
         self.model_with_user.save()
         self.assertTrue(mock_post_save.called)
+        mock_post_save.assert_called_once_with(self.model_with_user)
 
     @patch("osis_common.models.serializable_model.serializable_model_post_delete", side_effect=None)
     def test_delete(self, mock_post_delete):
