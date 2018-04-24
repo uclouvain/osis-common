@@ -77,7 +77,7 @@ def serializable_model_resend_messages_to_queue(self, request, queryset):
         queue_name = settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE')
         for record in queryset:
             try:
-                ser_obj = serialize(record)
+                ser_obj = serialize(record, False)
                 queue_sender.send_message(queue_name,
                                           wrap_serialization(ser_obj))
                 counter += 1
@@ -146,7 +146,7 @@ def serializable_model_post_change(instance, to_delete=False):
 
 def send_to_queue(instance, to_delete=False):
     queue_name = settings.QUEUES.get('QUEUES_NAME').get('MIGRATIONS_TO_PRODUCE')
-    serialized_instance = wrap_serialization(serialize(instance), to_delete)
+    serialized_instance = wrap_serialization(serialize(instance, to_delete), to_delete)
 
     try:
         # Try to resend message present in cache
@@ -193,15 +193,22 @@ def serialize_objects(objects, format='json'):
                                  use_natural_primary_keys=True)
 
 
-def serialize(obj, last_syncs=None):
+# TODO :: If record is to delete, we don't need to send the entire object, only the UUID is necessary to send.
+# TODO :: This need to correct the algorithm to consume messages.
+def serialize(obj, to_delete, last_syncs=None):
     if obj:
         fields = {}
         for f in obj.__class__._meta.fields:
-            attribute = getattr(obj, f.name)
-            if f.is_relation:
+            if f.is_relation and to_delete:
+                # If record is to delete, it's not necessary to find trough fk field values
+                # (cf. todo above to clean this code)
+                attribute = None
+            else:
+                attribute = getattr(obj, f.name)
+            if f.is_relation and not to_delete:
                 try:
                     if attribute and getattr(attribute, 'uuid'):
-                        fields[f.name] = serialize(attribute, last_syncs=last_syncs)
+                        fields[f.name] = serialize(attribute, to_delete, last_syncs=last_syncs)
                 except AttributeError:
                     pass
             else:
