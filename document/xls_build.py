@@ -64,7 +64,7 @@ def generate_xls(list_parameters):
         return HttpResponse('')
 
 
-def _create_xls(parameters_dict, filters):
+def _create_xls(parameters_dict):
     filename = _build_filename(parameters_dict.get(FILENAME_KEY))
 
     workbook = Workbook(encoding='utf-8')
@@ -73,8 +73,7 @@ def _create_xls(parameters_dict, filters):
         _build_worksheet(worksheet_data,  workbook, sheet_number)
         sheet_number = sheet_number + 1
 
-    _build_worksheet_parameters(workbook, parameters_dict.get(USER_KEY), parameters_dict.get(LIST_DESCRIPTION_KEY),
-                                filters)
+    _build_worksheet_parameters(workbook, parameters_dict.get(USER_KEY), parameters_dict.get(LIST_DESCRIPTION_KEY))
     response = HttpResponse(save_virtual_workbook(workbook), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=binary')
     response['Content-Disposition'] = "%s%s" % ("attachment; filename=", filename)
 
@@ -140,16 +139,13 @@ def _create_worksheet(workbook, title, sheet_num):
     return worksheet1
 
 
-def _build_worksheet_parameters(workbook, a_user, list_description=None, filters=None):
+def _build_worksheet_parameters(workbook, a_user, list_description=None):
     worksheet_parameters = workbook.create_sheet(title=str(_('parameters')))
     today = datetime.date.today()
     worksheet_parameters.append([str(_('creation_date')), today.strftime('%d-%m-%Y')])
     worksheet_parameters.append([str(_('created_by')), str(a_user)])
     if list_description:
         worksheet_parameters.append([str(_('description')), list_description])
-    if filters:
-        for key, value in filters.items():
-            worksheet_parameters.append([str(key), str(value)])
     _adjust_column_width(worksheet_parameters)
     return worksheet_parameters
 
@@ -268,3 +264,43 @@ def translate(string_value):
             return _('true')
         return _('false')
     return None
+
+
+def generate_xls_with_filter(list_parameters, filters=None):
+    if _is_valid(list_parameters):
+        return _create_xls_with_filter(list_parameters, filters)
+    else:
+        logger.warning('Error data invalid to create xls')
+        return HttpResponse('')
+
+
+def _create_xls_with_filter(parameters_dict, filters):
+    filename = _build_filename(parameters_dict.get(FILENAME_KEY))
+
+    workbook = Workbook(encoding='utf-8')
+    sheet_number = 0
+    for worksheet_data in parameters_dict.get(WORKSHEETS_DATA):
+        _build_worksheet(worksheet_data,  workbook, sheet_number)
+        sheet_number = sheet_number + 1
+
+    _build_worksheet_parameters_with_filter(workbook, parameters_dict.get(USER_KEY),
+                                            parameters_dict.get(LIST_DESCRIPTION_KEY),
+                                            filters)
+    response = HttpResponse(save_virtual_workbook(workbook), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=binary')
+    response['Content-Disposition'] = "%s%s" % ("attachment; filename=", filename)
+
+    return response
+
+
+def _build_worksheet_parameters_with_filter(workbook, a_user, list_description=None, filters=None):
+    worksheet_parameters = workbook.create_sheet(title=str(_('parameters')))
+    today = datetime.date.today()
+    worksheet_parameters.append([str(_('creation_date')), today.strftime('%d-%m-%Y')])
+    worksheet_parameters.append([str(_('created_by')), str(a_user)])
+    if list_description:
+        worksheet_parameters.append([str(_('description')), list_description])
+    if filters:
+        for key, value in filters.items():
+            worksheet_parameters.append([str(key), str(value)])
+    _adjust_column_width(worksheet_parameters)
+    return worksheet_parameters
