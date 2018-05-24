@@ -146,7 +146,7 @@ msgid "produce_xls_lu"
 msgstr "Xls avec les activités"
 
 msgid "created_by"
-msgstr "Created by"
+msgstr "Créé par"
 
 msgid "true"
 msgstr "Vrai"

@@ -150,7 +150,7 @@ def _build_worksheet_parameters(workbook, a_user, list_description=None, filters
     worksheet_parameters.append([str(_('creation_date')), today.strftime('%d-%m-%Y')])
     worksheet_parameters.append([str(_('created_by')), str(a_user)])
     if list_description:
-        worksheet_parameters.append([str(_('description')), list_description])
+        worksheet_parameters.append([str(_('description')), str(list_description)])
     if filters:
         for key, value in filters.items():
             worksheet_parameters.append([str(key), str(value)])
