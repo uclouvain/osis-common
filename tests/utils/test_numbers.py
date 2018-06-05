@@ -30,11 +30,10 @@ from osis_common.utils import numbers
 
 class TestNumbersUtils(TestCase):
     def test_to_float_or_zero(self):
-        self.assertEqual(numbers.to_float_or_zero(17), 17.0)
-        self.assertEqual(numbers.to_float_or_zero(-42), -42.0)
-        self.assertEqual(numbers.to_float_or_zero(0), 0)
-        self.assertEqual(numbers.to_float_or_zero(None), 0)
-        self.assertEqual(numbers.to_float_or_zero(False), 0)
-        self.assertEqual(numbers.to_float_or_zero(""), 0)
+        input_output = [(17, 17.0), (-42, -42.0), (0, 0), (None, 0), (False, 0), ("", 0)]
+        for (inp, outp) in input_output:
+            with self.subTest(inp=inp, outp=outp):
+                self.assertEqual(numbers.to_float_or_zero(inp), outp)
+
         with self.assertRaises(ValueError):
             numbers.to_float_or_zero("string")
