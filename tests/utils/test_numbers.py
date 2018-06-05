@@ -36,3 +36,5 @@ class TestNumbersUtils(TestCase):
         self.assertEqual(numbers.to_float_or_zero(None), 0)
         self.assertEqual(numbers.to_float_or_zero(False), 0)
         self.assertEqual(numbers.to_float_or_zero(""), 0)
+        with self.assertRaises(ValueError):
+            numbers.to_float_or_zero("string")
