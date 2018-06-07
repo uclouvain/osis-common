@@ -24,13 +24,12 @@
 #
 ##############################################################################
 from django.db import models
-from django.contrib import admin
+from osis_common.models import osis_model_admin
 from django.utils import timezone
 
 
-class ApplicationNoticeAdmin(admin.ModelAdmin):
-    list_display = ('subject','notice','start_publish','stop_publish')
-    fieldsets = ((None, {'fields': ('subject','notice','start_publish','stop_publish')}),)
+class ApplicationNoticeAdmin(osis_model_admin.OsisModelAdmin):
+    list_display = ('subject', 'notice', 'start_publish', 'stop_publish')
 
 
 class ApplicationNotice(models.Model):

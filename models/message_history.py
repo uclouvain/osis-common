@@ -25,11 +25,11 @@
 ##############################################################################
 from django.db import models
 from django.utils import timezone
-from django.contrib import admin
+from osis_common.models import osis_model_admin
 from django.utils.safestring import mark_safe
 
 
-class MessageHistoryAdmin(admin.ModelAdmin):
+class MessageHistoryAdmin(osis_model_admin.OsisModelAdmin):
     def has_add_permission(self, request):
         return False
 
@@ -44,8 +44,6 @@ class MessageHistoryAdmin(admin.ModelAdmin):
 
     date_hierarchy = 'created'
     list_display = ('receiver_id', 'reference', 'subject', 'sent', 'created')
-    fieldsets = ((None, {'fields': ('receiver_id', 'reference',
-                                    'subject', ('sent', 'created'), 'content_html_safe', 'content_txt')}),)
     readonly_fields = ('receiver_id', 'reference', 'subject', 'sent', 'created', 'content_html_safe', 'content_txt')
     ordering = ['-created']
     search_fields = ['receiver_id', 'reference', 'subject']
