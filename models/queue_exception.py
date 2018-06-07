@@ -25,15 +25,14 @@
 ##############################################################################
 from django.db import models
 from django.contrib.postgres.fields import JSONField
-from django.contrib import admin, messages
+from django.contrib import messages
 from osis_common.queue import queue_sender
-from pika.exceptions import ChannelClosed, ConnectionClosed
+from osis_common.models import osis_model_admin
 
 
-class QueueExceptionAdmin(admin.ModelAdmin):
+class QueueExceptionAdmin(osis_model_admin.OsisModelAdmin):
     date_hierarchy = 'creation_date'
     list_display = ('queue_name', 'exception_title', 'creation_date')
-    fieldsets = ((None, {'fields': ('queue_name', 'exception_title', 'exception', 'message', 'creation_date')}),)
     readonly_fields = ('queue_name', 'exception_title', 'creation_date', 'message', 'exception', )
     ordering = ['-creation_date']
     search_fields = ['queue_name', 'exception_title']
