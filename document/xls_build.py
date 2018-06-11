@@ -53,6 +53,13 @@ COLORED_COLS = 'colored_cols'
 STYLE_NO_GRAY = Style(fill=PatternFill(patternType='solid', fgColor=Color('C1C1C1')))
 STYLE_RED = Style(fill=PatternFill(patternType='solid', fgColor=Color(rgb='00FF0000')))
 
+DESCRIPTION = 'param_description'
+FILENAME = 'param_filename'
+USER = 'param_user'
+HEADER_TITLES = 'param_header_titles'
+WS_TITLE = 'param_worksheet_title'
+
+
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
 
@@ -89,8 +96,8 @@ def _build_worksheet(worksheet_data, workbook, sheet_number):
     content = worksheet_data.get(CONTENT_KEY)
 
     a_worksheet = _create_worksheet(workbook,
-                                   _create_worsheet_title(sheet_number, worksheet_data.get(WORKSHEET_TITLE_KEY)),
-                                   sheet_number)
+                                    _create_worsheet_title(sheet_number, worksheet_data.get(WORKSHEET_TITLE_KEY)),
+                                    sheet_number)
     _add_column_headers(worksheet_data.get(HEADER_TITLES_KEY), a_worksheet)
     _add_content(content, a_worksheet)
     _adjust_column_width(a_worksheet)
@@ -272,3 +279,15 @@ def translate(string_value):
             return _('true')
         return _('false')
     return None
+
+
+def prepare_xls_parameters_list(working_sheets_data, parameters):
+    return {LIST_DESCRIPTION_KEY: _(parameters.get(DESCRIPTION, None)),
+            FILENAME_KEY: _(parameters.get(FILENAME, None)),
+            USER_KEY: parameters.get(USER, None),
+            WORKSHEETS_DATA:
+                [{CONTENT_KEY: working_sheets_data,
+                  HEADER_TITLES_KEY: parameters.get(HEADER_TITLES, None),
+                  WORKSHEET_TITLE_KEY: _(parameters.get(WS_TITLE, None)),
+                  }
+                 ]}
