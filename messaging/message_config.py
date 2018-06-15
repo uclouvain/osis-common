@@ -71,18 +71,20 @@ def create_message_content(html_template_ref,
     }
 
 
-def create_table(table_template_name, header_txt, data):
+def create_table(table_template_name, header_txt, data, data_translatable=None):
     """
     Create à dict that represent the table of data hat has to be inserted in a message template.
     :param table_template_name:The name of the param in the template used to represent the table.
     :param header_txt: The header of the table, as a list of strings
     :param data: The data for each row of the table as list of tuples
+    :param data_translatable: The name of column which data need translation
     :return: The dict representing the table used in the formating of the message
     """
     return {
-        'table_template_name':  table_template_name,
-        'header_txt':           header_txt,
-        'data':                 data
+        'table_template_name':          table_template_name,
+        'header_txt':                   header_txt,
+        'data':                         data,
+        'data_translatable':            data_translatable or []
     }
 
 

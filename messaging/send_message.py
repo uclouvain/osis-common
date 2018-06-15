@@ -208,9 +208,13 @@ def __make_tables_template_data(tables, lang_code):
         for table in tables:
             table_template_name = table.get('table_template_name')
             table_header_txt = table.get('header_txt')
-            with translation.override(lang_code):
-                table_headers = (_(txt) for txt in table_header_txt)
             table_data = table.get('data')
+            table_data_translatable = table.get('data_translatable')
+
+            with translation.override(lang_code):
+                table_headers = [_(txt) for txt in table_header_txt]
+            table_data = __apply_translation_on_table_data(table_data, lang_code, table_header_txt,
+                                                           table_data_translatable)
             table_html = __render_table_template_as_string(
                 table_headers,
                 table_data,
@@ -224,6 +228,41 @@ def __make_tables_template_data(tables, lang_code):
             html_templates_data[table_template_name] = table_html
             txt_templates_data[table_template_name] = table_txt
     return html_templates_data, txt_templates_data
+
+
+def __apply_translation_on_table_data(table_data, lang_code, table_header_txt, table_data_translatable):
+    """
+       Apply translation on data table
+       :param table_data             :  The lists of tuple which compose the table data.
+       :param lang_code              :  The language_code we want for translation
+       :param table_header_txt       :  The headers [not translated] of table
+       :param table_data_translatable:  The headers [not translated] of table
+       :return: The data table which translation apply
+    """
+    table_data_translated = []
+    col_indexes_to_translate = [table_header_txt.index(column_to_translated) for column_to_translated in
+                                table_data_translatable if column_to_translated in table_header_txt]
+    for row in table_data:
+        with translation.override(lang_code):
+            row_translated = __apply_translation_on_row_table_data(row, col_indexes_to_translate)
+        table_data_translated.append(row_translated)
+    return table_data_translated
+
+
+def __apply_translation_on_row_table_data(row_data, col_indexes_to_translate):
+    """
+       Apply translation on row data table
+       :param row_data                              :  The tuple which compose a row data.
+       :param col_indexes_to_translate              :  The language_code we want for translation
+       :return: The row table which translation apply
+    """
+    row_translated = []
+    for col_idx, col_data in enumerate(row_data):
+        if col_idx in col_indexes_to_translate and col_data is not None:
+            row_translated.append(_(col_data))
+        else:
+            row_translated.append(col_data)
+    return tuple(row_translated)
 
 
 def send_messages(message_content):
