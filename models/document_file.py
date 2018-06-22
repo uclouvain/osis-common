@@ -58,9 +58,9 @@ class DocumentFile(serializable_model.SerializableModel):
     application_name = models.CharField(max_length=100, null=True, blank=True)
     size = models.IntegerField(null=True, blank=True)
 
-    def save(self):
+    def save(self, *args, **kwargs):
         self.file.name = str(self.uuid)
-        super(DocumentFile, self).save()
+        super(DocumentFile, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.file_name
