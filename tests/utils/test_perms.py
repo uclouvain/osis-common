@@ -65,3 +65,13 @@ class TestBasePerms(SimpleTestCase):
         is_valid = IsNumberLegit(6).is_valid()
         self.assertTrue(is_valid)
 
+    def test_as_ul(self):
+        html = IsNumberLegit(6).as_ul
+        self.assertEqual(html, "")
+
+        html = IsNumberLegit(11).as_ul
+        self.assertEqual("<ul><li>{msg1}</li><li>{msg2}</li></ul>".format(msg1=error_msg1, msg2=error_msg2),
+                         html)
+
+
+

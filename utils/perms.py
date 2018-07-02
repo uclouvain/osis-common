@@ -23,7 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-import sys
+import itertools
 
 from django.core.exceptions import PermissionDenied
 from django.utils.functional import cached_property
@@ -40,6 +40,11 @@ class BasePerm:
         predicates_errors = (self._call_predicate(p) for p in self.predicates)
         return [e for e in predicates_errors if e]
 
+    @property
+    def as_ul(self):
+        html = "<ul><li>{}</li></ul>".format("</li><li>".join(self.errors))
+        return html if self.errors else ""
+
     def _call_predicate(self, predicate):
         try:
             predicate(*self.predicates_arguments)
@@ -49,8 +54,6 @@ class BasePerm:
 
     def is_valid(self):
         return not self.errors
-
-
 
 
 def conjunction(*predicates):
