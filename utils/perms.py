@@ -23,8 +23,6 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-import itertools
-
 from django.core.exceptions import PermissionDenied
 from django.utils.functional import cached_property
 
@@ -33,7 +31,7 @@ class BasePerm:
     predicates = None
 
     def __init__(self, *args, **kwargs):
-        self.predicates_arguments = args
+        self.predicates_arguments = kwargs
 
     @cached_property
     def errors(self):
@@ -47,7 +45,7 @@ class BasePerm:
 
     def _call_predicate(self, predicate):
         try:
-            predicate(*self.predicates_arguments)
+            predicate(**self.predicates_arguments)
         except PermissionDenied as e:
             return str(e)
         return ""

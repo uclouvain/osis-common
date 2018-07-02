@@ -31,13 +31,13 @@ from osis_common.utils.perms import BasePerm
 error_msg1 = "Number too big"
 error_msg2 = "Number is not pair"
 
-def predicate1(n):
+def predicate1(n, **kwargs):
     value = n <= 10
     if not value:
         raise PermissionDenied(error_msg1)
 
 
-def predicate2(n):
+def predicate2(n, **kwargs):
     value = n % 2 == 0
     if not value:
         raise PermissionDenied(error_msg2)
@@ -49,26 +49,26 @@ class IsNumberLegit(BasePerm):
 
 class TestBasePerms(SimpleTestCase):
     def test_errors(self):
-        errors = IsNumberLegit(11).errors
+        errors = IsNumberLegit(n=11).errors
         self.assertListEqual(errors, [error_msg1, error_msg2])
 
-        errors = IsNumberLegit(9).errors
+        errors = IsNumberLegit(n=9).errors
         self.assertListEqual(errors, [error_msg2])
 
-        errors = IsNumberLegit(6).errors
+        errors = IsNumberLegit(n=6).errors
         self.assertListEqual(errors, [])
 
     def test_is_valid(self):
-        is_valid = IsNumberLegit(9).is_valid()
+        is_valid = IsNumberLegit(n=9).is_valid()
         self.assertFalse(is_valid)
 
-        is_valid = IsNumberLegit(6).is_valid()
+        is_valid = IsNumberLegit(n=6).is_valid()
         self.assertTrue(is_valid)
 
     def test_as_ul(self):
-        html = IsNumberLegit(6).as_ul
+        html = IsNumberLegit(n=6).as_ul
         self.assertEqual(html, "")
 
-        html = IsNumberLegit(11).as_ul
+        html = IsNumberLegit(n=11).as_ul
         self.assertEqual("<ul><li>{msg1}</li><li>{msg2}</li></ul>".format(msg1=error_msg1, msg2=error_msg2),
                          html)
