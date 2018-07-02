@@ -72,6 +72,3 @@ class TestBasePerms(SimpleTestCase):
         html = IsNumberLegit(11).as_ul
         self.assertEqual("<ul><li>{msg1}</li><li>{msg2}</li></ul>".format(msg1=error_msg1, msg2=error_msg2),
                          html)
-
-
-
