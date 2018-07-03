@@ -30,7 +30,7 @@ from django.utils.functional import cached_property
 class BasePerm:
     predicates = None
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         self.predicates_arguments = kwargs
 
     @cached_property

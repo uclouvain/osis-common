@@ -31,13 +31,13 @@ from osis_common.utils.perms import BasePerm
 error_msg1 = "Number too big"
 error_msg2 = "Number is not pair"
 
-def predicate1(n, **kwargs):
+def predicate1(*, n):
     value = n <= 10
     if not value:
         raise PermissionDenied(error_msg1)
 
 
-def predicate2(n, **kwargs):
+def predicate2(*, n):
     value = n % 2 == 0
     if not value:
         raise PermissionDenied(error_msg2)
