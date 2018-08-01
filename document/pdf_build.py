@@ -23,22 +23,24 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from io import BytesIO
+import tempfile
 
 from django.http import HttpResponse
-from django.template.loader import get_template
-from xhtml2pdf import pisa as pisa
+from django.template.loader import render_to_string
+from weasyprint import HTML
 
 
-class Render:
-
-    @staticmethod
-    def render(path: str, params: dict):
-        template = get_template(path)
-        html = template.render(params)
-        response = BytesIO()
-        pdf = pisa.pisaDocument(BytesIO(html.encode("UTF-8")), response)
-        if not pdf.err:
-            return HttpResponse(response.getvalue(), content_type='application/pdf')
-        else:
-            return HttpResponse("Error Rendering PDF", status=400)
+def render_pdf(request, parent, tree, template):
+    html_string = render_to_string(template, {'parent': parent, 'tree': tree})
+    html = HTML(string=html_string, base_url=request.build_absolute_uri())
+    result = html.write_pdf(presentational_hints=True)
+    # Creating http response
+    response = HttpResponse(content_type='application/pdf;')
+    response['Content-Disposition'] = 'inline; filename={}.pdf'.format(parent.title)
+    response['Content-Transfer-Encoding'] = 'binary'
+    with tempfile.NamedTemporaryFile(delete=True) as output:
+        output.write(result)
+        output.flush()
+        output = open(output.name, 'rb')
+        response.write(output.read())
+    return response
