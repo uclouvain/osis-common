@@ -30,13 +30,13 @@ from django.template.loader import render_to_string
 from weasyprint import HTML
 
 
-def render_pdf(request, parent, tree, template):
-    html_string = render_to_string(template, {'parent': parent, 'tree': tree})
+def render_pdf(request, context, filename, template):
+    html_string = render_to_string(template, context)
     html = HTML(string=html_string, base_url=request.build_absolute_uri())
     result = html.write_pdf(presentational_hints=True)
     # Creating http response
     response = HttpResponse(content_type='application/pdf;')
-    response['Content-Disposition'] = 'inline; filename={}.pdf'.format(parent.acronym)
+    response['Content-Disposition'] = 'inline; filename={}.pdf'.format(filename)
     response['Content-Transfer-Encoding'] = 'binary'
     with tempfile.NamedTemporaryFile(delete=True) as output:
         output.write(result)
