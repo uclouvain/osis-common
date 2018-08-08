@@ -36,7 +36,7 @@ def render_pdf(request, context, filename, template):
     result = html.write_pdf(presentational_hints=True)
     # Creating http response
     response = HttpResponse(content_type='application/pdf;')
-    response['Content-Disposition'] = 'inline; filename={}.pdf'.format(filename)
+    response['Content-Disposition'] = 'attachment; filename={}.pdf'.format(filename)
     response['Content-Transfer-Encoding'] = 'binary'
     with tempfile.NamedTemporaryFile(delete=True) as output:
         output.write(result)
