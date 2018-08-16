@@ -25,15 +25,15 @@
 ##############################################################################
 import datetime
 import re
+import logging
+
 from openpyxl.writer.excel import save_virtual_workbook
 from openpyxl import Workbook
 from django.utils.translation import ugettext_lazy as _
 from django.http import HttpResponse
-import logging
 from django.conf import settings
 from openpyxl.styles import Color, Style, PatternFill
 from openpyxl.styles import Font
-from openpyxl.styles import colors
 
 CONTENT_TYPE_XLS = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=binary'
 
