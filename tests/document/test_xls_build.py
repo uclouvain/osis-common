@@ -26,6 +26,7 @@
 import datetime
 from django.test.testcases import TestCase
 from osis_common.document import xls_build
+from osis_common.document.xls_build import CONTENT_TYPE_XLS
 
 TODAY = datetime.date.today()
 
@@ -76,7 +77,7 @@ class TestXlsBuild(TestCase):
         http_response = xls_build._create_xls(data)
         self.assertEqual(http_response.status_code, 200)
         self.assertIsNotNone(http_response.content)
-        self.assertEqual(http_response['content-type'], 'application/vnd.ms-excel')
+        self.assertEqual(http_response['content-type'], CONTENT_TYPE_XLS)
 
 
 def getRightData():
@@ -94,6 +95,7 @@ def getRightData():
                                            xls_build.STYLE_RED: [2]},
                   xls_build.COLORED_COLS: {xls_build.STYLE_NO_GRAY: [1],
                                            xls_build.STYLE_RED: [2]},
+                  xls_build.COLORED_CELLS: {xls_build.FONT_GREEN: ['A1', 'B2']},
                   },
                  {xls_build.CONTENT_KEY: [['Col1 Row1', 'C. biologie', 'Marcel Lenoir', 2018]],
                   xls_build.HEADER_TITLES_KEY: ['Code', 'Short title', 'Name', 'Year'],
