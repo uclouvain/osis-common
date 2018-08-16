@@ -32,7 +32,10 @@ from django.http import HttpResponse
 import logging
 from django.conf import settings
 from openpyxl.styles import Color, Style, PatternFill
+from openpyxl.styles import Font
+from openpyxl.styles import colors
 
+CONTENT_TYPE_XLS = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=binary'
 
 FIRST_DATA_LINE = 2
 MAX_COL_WIDTH = 50
@@ -49,6 +52,7 @@ HEADER_TITLES_KEY = 'header_titles'
 WORKSHEET_TITLE_KEY = 'worksheet_title'
 COLORED_ROWS = 'colored_rows'
 COLORED_COLS = 'colored_cols'
+COLORED_CELLS = 'colored_cells'
 
 STYLE_NO_GRAY = Style(fill=PatternFill(patternType='solid', fgColor=Color('C1C1C1')))
 STYLE_RED = Style(fill=PatternFill(patternType='solid', fgColor=Color(rgb='00FF0000')))
@@ -59,6 +63,7 @@ USER = 'param_user'
 HEADER_TITLES = 'param_header_titles'
 WS_TITLE = 'param_worksheet_title'
 
+FONT_GREEN = Font(color=Color('5CB85C'))
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
@@ -78,7 +83,7 @@ def _create_xls(parameters_dict, filters=None):
     sheet_number = 0
     for worksheet_data in parameters_dict.get(WORKSHEETS_DATA):
         _build_worksheet(worksheet_data,  workbook, sheet_number)
-        sheet_number = sheet_number + 1
+        sheet_number += 1
 
     _build_worksheet_parameters(workbook,
                                 parameters_dict.get(USER_KEY),
@@ -86,7 +91,7 @@ def _create_xls(parameters_dict, filters=None):
                                 filters)
     response = HttpResponse(
         save_virtual_workbook(workbook),
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=binary')
+        content_type=CONTENT_TYPE_XLS)
     response['Content-Disposition'] = "%s%s" % ("attachment; filename=", filename)
 
     return response
@@ -104,6 +109,7 @@ def _build_worksheet(worksheet_data, workbook, sheet_number):
     _adapt_format_for_string_with_numbers(a_worksheet, content)
     _coloring_rows(a_worksheet, worksheet_data.get(COLORED_ROWS, None))
     _coloring_cols(a_worksheet, worksheet_data.get(COLORED_COLS, None))
+    _coloring_cells(a_worksheet, worksheet_data.get(COLORED_CELLS, None))
 
 
 def _add_column_headers(headers_title, worksheet1):
@@ -197,8 +203,8 @@ def _adapt_format_for_string_with_numbers(worksheet1, worksheet_content):
             if type(element) is str and re.match(r'^[0-9]+$', element):
                 worksheet1.cell(column=num_corresponding_column,
                                 row=num_corresponding_row).number_format = OPENPYXL_STRING_FORMAT
-            num_corresponding_column = num_corresponding_column + 1
-        num_corresponding_row = num_corresponding_row+1
+            num_corresponding_column += 1
+        num_corresponding_row += 1
 
 
 def _is_checked_file_parameters_list(list_parameters):
@@ -289,5 +295,21 @@ def prepare_xls_parameters_list(working_sheets_data, parameters):
                 [{CONTENT_KEY: working_sheets_data,
                   HEADER_TITLES_KEY: parameters.get(HEADER_TITLES, None),
                   WORKSHEET_TITLE_KEY: _(parameters.get(WS_TITLE, None)),
+                  COLORED_CELLS: parameters.get(COLORED_CELLS, None),
                   }
                  ]}
+
+
+def _coloring_cells(ws, data):
+    if data:
+        for a_style in data.keys():
+            cell_reference = data.get(a_style)
+            if cell_reference:
+                for cell in cell_reference:
+                    _set_cell_font(a_style, cell, ws)
+
+
+def _set_cell_font(a_style, cell_number, ws):
+    cell = ws[str(cell_number)]
+    ft = a_style
+    cell.font = ft
