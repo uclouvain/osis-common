@@ -95,7 +95,7 @@ def getRightData():
                                            xls_build.STYLE_RED: [2]},
                   xls_build.COLORED_COLS: {xls_build.STYLE_NO_GRAY: [1],
                                            xls_build.STYLE_RED: [2]},
-                  xls_build.COLORED_CELLS: {xls_build.FONT_GREEN: ['A1', 'B2']},
+                  xls_build.STYLED_CELLS: {xls_build.STYLE_MODIFIED: ['A1', 'B2']},
                   },
                  {xls_build.CONTENT_KEY: [['Col1 Row1', 'C. biologie', 'Marcel Lenoir', 2018]],
                   xls_build.HEADER_TITLES_KEY: ['Code', 'Short title', 'Name', 'Year'],

@@ -34,6 +34,7 @@ from django.http import HttpResponse
 from django.conf import settings
 from openpyxl.styles import Color, Style, PatternFill
 from openpyxl.styles import Font
+from openpyxl.styles.borders import Border, Side, BORDER_THIN
 
 CONTENT_TYPE_XLS = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=binary'
 
@@ -52,10 +53,18 @@ HEADER_TITLES_KEY = 'header_titles'
 WORKSHEET_TITLE_KEY = 'worksheet_title'
 COLORED_ROWS = 'colored_rows'
 COLORED_COLS = 'colored_cols'
-COLORED_CELLS = 'colored_cells'
-
+STYLED_CELLS = 'styled_cells'
 STYLE_NO_GRAY = Style(fill=PatternFill(patternType='solid', fgColor=Color('C1C1C1')))
 STYLE_RED = Style(fill=PatternFill(patternType='solid', fgColor=Color(rgb='00FF0000')))
+STYLE_BORDER_TOP = Style(
+    border=Border(
+        top=Side(border_style=BORDER_THIN,
+                 color=Color('FF000000')
+                 ),
+    )
+)
+
+STYLE_MODIFIED = Style(font=Font(color=Color('5CB85C')),)
 
 DESCRIPTION = 'param_description'
 FILENAME = 'param_filename'
@@ -109,7 +118,7 @@ def _build_worksheet(worksheet_data, workbook, sheet_number):
     _adapt_format_for_string_with_numbers(a_worksheet, content)
     _coloring_rows(a_worksheet, worksheet_data.get(COLORED_ROWS, None))
     _coloring_cols(a_worksheet, worksheet_data.get(COLORED_COLS, None))
-    _coloring_cells(a_worksheet, worksheet_data.get(COLORED_CELLS, None))
+    _styling_cells(a_worksheet, worksheet_data.get(STYLED_CELLS, None))
 
 
 def _add_column_headers(headers_title, worksheet1):
@@ -295,21 +304,22 @@ def prepare_xls_parameters_list(working_sheets_data, parameters):
                 [{CONTENT_KEY: working_sheets_data,
                   HEADER_TITLES_KEY: parameters.get(HEADER_TITLES, None),
                   WORKSHEET_TITLE_KEY: _(parameters.get(WS_TITLE, None)),
-                  COLORED_CELLS: parameters.get(COLORED_CELLS, None),
+                  STYLED_CELLS: parameters.get(STYLED_CELLS, None),
                   }
                  ]}
 
 
-def _coloring_cells(ws, data):
+def _styling_cells(ws, data):
     if data:
         for a_style in data.keys():
             cell_reference = data.get(a_style)
             if cell_reference:
                 for cell in cell_reference:
-                    _set_cell_font(a_style, cell, ws)
+                    _set_cell_style(a_style, cell, ws)
 
 
-def _set_cell_font(a_style, cell_number, ws):
+def _set_cell_style(a_style, cell_number, ws):
     cell = ws[str(cell_number)]
     ft = a_style
-    cell.font = ft
+    cell.style = ft
+
