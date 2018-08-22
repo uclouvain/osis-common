@@ -34,9 +34,9 @@ class InstalledAppsTestRunner(DiscoverRunner):
     @override(DiscoverRunner)
     def build_suite(self, test_labels=None, extra_tests=None, **kwargs):
         django_version = get_django_version()
-        if hasattr(settings.TESTS_TYPES) and settings.TESTS_TYPES == 'ALL':
+        if hasattr(settings, 'TESTS_TYPES') and settings.TESTS_TYPES == 'ALL':
             tests_type = 'Unit Tests + Selenium Tests'
-        elif hasattr(settings.TESTS_TYPES) and settings.TESTS_TYPES == 'SELENIUM':
+        elif hasattr(settings, 'TESTS_TYPES') and settings.TESTS_TYPES == 'SELENIUM':
             tests_type = 'Selenium Tests Only'
             self.tags = ['selenium']
         else:
