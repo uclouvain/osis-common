@@ -25,14 +25,13 @@
 ##############################################################################
 from ckeditor.fields import RichTextField
 from django.db import models
-from django.contrib import admin
+from osis_common.models import osis_model_admin
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 
 
-class MessageTemplateAdmin(admin.ModelAdmin):
+class MessageTemplateAdmin(osis_model_admin.OsisModelAdmin):
     list_display = ('reference', 'subject', 'format', 'language')
-    fieldsets = ((None, {'fields': ('reference', 'subject', 'template', 'format', 'language')}),)
 
     def get_actions(self, request):
         actions = super(MessageTemplateAdmin, self).get_actions(request)

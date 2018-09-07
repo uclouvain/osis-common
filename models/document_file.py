@@ -24,14 +24,11 @@
 #
 ##############################################################################
 from django.db import models
-from django.contrib import admin
-from osis_common.models import serializable_model
+from osis_common.models import serializable_model, osis_model_admin
 
 
-class DocumentFileAdmin(admin.ModelAdmin):
+class DocumentFileAdmin(osis_model_admin.OsisModelAdmin):
     list_display = ('uuid', 'file_name', 'content_type', 'description', 'update_by', 'creation_date', 'size')
-    fieldsets = ((None, {'fields': ('file_name', 'content_type', 'creation_date', 'storage_duration', 'file',
-                                    'description', 'update_by', 'size')}),)
     readonly_fields = ('creation_date',)
     search_fields = ('file_name', 'update_by')
 
@@ -61,9 +58,9 @@ class DocumentFile(serializable_model.SerializableModel):
     application_name = models.CharField(max_length=100, null=True, blank=True)
     size = models.IntegerField(null=True, blank=True)
 
-    def save(self):
+    def save(self, *args, **kwargs):
         self.file.name = str(self.uuid)
-        super(DocumentFile, self).save()
+        super(DocumentFile, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.file_name

@@ -24,9 +24,9 @@
 #
 ##############################################################################
 import datetime
+
 import factory
 import factory.fuzzy
-
 from django.test import TestCase
 
 from osis_common.utils.datetime import get_tzinfo, is_in_chronological_order, convert_datetime_to_date, \
@@ -38,24 +38,21 @@ class DateTimeUtils(TestCase):
         now = datetime.datetime.now()
         datetimes = [now + datetime.timedelta(days=x*365) for x in range(4)]
 
-        self.datetime_low = factory.fuzzy.FuzzyDateTime(datetime.datetime(datetimes[0].year,
+        self.datetime_low = factory.fuzzy.FuzzyNaiveDateTime(datetime.datetime(datetimes[0].year,
                                                                           datetimes[0].month,
-                                                                          datetimes[0].day,
-                                                                          tzinfo=get_tzinfo()),
+                                                                          datetimes[0].day),
                                                         datetime.datetime(datetimes[1].year,
                                                                           datetimes[1].month,
-                                                                          datetimes[1].day,
-                                                                          tzinfo=get_tzinfo())
+                                                                          datetimes[1].day)
                                                         ).fuzz()
 
-        self.datetime_high = factory.fuzzy.FuzzyDateTime(datetime.datetime(datetimes[2].year,
+        self.datetime_high = factory.fuzzy.FuzzyNaiveDateTime(datetime.datetime(datetimes[2].year,
                                                                            datetimes[2].month,
                                                                            datetimes[2].day,
                                                                            tzinfo=get_tzinfo()),
                                                          datetime.datetime(datetimes[3].year,
                                                                            datetimes[3].month,
-                                                                           datetimes[3].day,
-                                                                           tzinfo=get_tzinfo())
+                                                                           datetimes[3].day)
                                                          ).fuzz()
 
     def test_is_in_chronological_order_2_datetimes(self):

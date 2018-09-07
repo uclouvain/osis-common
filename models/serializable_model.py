@@ -37,7 +37,7 @@ from django.db.models import DateTimeField, DateField
 from django.core import serializers
 from django.utils.encoding import force_text
 from django.apps import apps
-from osis_common.models import message_queue_cache
+from osis_common.models import message_queue_cache, osis_model_admin
 from osis_common.models.message_queue_cache import MessageQueueCache
 
 from pika.exceptions import ChannelClosed, ConnectionClosed
@@ -64,7 +64,7 @@ class SerializableModelManager(models.Manager):
         return SerializableQuerySet(self.model, using=self._db)
 
 
-class SerializableModelAdmin(admin.ModelAdmin):
+class SerializableModelAdmin(osis_model_admin.OsisModelAdmin):
     actions = ['resend_messages_to_queue']
 
     def resend_messages_to_queue(self, request, queryset):
