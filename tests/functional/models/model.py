@@ -76,9 +76,12 @@ class FunctionalTestCase(StaticLiveServerTestCase):
         self.test_class_report.test_function_reports.append(self.function_report)
 
     def open_url_by_name(self, url_name, kwargs=None):
+        self.selenium.get(self.get_link_href_by_url_name(url_name, kwargs=kwargs))
+
+    def get_link_href_by_url_name(self, url_name, kwargs=None):
         if not kwargs:
             kwargs = {}
-        self.selenium.get(self.live_server_url + reverse(url_name, kwargs=kwargs))
+        return self.live_server_url + reverse(url_name, kwargs=kwargs)
 
     def fill_element_by_id(self, element_id, value):
         element = self.selenium.find_element_by_id(element_id)
@@ -105,6 +108,10 @@ class FunctionalTestCase(StaticLiveServerTestCase):
 
     def check_page_not_contains_string(self, expected_string):
         self.assertFalse(expected_string in self.selenium.page_source)
+
+    def check_page_contains_links(self, expected_links_ref):
+        for link_ref in expected_links_ref:
+            self.selenium.find_element_by_css_selector('[href^={}'.format(link_ref))
 
     def check_page_contains_ids(self, ids):
         for id in ids:
