@@ -48,8 +48,7 @@ class DateTimeUtils(TestCase):
 
         self.datetime_high = factory.fuzzy.FuzzyNaiveDateTime(datetime.datetime(datetimes[2].year,
                                                                            datetimes[2].month,
-                                                                           datetimes[2].day,
-                                                                           tzinfo=get_tzinfo()),
+                                                                           datetimes[2].day),
                                                          datetime.datetime(datetimes[3].year,
                                                                            datetimes[3].month,
                                                                            datetimes[3].day)
