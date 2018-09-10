@@ -56,13 +56,13 @@ def can_be_reported(func):
                 self.function_report.reason = '{} - {}'.format(type(e).__name__, str(e))
                 self.function_report.traceback = traceback.format_exc()
             if config and config.get('TAKE_SCREENSHOTS'):
-                self.function_report.screenshot = take_screenshot(self.selenium, func.__name__)
+                self.function_report.screenshot = __take_screenshot(self.selenium, func.__name__)
             raise
     return wrapper
 
 
-def take_screenshot(selenium_driver, name):
-    date_str = "{:%d_%m_%Y}".format(datetime.datetime.today())
+def __take_screenshot(selenium_driver, name):
+    date_str = "{:%d_%m_%Y_%H_%M}".format(datetime.datetime.today())
     complete_path = "{screenshot_dir}/{name}_{date}.png".format(screenshot_dir=config.get('SCREENSHOTS_DIR'),
                                                                 name="".join(name.replace("'", "").split()),
                                                                 date=date_str)

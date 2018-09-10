@@ -84,6 +84,7 @@
                                             <div class="card-body">
                                                 {% if class_test.doc %}
                                                     <div class="{% if class_test.succeeded %}alert-info{% else %}alert-warning{% endif %}">
+                                                        <br/>
                                                         <pre>{{ class_test.doc }}</pre>
                                                     </div>
                                                 {% endif %}
@@ -105,6 +106,7 @@
                                                                 <div class="card-body">
                                                                     {% if func_test.doc %}
                                                                         <div class="{% if func_test.succeeded %}alert-info{% else %}alert-warning{% endif %}">
+                                                                            <br/>
                                                                             <pre>{{ func_test.doc }}</pre>
                                                                         </div>
                                                                     {% endif %}
