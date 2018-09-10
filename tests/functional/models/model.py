@@ -16,7 +16,7 @@ from osis_common.tests.functional.models.report import TestClassReport, TestFunc
 
 @tag("selenium")
 class FunctionalTestCase(StaticLiveServerTestCase):
-    config = settings.FUNCT_TESTS_CONFIG
+    config = settings.FUNCT_TESTS_CONFIG if hasattr(settings, 'FUNCT_TESTS_CONFIG') else None
 
     @classmethod
     def setUpClass(cls):
