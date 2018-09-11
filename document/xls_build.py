@@ -305,6 +305,7 @@ def prepare_xls_parameters_list(working_sheets_data, parameters):
                   HEADER_TITLES_KEY: parameters.get(HEADER_TITLES, None),
                   WORKSHEET_TITLE_KEY: _(parameters.get(WS_TITLE, None)),
                   STYLED_CELLS: parameters.get(STYLED_CELLS, None),
+                  COLORED_ROWS: parameters.get(COLORED_ROWS, None),
                   }
                  ]}
 
