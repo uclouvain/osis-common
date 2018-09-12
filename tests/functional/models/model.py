@@ -16,10 +16,9 @@ from osis_common.tests.functional.models.report import TestClassReport, TestFunc
 
 @tag("selenium")
 class FunctionalTestCase(StaticLiveServerTestCase):
-    config = settings.FUNCT_TESTS_CONFIG if hasattr(settings, 'FUNCT_TESTS_CONFIG') else None
-
     @classmethod
     def setUpClass(cls):
+        cls.config = settings.FUNCT_TESTS_CONFIG if hasattr(settings, 'FUNCT_TESTS_CONFIG') else None
         super(FunctionalTestCase, cls).setUpClass()
         if cls.config.get('VIRTUAL_DISPLAY'):
             cls.virtual_display = pyvirtualdisplay.Display(size=(cls.config.get('DISPLAY_WIDTH'),
@@ -92,10 +91,10 @@ class FunctionalTestCase(StaticLiveServerTestCase):
         element = self.selenium.find_element_by_id(element_id)
         element.click()
 
-    def login(self, username, password=None):
+    def login(self, username, password=None, login_page_name='login'):
         if password is None:
             password = "password123"
-        self.open_url_by_name('login')
+        self.open_url_by_name(login_page_name)
         self.fill_element_by_id('id_username', username)
         self.fill_element_by_id('id_password', password)
         self.click_element_by_id('post_login_btn')
@@ -127,3 +126,6 @@ class FunctionalTestCase(StaticLiveServerTestCase):
 
     def wait_until_tabs_open(self, count_tabs=2, timeout=10):
         WebDriverWait(self.selenium, timeout).until(EC.number_of_windows_to_be(count_tabs))
+
+    def wait_until_title_is(self, title, timeout=10):
+        WebDriverWait(self.selenium, timeout).until(EC.title_is(title))
