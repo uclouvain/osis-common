@@ -1,0 +1,175 @@
+<!doctype html>
+{% load staticfiles %}
+{% load i18n %}
+
+{% comment "License" %}
+* OSIS stands for Open Student Information System. It's an application
+* designed to manage the core business of higher education institutions,
+* such as universities, faculties, institutes and professional schools.
+* The core business involves the administration of students, teachers,
+* courses, programs and so on.
+*
+* Copyright (C) 2015-2018 Université catholique de Louvain (http://www.uclouvain.be)
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* A copy of this license - GNU General Public License - is available
+* at the root of the source code of this program.  If not,
+* see http://www.gnu.org/licenses/.
+{% endcomment %}
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Functional Tests Report</title>
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+    <link rel="icon" href="{{ static_dir }}/img/favicon.ico"/>
+    <link rel="stylesheet" href="{{ static_dir }}/css/armata.css">
+    <link rel="stylesheet" href="{{ static_dir }}/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ static_dir }}/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="{{ static_dir }}/css/all.min.css">
+    <link rel="stylesheet" href="{{ static_dir }}/css/custom.css">
+    <style>
+        body {
+            font-family: 'Armata', sans-serif;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-light bg-light">
+    <a class="navbar-brand" href="#"><img src="{{ static_dir }}/img/logo_osis.png"></a>
+    <span class="navbar-text">
+    <b>Résultats des test fonctionnel du {{ date_time }}</b>
+  </span>
+</nav>
+<div class="container">
+    <div id="acordion_root">
+        {% for app_test in tested_apps %}
+            {% with forloop.counter as cpt %}
+                <div class="card">
+                    <div class="{% if app_test.succeeded %} bg-success {% else %} bg-danger {% endif %}"
+                         id="heading_{{ cpt }}">
+                        <button class="btn btn-link text-dark" style="text-decoration: none" data-toggle="collapse"
+                                data-target="#collapse_{{ cpt }}"
+                                aria-expanded="false"
+                                aria-controls="collapse_{{ cpt }}">{{ app_test.name }}</button>
+                    </div>
+                    <div id="collapse_{{ cpt }}" aria-labelledby="heading__{{ cpt }}" data-parent="#acordion_root"
+                         class="collapse">
+                        <div class="card-body">
+                            <div id="accordion_{{ cpt }}">
+                                {% for class_test in app_test.test_class_reports %}
+                                    <div class="card">
+                                        <div class="{% if class_test.succeeded %} bg-success {% else %} bg-danger {% endif %}"
+                                             id="heading_{{ class_test.name }}">
+                                            <button class="btn btn-link text-dark" style="text-decoration: none"
+                                                    data-toggle="collapse"
+                                                    data-target="#collapse_{{ class_test.name }}"
+                                                    aria-expanded="false"
+                                                    aria-controls="collapse_{{ class_test.name }}">{{ class_test.name }}</button>
+                                        </div>
+                                        <div id="collapse_{{ class_test.name }}"
+                                             aria-labelledby="heading__{{ class_test.name }}" data-parent="#accordion_{{ cpt }}"
+                                             class="collapse">
+                                            <div class="card-body">
+                                                {% if class_test.doc %}
+                                                    <div class="{% if class_test.succeeded %}alert-info{% else %}alert-warning{% endif %}">
+                                                        <br/>
+                                                        <pre>{{ class_test.doc }}</pre>
+                                                    </div>
+                                                {% endif %}
+                                                <div id="accordion_{{ class_test.name }}">
+                                                    {% for func_test in class_test.test_function_reports %}
+                                                        <div class="card">
+                                                            <div class="{% if func_test.succeeded %} bg-success {% else %} bg-danger {% endif %}"
+                                                                 id="heading_{{ func_test.name }}">
+                                                                <button class="btn btn-link text-dark"
+                                                                        style="text-decoration: none"
+                                                                        data-toggle="collapse"
+                                                                        data-target="#collapse_{{ func_test.name }}"
+                                                                        aria-expanded="false"
+                                                                        aria-controls="collapse_{{ func_test.name }}">{{ func_test.name }}</button>
+                                                            </div>
+                                                            <div id="collapse_{{ func_test.name }}" class="collapse"
+                                                                 aria-labelledby="heading_{{ func_test.name }}"
+                                                                 data-parent="#accordion_{{ class_test.name }}">
+                                                                <div class="card-body">
+                                                                    {% if func_test.doc %}
+                                                                        <div class="{% if func_test.succeeded %}alert-info{% else %}alert-warning{% endif %}">
+                                                                            <br/>
+                                                                            <pre>{{ func_test.doc }}</pre>
+                                                                        </div>
+                                                                    {% endif %}
+                                                                    {% if not func_test.succeeded %}
+                                                                        <p>Motif de l'échec : {{ func_test.reason }}</p>
+                                                                        <div id="accordeon_error_{{ func_test.name }}">
+                                                                            <div class="text-center">
+                                                                                {% if func_test.traceback %}
+                                                                                    <a class="btn btn-primary"
+                                                                                       data-toggle="collapse"
+                                                                                       href="#traceback_{{ func_test.name }}"
+                                                                                       aria-expanded="false"
+                                                                                       aria-controls="screenshot_{{ func_test.name }}">TraceBack</a>
+                                                                                {% endif %}
+                                                                                {% if func_test.screenshot %}
+                                                                                    <a class="btn btn-primary"
+                                                                                       data-toggle="collapse"
+                                                                                       href="#screenshot_{{ func_test.name }}"
+                                                                                       aria-expanded="false"
+                                                                                       aria-controls="screenshot_{{ func_test.name }}">Capture
+                                                                                        d'ecran</a>
+                                                                                {% endif %}
+                                                                            </div>
+                                                                            {% if func_test.traceback %}
+                                                                                <div class="collapse"
+                                                                                     id="traceback_{{ func_test.name }}"
+                                                                                     data-parent="#accordeon_error_{{ func_test.name }}">
+                                                                                    <div class="card card-body">
+                                                                                        <pre>{{ func_test.traceback }}</pre>
+                                                                                    </div>
+                                                                                </div>
+                                                                            {% endif %}
+                                                                            {% if func_test.screenshot %}
+                                                                                <div class="collapse"
+                                                                                     id="screenshot_{{ func_test.name }}"
+                                                                                     data-parent="#accordeon_error_{{ func_test.name }}">
+                                                                                    <div class="card card-body">
+                                                                                        <img src="{{ func_test.screenshot }}"
+                                                                                             alt="Screenshot"
+                                                                                             class="img-thumbnail"/>
+                                                                                    </div>
+                                                                                </div>
+                                                                            {% endif %}
+                                                                        </div>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endwith %}
+        {% endfor %}
+    </div>
+    <script src="{{ static_dir }}/js/jquery-2.1.4.min.js"></script>
+    <script src="{{ static_dir }}/js/bootstrap.min.js"></script>
+</body>
+</div>
+</html>
