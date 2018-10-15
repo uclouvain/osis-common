@@ -24,7 +24,8 @@
 #
 ##############################################################################
 import functools
-from osis_common.models.exception import OverrideSubClassError, OverrideMethodError
+
+from osis_common.models.exception import OverrideMethodError
 
 
 def override(SuperClass):
@@ -32,8 +33,6 @@ def override(SuperClass):
     def method(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            if SuperClass not in args[0].__class__.__bases__:
-                raise OverrideSubClassError(args[0].__class__.__name__)
             if not _check_super_class_method(args[0].__class__.__bases__, func.__name__):
                 raise OverrideMethodError(func.__name__,
                                           ' - '.join([superclass.__name__
