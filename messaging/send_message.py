@@ -77,7 +77,8 @@ def _get_template_by_language_or_default(lang_code, html_message_templates, txt_
     return html_message_template, txt_message_template
 
 
-def __send_messages(html_message_template, txt_message_template, html_data, txt_data, receivers, subject, attachment):
+def __send_messages(html_message_template, txt_message_template, html_data, txt_data, receivers, subject, attachment,
+                    force_sending_outside_production=False):
     """
     Send a message to a list of person ,with txt and html format.
     The messages are build according templates and data (dictionnary of template vars).
@@ -89,6 +90,7 @@ def __send_messages(html_message_template, txt_message_template, html_data, txt_
     :param receivers: The receivers list of the message
     :param subject: The subject of the message
     :param attachment: An attachment to the message.
+    :param force_sending_outside_production: Send the message to real receiver outside production environment
     """
     html_data['signature'] = render_to_string('messaging/html_email_signature.html', {
         'logo_mail_signature_url': settings.LOGO_EMAIL_SIGNATURE_URL,
@@ -99,7 +101,8 @@ def __send_messages(html_message_template, txt_message_template, html_data, txt_
                     subject=unescape(strip_tags(subject)),
                     message=unescape(strip_tags(txt_message)),
                     html_message=html_message, from_email=settings.DEFAULT_FROM_EMAIL,
-                    attachment=attachment)
+                    attachment=attachment,
+                    force_sending_outside_production=force_sending_outside_production)
 
 
 def __render_table_template_as_string(table_headers, table_rows, html_format):
@@ -168,8 +171,12 @@ def __send_and_save(receivers, reference=None, **kwargs):
     if receivers:
         for receiver in receivers:
             if not settings.EMAIL_PRODUCTION_SENDING:
-                logger.info('Sending mail not in production to {}'.format(settings.COMMON_EMAIL_RECEIVER))
-                recipient_list.append(settings.COMMON_EMAIL_RECEIVER)
+                if kwargs.get('force_sending_outside_production'):
+                    logger.info('Sending mail not in production to {}'.format(receiver.get('receiver_email')))
+                    recipient_list.append(receiver.get('receiver_email'))
+                else:
+                    logger.info('Sending mail not in production to {}'.format(settings.COMMON_EMAIL_RECEIVER))
+                    recipient_list.append(settings.COMMON_EMAIL_RECEIVER)
             elif receiver.get('receiver_email'):
                 logger.info('Sending mail in production to {}'.format(receiver.get('receiver_email')))
                 recipient_list.append(receiver.get('receiver_email'))
@@ -265,11 +272,12 @@ def __apply_translation_on_row_table_data(row_data, col_indexes_to_translate):
     return tuple(row_translated)
 
 
-def send_messages(message_content):
+def send_messages(message_content, force_sending_outside_production=False):
     """
     Send messages according to the message_content
     :param message_content: The message content and configuration dictionnary
     message_content is created by message_config.create_message_content function
+    :param force_sending_outside_production Send the message to real receivers outside production environment
     :return: An error message if something wrong,None else
     """
     html_template_ref = message_content.get('html_template_ref', None)
@@ -306,6 +314,7 @@ def send_messages(message_content):
         html_data['signature'] = render_to_string('messaging/html_email_signature.html', {
             'logo_mail_signature_url': settings.LOGO_EMAIL_SIGNATURE_URL,
             'logo_osis_url': settings.LOGO_OSIS_URL, })
-        __send_messages(html_message_template, txt_message_template, html_data, txt_data, receivers, subject, attachment)
+        __send_messages(html_message_template, txt_message_template, html_data, txt_data, receivers,
+                        subject, attachment, force_sending_outside_production)
 
     return None
