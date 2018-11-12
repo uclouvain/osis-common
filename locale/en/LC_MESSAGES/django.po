@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-04-22 15:14+0200\n"
+"POT-Creation-Date: 2018-11-12 12:30+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,131 +16,205 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-msgid "message_content_error"
-msgstr "No email has been sent because a technical error occured."
+#: forms.py:61
+msgid " title"
+msgstr ""
 
-msgid "template_error"
-msgstr "No messages were sent : the message template {} does not exist."
+#: forms.py:59
+msgid "MAX_UPLOAD_SIZE"
+msgstr ""
 
-msgid "must_give_only_one_model"
-msgstr "Only objects from the same models are allowed"
-
-msgid "students"
-msgstr "students"
-
-msgid "student"
-msgstr "student"
-
-msgid "creation_date"
-msgstr "Creation date"
-
-msgid "not_passed"
-msgstr "Not passed"
-
-msgid "date_not_passed"
-msgstr "Date not passed"
-
-msgid "submit_date"
-msgstr "Submit data"
-
-msgid "score"
-msgstr "Score"
-
-msgid "override_sublclass_error"
-msgstr "{subclass_name} is not a sub-class"
-
-msgid "override_method_error"
-msgstr "{function_name} is not a function of a super-class of {subclass_name} [{super_classes_names}]"
-
-msgid "warn_user_data_can_change"
-msgstr "The data presented on this document correspond to the state of the system dated %s and are likely to evolve"
-
-msgid "scores_sheet"
-msgstr "Score sheet"
-
-msgid "ucl_denom_location"
-msgstr "Université catholique de Louvain"
-
-msgid "ABSENCE_JUSTIFIED"
-msgstr "Justified absence"
-
-msgid "ABSENCE_UNJUSTIFIED"
-msgstr "Unjustified Absence"
-
-msgid "CHEATING"
-msgstr "Cheating"
-
-msgid "SCORE_MISSING"
-msgstr "Score missing"
-
-msgid "registration_number"
-msgstr "Reg. No."
-
-msgid "lastname"
-msgstr "Lastname"
-
-msgid "firstname"
-msgstr "Firstname"
-
-msgid "justification"
-msgstr "Justification"
-
+#: document/paper_sheet.py:267
 msgid "SCORES_RESPONSIBLE"
 msgstr "Scores responsible"
 
-msgid "none"
-msgstr "None"
-
-msgid "email"
-msgstr "Email"
-
-msgid "phone"
-msgstr "Phone"
-
-msgid "fax"
-msgstr "Fax"
-
-msgid "program"
-msgstr "Program"
-
-msgid "deliberation_date"
-msgstr "Deliberation date"
-
+#: document/paper_sheet.py:352
 msgid "academic_year"
 msgstr "Academic year"
 
-msgid "done_at"
-msgstr "Done at"
-
-msgid "the"
-msgstr "the"
-
-msgid "justification_legend"
-msgstr "Justification legend: %s"
-
-msgid "justification_legend_pdf"
-msgstr "Justification legend: A=Absent, T=Cheating"
-
-msgid "score_legend"
-msgstr "Score legend: %s (0=Score of presence)"
-
+#: document/paper_sheet.py:383
 msgid "authorized_decimal_for_this_activity"
 msgstr "Decimals authorized for this learning unit"
 
-msgid "unauthorized_decimal_for_this_activity"
-msgstr "Unauthorized decimal for this learning unit"
-
-msgid "in_accordance_to_regulation"
-msgstr "In accordance to regulation's rules 104, 109 and 111. Complete rules avalaible here"
-
-msgid "link_to_RGEE"
-msgstr "https://www.uclouvain.be/enseignement-reglements.html"
-
+#: document/xls_build.py:173
 msgid "created_by"
 msgstr "Created by"
 
+#: document/paper_sheet.py:409 document/xls_build.py:172
+msgid "creation_date"
+msgstr "Creation date"
+
+#: document/paper_sheet.py:348
+msgid "deliberation_date"
+msgstr "Deliberation date"
+
+#: document/xls_build.py:175 templates/uploading/upload_file_list.html:49
+msgid "description"
+msgstr ""
+
+#: document/paper_sheet.py:372
+msgid "done_at"
+msgstr "Done at"
+
+#: document/paper_sheet.py:290
+msgid "email"
+msgstr "Email"
+
+#: document/xls_build.py:295
+msgid "false"
+msgstr "False"
+
+#: document/paper_sheet.py:320
+msgid "fax"
+msgstr "Fax"
+
+#: templates/uploading/upload_file_form.html:30
+#: templates/uploading/upload_file_list.html:41
+msgid "file"
+msgstr ""
+
+#: templates/uploading/upload_file_list.html:33
+#, fuzzy
+#| msgid "firstname"
+msgid "file_name"
+msgstr "Firstname"
+
+#: document/paper_sheet.py:229
+msgid "firstname"
+msgstr "Firstname"
+
+#: document/paper_sheet.py:388
+msgid "in_accordance_to_regulation"
+msgstr ""
+"In accordance to regulation's rules 104, 109 and 111. Complete rules "
+"avalaible here"
+
+#: document/paper_sheet.py:231
+msgid "justification"
+msgstr "Justification"
+
+#: document/paper_sheet.py:380
+msgid "justification_legend_pdf"
+msgstr "Justification legend: A=Absent, T=Cheating"
+
+#: document/paper_sheet.py:228
+msgid "lastname"
+msgstr "Lastname"
+
+#: document/paper_sheet.py:388
+msgid "link_to_RGEE"
+msgstr "https://www.uclouvain.be/enseignement-reglements.html"
+
+#: messaging/send_message.py:292 messaging/send_message.py:295
+msgid "message_content_error"
+msgstr "No email has been sent because a technical error occured."
+
+#: models/exception.py:38
+msgid "migration_persistence_error"
+msgstr ""
+
+#: templates/uploading/upload_file_form.html:39
+msgid "msg_error_size_and_content"
+msgstr ""
+
+#: models/exception.py:31
+msgid "must_give_only_one_model"
+msgstr "Only objects from the same models are allowed"
+
+#: document/paper_sheet.py:275
+msgid "none"
+msgstr "None"
+
+#: models/exception.py:52
+msgid "override_method_error"
+msgstr ""
+"{function_name} is not a function of a super-class of {subclass_name} "
+"[{super_classes_names}]"
+
+#: models/exception.py:45
+msgid "override_sublclass_error"
+msgstr "{subclass_name} is not a sub-class"
+
+#: document/xls_build.py:170
+msgid "parameters"
+msgstr ""
+
+#: document/paper_sheet.py:310
+msgid "phone"
+msgstr "Phone"
+
+#: models/message_template.py:44
+msgid "plain"
+msgstr ""
+
+#: models/message_template.py:46
+msgid "plain_and_html"
+msgstr ""
+
+#: document/paper_sheet.py:337
+msgid "program"
+msgstr "Program"
+
+#: document/paper_sheet.py:227
+msgid "registration_number"
+msgstr "Reg. No."
+
+#: document/paper_sheet.py:230
+msgid "score"
+msgstr "Score"
+
+#: document/paper_sheet.py:381
+msgid "score_legend"
+msgstr "Score legend: %s (0=Score of presence)"
+
+#: document/paper_sheet.py:113 document/paper_sheet.py:161
+msgid "scores_sheet"
+msgstr "Score sheet"
+
+#: document/paper_sheet.py:372
+msgid "signature"
+msgstr ""
+
+#: document/paper_sheet.py:340
+msgid "student"
+msgstr "student"
+
+#: document/paper_sheet.py:340
+msgid "students"
+msgstr "students"
+
+#: document/paper_sheet.py:232
+msgid "submit_date"
+msgstr "Submit data"
+
+#: messaging/send_message.py:299
+msgid "template_error"
+msgstr "No messages were sent : the message template {} does not exist."
+
+#: document/paper_sheet.py:372
+msgid "the"
+msgstr "the"
+
+#: document/xls_build.py:294
 msgid "true"
 msgstr "True"
 
-msgid "false"
-msgstr "False"
+#: document/paper_sheet.py:163
+msgid "ucl_denom_location"
+msgstr "Université catholique de Louvain"
+
+#: document/paper_sheet.py:385
+msgid "unauthorized_decimal_for_this_activity"
+msgstr "Unauthorized decimal for this learning unit"
+
+#: document/paper_sheet.py:390
+msgid "warn_user_data_can_change"
+msgstr ""
+"The data presented on this document correspond to the state of the system "
+"dated %s and are likely to evolve"
+
+#: document/xls_build.py:194
+#, fuzzy
+#| msgid "scores_sheet"
+msgid "worksheet"
+msgstr "Score sheet"

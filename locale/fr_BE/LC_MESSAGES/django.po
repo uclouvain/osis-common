@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-04-22 15:14+0200\n"
+"POT-Creation-Date: 2018-11-12 12:30+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,140 +16,205 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-msgid "message_content_error"
-msgstr "Aucun email n'a été envoyé à cause d'un problème technique."
+#: forms.py:61
+msgid " title"
+msgstr ""
 
-msgid "template_error"
-msgstr "Aucun message n'a été envoyé : le modèle de message {} n'existe pas."
+#: forms.py:59
+msgid "MAX_UPLOAD_SIZE"
+msgstr ""
 
-msgid "must_give_only_one_model"
-msgstr "Tous les objets doivent appartenir au même modèle"
-
-msgid "students"
-msgstr "étudiants"
-
-msgid "student"
-msgstr "étudiant"
-
-msgid "creation_date"
-msgstr "Date de création"
-
-msgid "not_passed"
-msgstr "Non communiquée"
-
-msgid "date_not_passed"
-msgstr "Date non communiquée"
-
-msgid "submit_date"
-msgstr "Date de remise"
-
-msgid "score"
-msgstr "Note"
-
-msgid "override_sublclass_error"
-msgstr "La classe {subclass_name} n'est pas une sous-classe"
-
-msgid "override_method_error"
-msgstr "La fonction {function_name} n'est pas une fonction d'une super classe de {subclass_name} [{super_classes_names}]"
-
-msgid "warn_user_data_can_change"
-msgstr "Les données présentes sur ce document correspondent à l'état du système en date du %s et sont susceptibles d'évoluer"
-
-msgid "scores_sheet"
-msgstr "Feuille de notes"
-
-msgid "ucl_denom_location"
-msgstr "Université catholique de Louvain"
-
-msgid "ABSENCE_JUSTIFIED"
-msgstr "Absence justifiée"
-
-msgid "ABSENCE_UNJUSTIFIED"
-msgstr "Absence injustifiée"
-
-msgid "CHEATING"
-msgstr "Tricherie"
-
-msgid "SCORE_MISSING"
-msgstr "Note manquante"
-
-msgid "registration_number"
-msgstr "Noma"
-
-msgid "lastname"
-msgstr "Nom"
-
-msgid "firstname"
-msgstr "Prénom"
-
-msgid "justification"
-msgstr "Justification"
-
+#: document/paper_sheet.py:267
 msgid "SCORES_RESPONSIBLE"
 msgstr "Responsable de notes"
 
-msgid "none"
-msgstr "Aucun"
-
-msgid "email"
-msgstr "Email"
-
-msgid "phone"
-msgstr "Téléphone"
-
-msgid "fax"
-msgstr "Fax"
-
-msgid "program"
-msgstr "Programme"
-
-msgid "deliberation_date"
-msgstr "Date de délibération"
-
+#: document/paper_sheet.py:352
 msgid "academic_year"
 msgstr "Année académique"
 
-msgid "done_at"
-msgstr "Fait à"
-
-msgid "the"
-msgstr "le"
-
-msgid "signature"
-msgstr "Signature"
-
-msgid "justification_legend"
-msgstr "Légende pour le champ 'Justification': %s"
-
-msgid "justification_legend_pdf"
-msgstr "Légende pour le champ 'Justification': A=Absent, T=Tricherie"
-
-msgid "score_legend"
-msgstr "Légende pour le champ 'Note chiffrée': %s (0=Cote de présence)"
-
+#: document/paper_sheet.py:383
 msgid "authorized_decimal_for_this_activity"
 msgstr "Les notes décimales sont autorisées pour ce cours"
 
-msgid "unauthorized_decimal_for_this_activity"
-msgstr "Attention : décimales non autorisées pour ce cours"
-
-msgid "in_accordance_to_regulation"
-msgstr "Conformément aux articles 104, 109 et 111 RGEE (Règlement général des études et des examens) disponible au lien suivant"
-
-msgid "link_to_RGEE"
-msgstr "https://uclouvain.be/fr/decouvrir/rgee.html"
-
-msgid "produce_xls"
-msgstr "Produire un excel avec la liste des résultats"
-
-msgid "produce_xls_lu"
-msgstr "Xls avec les activités"
-
+#: document/xls_build.py:173
 msgid "created_by"
 msgstr "Créé par"
 
+#: document/paper_sheet.py:409 document/xls_build.py:172
+msgid "creation_date"
+msgstr "Date de création"
+
+#: document/paper_sheet.py:348
+msgid "deliberation_date"
+msgstr "Date de délibération"
+
+#: document/xls_build.py:175 templates/uploading/upload_file_list.html:49
+msgid "description"
+msgstr ""
+
+#: document/paper_sheet.py:372
+msgid "done_at"
+msgstr "Fait à"
+
+#: document/paper_sheet.py:290
+msgid "email"
+msgstr "Email"
+
+#: document/xls_build.py:295
+msgid "false"
+msgstr "Faux"
+
+#: document/paper_sheet.py:320
+msgid "fax"
+msgstr "Fax"
+
+#: templates/uploading/upload_file_form.html:30
+#: templates/uploading/upload_file_list.html:41
+msgid "file"
+msgstr ""
+
+#: templates/uploading/upload_file_list.html:33
+#, fuzzy
+#| msgid "firstname"
+msgid "file_name"
+msgstr "Prénom"
+
+#: document/paper_sheet.py:229
+msgid "firstname"
+msgstr "Prénom"
+
+#: document/paper_sheet.py:388
+msgid "in_accordance_to_regulation"
+msgstr ""
+"Conformément aux articles 104, 109 et 111 RGEE (Règlement général des études "
+"et des examens) disponible au lien suivant"
+
+#: document/paper_sheet.py:231
+msgid "justification"
+msgstr "Justification"
+
+#: document/paper_sheet.py:380
+msgid "justification_legend_pdf"
+msgstr "Légende pour le champ 'Justification': A=Absent, T=Tricherie"
+
+#: document/paper_sheet.py:228
+msgid "lastname"
+msgstr "Nom"
+
+#: document/paper_sheet.py:388
+msgid "link_to_RGEE"
+msgstr "https://uclouvain.be/fr/decouvrir/rgee.html"
+
+#: messaging/send_message.py:292 messaging/send_message.py:295
+msgid "message_content_error"
+msgstr "Aucun email n'a été envoyé à cause d'un problème technique."
+
+#: models/exception.py:38
+msgid "migration_persistence_error"
+msgstr ""
+
+#: templates/uploading/upload_file_form.html:39
+msgid "msg_error_size_and_content"
+msgstr ""
+
+#: models/exception.py:31
+msgid "must_give_only_one_model"
+msgstr "Tous les objets doivent appartenir au même modèle"
+
+#: document/paper_sheet.py:275
+msgid "none"
+msgstr "Aucun"
+
+#: models/exception.py:52
+msgid "override_method_error"
+msgstr ""
+"La fonction {function_name} n'est pas une fonction d'une super classe de "
+"{subclass_name} [{super_classes_names}]"
+
+#: models/exception.py:45
+msgid "override_sublclass_error"
+msgstr "La classe {subclass_name} n'est pas une sous-classe"
+
+#: document/xls_build.py:170
+msgid "parameters"
+msgstr ""
+
+#: document/paper_sheet.py:310
+msgid "phone"
+msgstr "Téléphone"
+
+#: models/message_template.py:44
+msgid "plain"
+msgstr ""
+
+#: models/message_template.py:46
+msgid "plain_and_html"
+msgstr ""
+
+#: document/paper_sheet.py:337
+msgid "program"
+msgstr "Programme"
+
+#: document/paper_sheet.py:227
+msgid "registration_number"
+msgstr "Noma"
+
+#: document/paper_sheet.py:230
+msgid "score"
+msgstr "Note"
+
+#: document/paper_sheet.py:381
+msgid "score_legend"
+msgstr "Légende pour le champ 'Note chiffrée': %s (0=Cote de présence)"
+
+#: document/paper_sheet.py:113 document/paper_sheet.py:161
+msgid "scores_sheet"
+msgstr "Feuille de notes"
+
+#: document/paper_sheet.py:372
+msgid "signature"
+msgstr "Signature"
+
+#: document/paper_sheet.py:340
+msgid "student"
+msgstr "étudiant"
+
+#: document/paper_sheet.py:340
+msgid "students"
+msgstr "étudiants"
+
+#: document/paper_sheet.py:232
+msgid "submit_date"
+msgstr "Date de remise"
+
+#: messaging/send_message.py:299
+msgid "template_error"
+msgstr "Aucun message n'a été envoyé : le modèle de message {} n'existe pas."
+
+#: document/paper_sheet.py:372
+msgid "the"
+msgstr "le"
+
+#: document/xls_build.py:294
 msgid "true"
 msgstr "Vrai"
 
-msgid "false"
-msgstr "Faux"
+#: document/paper_sheet.py:163
+msgid "ucl_denom_location"
+msgstr "Université catholique de Louvain"
+
+#: document/paper_sheet.py:385
+msgid "unauthorized_decimal_for_this_activity"
+msgstr "Attention : décimales non autorisées pour ce cours"
+
+#: document/paper_sheet.py:390
+msgid "warn_user_data_can_change"
+msgstr ""
+"Les données présentes sur ce document correspondent à l'état du système en "
+"date du %s et sont susceptibles d'évoluer"
+
+#: document/xls_build.py:194
+#, fuzzy
+#| msgid "scores_sheet"
+msgid "worksheet"
+msgstr "Feuille de notes"
