@@ -25,48 +25,48 @@ msgid "MAX_UPLOAD_SIZE"
 msgstr ""
 
 #: document/paper_sheet.py:267
-msgid "SCORES_RESPONSIBLE"
-msgstr "Scores responsible"
+msgid "Scores responsible"
+msgstr ""
 
 #: document/paper_sheet.py:352
-msgid "academic_year"
-msgstr "Academic year"
+msgid "Academic year"
+msgstr ""
 
 #: document/paper_sheet.py:383
-msgid "authorized_decimal_for_this_activity"
-msgstr "Decimals authorized for this learning unit"
+msgid "Decimals authorized for this learning unit"
+msgstr ""
 
 #: document/xls_build.py:173
-msgid "created_by"
-msgstr "Created by"
+msgid "Created by"
+msgstr ""
 
 #: document/paper_sheet.py:409 document/xls_build.py:172
-msgid "creation_date"
-msgstr "Creation date"
+msgid "Creation date"
+msgstr ""
 
 #: document/paper_sheet.py:348
-msgid "deliberation_date"
-msgstr "Deliberation date"
+msgid "Deliberation date"
+msgstr ""
 
 #: document/xls_build.py:175 templates/uploading/upload_file_list.html:49
 msgid "description"
 msgstr ""
 
 #: document/paper_sheet.py:372
-msgid "done_at"
-msgstr "Done at"
+msgid "Done at"
+msgstr ""
 
 #: document/paper_sheet.py:290
-msgid "email"
-msgstr "Email"
+msgid "Email"
+msgstr ""
 
 #: document/xls_build.py:295
-msgid "false"
-msgstr "False"
+msgid "False"
+msgstr ""
 
 #: document/paper_sheet.py:320
-msgid "fax"
-msgstr "Fax"
+msgid "Fax"
+msgstr ""
 
 #: templates/uploading/upload_file_form.html:30
 #: templates/uploading/upload_file_list.html:41
@@ -74,74 +74,68 @@ msgid "file"
 msgstr ""
 
 #: templates/uploading/upload_file_list.html:33
-#, fuzzy
-#| msgid "firstname"
-msgid "file_name"
-msgstr "Firstname"
+msgid "File name"
+msgstr ""
 
 #: document/paper_sheet.py:229
-msgid "firstname"
-msgstr "Firstname"
+msgid "Firstname"
+msgstr ""
 
 #: document/paper_sheet.py:388
-msgid "in_accordance_to_regulation"
+msgid "In accordance to regulation's rules 104, 109 and 111. Complete rules avalaible here"
 msgstr ""
-"In accordance to regulation's rules 104, 109 and 111. Complete rules "
-"avalaible here"
 
 #: document/paper_sheet.py:231
-msgid "justification"
-msgstr "Justification"
+msgid "Justification"
+msgstr ""
 
 #: document/paper_sheet.py:380
-msgid "justification_legend_pdf"
-msgstr "Justification legend: A=Absent, T=Cheating"
+msgid "Justification legend: A=Absent, T=Cheating"
+msgstr ""
 
 #: document/paper_sheet.py:228
-msgid "lastname"
-msgstr "Lastname"
+msgid "Lastname"
+msgstr ""
 
 #: document/paper_sheet.py:388
-msgid "link_to_RGEE"
-msgstr "https://www.uclouvain.be/enseignement-reglements.html"
+msgid "https://www.uclouvain.be/enseignement-reglements.html"
+msgstr ""
 
 #: messaging/send_message.py:292 messaging/send_message.py:295
-msgid "message_content_error"
-msgstr "No email has been sent because a technical error occured."
+msgid "No email has been sent because a technical error occured."
+msgstr ""
 
 #: models/exception.py:38
-msgid "migration_persistence_error"
+msgid "Migration persistence error"
 msgstr ""
 
 #: templates/uploading/upload_file_form.html:39
-msgid "msg_error_size_and_content"
+msgid "Message error : size and content"
 msgstr ""
 
 #: models/exception.py:31
-msgid "must_give_only_one_model"
-msgstr "Only objects from the same models are allowed"
+msgid "Only objects from the same models are allowed"
+msgstr ""
 
 #: document/paper_sheet.py:275
-msgid "none"
-msgstr "None"
+msgid "None"
+msgstr ""
 
 #: models/exception.py:52
-msgid "override_method_error"
+msgid "%(function_name)s is not a function of a super-class of %(subclass_name)s [%(super_classes_names)s]"
 msgstr ""
-"{function_name} is not a function of a super-class of {subclass_name} "
-"[{super_classes_names}]"
 
 #: models/exception.py:45
-msgid "override_sublclass_error"
-msgstr "{subclass_name} is not a sub-class"
+msgid "%(subclass_name)s is not a sub-class"
+msgstr ""
 
 #: document/xls_build.py:170
 msgid "parameters"
 msgstr ""
 
 #: document/paper_sheet.py:310
-msgid "phone"
-msgstr "Phone"
+msgid "Phone"
+msgstr ""
 
 #: models/message_template.py:44
 msgid "plain"
@@ -152,69 +146,65 @@ msgid "plain_and_html"
 msgstr ""
 
 #: document/paper_sheet.py:337
-msgid "program"
-msgstr "Program"
+msgid "Program"
+msgstr ""
 
 #: document/paper_sheet.py:227
-msgid "registration_number"
-msgstr "Reg. No."
+msgid "Reg. No."
+msgstr ""
 
 #: document/paper_sheet.py:230
-msgid "score"
-msgstr "Score"
+msgid "Score"
+msgstr ""
 
 #: document/paper_sheet.py:381
-msgid "score_legend"
-msgstr "Score legend: %s (0=Score of presence)"
+msgid "Score legend: %(score)s (0=Score of presence)"
+msgstr ""
 
 #: document/paper_sheet.py:113 document/paper_sheet.py:161
-msgid "scores_sheet"
-msgstr "Score sheet"
+msgid "Score sheet"
+msgstr ""
 
 #: document/paper_sheet.py:372
-msgid "signature"
+msgid "Signature"
 msgstr ""
 
 #: document/paper_sheet.py:340
 msgid "student"
-msgstr "student"
+msgstr ""
 
 #: document/paper_sheet.py:340
 msgid "students"
-msgstr "students"
+msgstr ""
 
 #: document/paper_sheet.py:232
-msgid "submit_date"
-msgstr "Submit data"
+msgid "Submit data"
+msgstr ""
 
 #: messaging/send_message.py:299
-msgid "template_error"
-msgstr "No messages were sent : the message template {} does not exist."
+msgid "No messages were sent : the message template %(html_template_ref)s does not exist."
+msgstr ""
 
 #: document/paper_sheet.py:372
 msgid "the"
-msgstr "the"
+msgstr ""
 
 #: document/xls_build.py:294
-msgid "true"
-msgstr "True"
+msgid "True"
+msgstr ""
 
 #: document/paper_sheet.py:163
-msgid "ucl_denom_location"
-msgstr "Université catholique de Louvain"
+msgid "Université catholique de Louvain"
+msgstr ""
 
 #: document/paper_sheet.py:385
-msgid "unauthorized_decimal_for_this_activity"
-msgstr "Unauthorized decimal for this learning unit"
+msgid "Unauthorized decimal for this learning unit"
+msgstr ""
 
 #: document/paper_sheet.py:390
-msgid "warn_user_data_can_change"
+msgid "The data presented on this document correspond to the state of the system dated %(creation_date)s and are likely to evolve"
 msgstr ""
-"The data presented on this document correspond to the state of the system "
-"dated %s and are likely to evolve"
 
 #: document/xls_build.py:194
-#, fuzzy
-#| msgid "scores_sheet"
-msgid "worksheet"
-msgstr "Score sheet"
+msgid "sheet"
+msgstr ""

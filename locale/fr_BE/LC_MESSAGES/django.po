@@ -25,122 +25,116 @@ msgid "MAX_UPLOAD_SIZE"
 msgstr ""
 
 #: document/paper_sheet.py:267
-msgid "SCORES_RESPONSIBLE"
+msgid "Scores responsible"
 msgstr "Responsable de notes"
 
 #: document/paper_sheet.py:352
-msgid "academic_year"
+msgid "Academic year"
 msgstr "Année académique"
 
 #: document/paper_sheet.py:383
-msgid "authorized_decimal_for_this_activity"
+msgid "Decimals authorized for this learning unit"
 msgstr "Les notes décimales sont autorisées pour ce cours"
 
 #: document/xls_build.py:173
-msgid "created_by"
+msgid "Created by"
 msgstr "Créé par"
 
 #: document/paper_sheet.py:409 document/xls_build.py:172
-msgid "creation_date"
+msgid "Creation date"
 msgstr "Date de création"
 
 #: document/paper_sheet.py:348
-msgid "deliberation_date"
+msgid "Deliberation date"
 msgstr "Date de délibération"
 
 #: document/xls_build.py:175 templates/uploading/upload_file_list.html:49
 msgid "description"
-msgstr ""
+msgstr "description"
 
 #: document/paper_sheet.py:372
-msgid "done_at"
+msgid "Done at"
 msgstr "Fait à"
 
 #: document/paper_sheet.py:290
-msgid "email"
+msgid "Email"
 msgstr "Email"
 
 #: document/xls_build.py:295
-msgid "false"
+msgid "False"
 msgstr "Faux"
 
 #: document/paper_sheet.py:320
-msgid "fax"
+msgid "Fax"
 msgstr "Fax"
 
 #: templates/uploading/upload_file_form.html:30
 #: templates/uploading/upload_file_list.html:41
 msgid "file"
-msgstr ""
+msgstr "fichier"
 
 #: templates/uploading/upload_file_list.html:33
-#, fuzzy
-#| msgid "firstname"
-msgid "file_name"
-msgstr "Prénom"
+msgid "File name"
+msgstr "Nom de fichier"
 
 #: document/paper_sheet.py:229
-msgid "firstname"
+msgid "Firstname"
 msgstr "Prénom"
 
 #: document/paper_sheet.py:388
-msgid "in_accordance_to_regulation"
-msgstr ""
-"Conformément aux articles 104, 109 et 111 RGEE (Règlement général des études "
-"et des examens) disponible au lien suivant"
+msgid "In accordance to regulation's rules 104, 109 and 111. Complete rules avalaible here"
+msgstr "Conformément aux articles 104, 109 et 111 RGEE (Règlement général des études et des examens) disponible au lien suivant"
 
 #: document/paper_sheet.py:231
-msgid "justification"
+msgid "Justification"
 msgstr "Justification"
 
 #: document/paper_sheet.py:380
-msgid "justification_legend_pdf"
+msgid "Justification legend: A=Absent, T=Cheating"
 msgstr "Légende pour le champ 'Justification': A=Absent, T=Tricherie"
 
 #: document/paper_sheet.py:228
-msgid "lastname"
+msgid "Lastname"
 msgstr "Nom"
 
 #: document/paper_sheet.py:388
-msgid "link_to_RGEE"
+msgid "https://www.uclouvain.be/enseignement-reglements.html"
 msgstr "https://uclouvain.be/fr/decouvrir/rgee.html"
 
 #: messaging/send_message.py:292 messaging/send_message.py:295
-msgid "message_content_error"
+msgid "No email has been sent because a technical error occured."
 msgstr "Aucun email n'a été envoyé à cause d'un problème technique."
 
 #: models/exception.py:38
-msgid "migration_persistence_error"
-msgstr ""
+msgid "Migration persistence error"
+msgstr "Erreur de persistance de migration"
 
 #: templates/uploading/upload_file_form.html:39
-msgid "msg_error_size_and_content"
-msgstr ""
+msgid "Message error : size and content"
+msgstr "Message d'erreur : taille et contenu"
 
 #: models/exception.py:31
-msgid "must_give_only_one_model"
+msgid "Only objects from the same models are allowed"
 msgstr "Tous les objets doivent appartenir au même modèle"
 
 #: document/paper_sheet.py:275
-msgid "none"
+msgid "None"
 msgstr "Aucun"
 
 #: models/exception.py:52
-msgid "override_method_error"
-msgstr ""
-"La fonction {function_name} n'est pas une fonction d'une super classe de "
-"{subclass_name} [{super_classes_names}]"
+msgid "%(function_name)s is not a function of a super-class of %(subclass_name)s [%(super_classes_names)s]"
+msgstr "La fonction %(function_name)s n'est pas une fonction d'une super classe de %(subclass_name)s [%(super_classes_names)s]"
 
 #: models/exception.py:45
-msgid "override_sublclass_error"
-msgstr "La classe {subclass_name} n'est pas une sous-classe"
+msgid "%(subclass_name)s is not a sub-class"
+msgstr "La classe %(subclass_name)s n'est pas une sous-classe"
 
 #: document/xls_build.py:170
 msgid "parameters"
 msgstr ""
 
 #: document/paper_sheet.py:310
-msgid "phone"
+msgid "Phone"
 msgstr "Téléphone"
 
 #: models/message_template.py:44
@@ -152,27 +146,27 @@ msgid "plain_and_html"
 msgstr ""
 
 #: document/paper_sheet.py:337
-msgid "program"
+msgid "Program"
 msgstr "Programme"
 
 #: document/paper_sheet.py:227
-msgid "registration_number"
+msgid "Reg. No."
 msgstr "Noma"
 
 #: document/paper_sheet.py:230
-msgid "score"
+msgid "Score"
 msgstr "Note"
 
 #: document/paper_sheet.py:381
-msgid "score_legend"
-msgstr "Légende pour le champ 'Note chiffrée': %s (0=Cote de présence)"
+msgid "Score legend: %(score)s (0=Score of presence)"
+msgstr "Légende pour le champ 'Note chiffrée': %(score)s (0=Cote de présence)"
 
 #: document/paper_sheet.py:113 document/paper_sheet.py:161
-msgid "scores_sheet"
+msgid "Score sheet"
 msgstr "Feuille de notes"
 
 #: document/paper_sheet.py:372
-msgid "signature"
+msgid "Signature"
 msgstr "Signature"
 
 #: document/paper_sheet.py:340
@@ -184,37 +178,33 @@ msgid "students"
 msgstr "étudiants"
 
 #: document/paper_sheet.py:232
-msgid "submit_date"
+msgid "Submit data"
 msgstr "Date de remise"
 
 #: messaging/send_message.py:299
-msgid "template_error"
-msgstr "Aucun message n'a été envoyé : le modèle de message {} n'existe pas."
+msgid "No messages were sent : the message template %(html_template_ref)s does not exist."
+msgstr "Aucun message n'a été envoyé : le modèle de message %(html_template_ref)s n'existe pas."
 
 #: document/paper_sheet.py:372
 msgid "the"
 msgstr "le"
 
 #: document/xls_build.py:294
-msgid "true"
+msgid "True"
 msgstr "Vrai"
 
 #: document/paper_sheet.py:163
-msgid "ucl_denom_location"
+msgid "Université catholique de Louvain"
 msgstr "Université catholique de Louvain"
 
 #: document/paper_sheet.py:385
-msgid "unauthorized_decimal_for_this_activity"
+msgid "Unauthorized decimal for this learning unit"
 msgstr "Attention : décimales non autorisées pour ce cours"
 
 #: document/paper_sheet.py:390
-msgid "warn_user_data_can_change"
-msgstr ""
-"Les données présentes sur ce document correspondent à l'état du système en "
-"date du %s et sont susceptibles d'évoluer"
+msgid "The data presented on this document correspond to the state of the system dated %(creation_date)s and are likely to evolve"
+msgstr "Les données présentes sur ce document correspondent à l'état du système en date du %(creation_date)s et sont susceptibles d'évoluer"
 
 #: document/xls_build.py:194
-#, fuzzy
-#| msgid "scores_sheet"
-msgid "worksheet"
-msgstr "Feuille de notes"
+msgid "sheet"
+msgstr "feuille"

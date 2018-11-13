@@ -110,7 +110,7 @@ def build_error_response():
 
 
 def build_response(data):
-    filename = "%s.pdf" % _('scores_sheet')
+    filename = "%s.pdf" % _('Score sheet')
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="%s"' % filename
     pdf = build_pdf(data)
@@ -158,9 +158,9 @@ def _write_header(canvas, doc, styles):
     a = Image(settings.LOGO_INSTITUTION_URL, width=15*mm, height=20*mm)
     p = Paragraph('''<para align=center>
                         <font size=16>%s</font>
-                    </para>''' % (_('scores_sheet')), styles["BodyText"])
+                    </para>''' % (_('Score sheet')), styles["BodyText"])
 
-    data_header = [[a, '%s' % _('ucl_denom_location'), p], ]
+    data_header = [[a, '%s' % _('Université catholique de Louvain'), p], ]
     t_header = Table(data_header, [30*mm, 100*mm, 50*mm])
     t_header.setStyle(TableStyle([]))
     w, h = t_header.wrap(doc.width, doc.topMargin)
@@ -224,12 +224,12 @@ def _build_exam_enrollments_table(enrollments_by_pdf_page, styles):
 
 
 def _students_table_header():
-    data = [['''%s''' % _('registration_number'),
-             '''%s''' % _('lastname'),
-             '''%s''' % _('firstname'),
-             '''%s''' % _('score'),
-             '''%s''' % _('justification'),
-             '''%s''' % _('submit_date')
+    data = [['''%s''' % _('Reg. No.'),
+             '''%s''' % _('Lastname'),
+             '''%s''' % _('Firstname'),
+             '''%s''' % _('Score'),
+             '''%s''' % _('Justification'),
+             '''%s''' % _('Submit data')
              ]]
     return data
 
@@ -264,7 +264,7 @@ def _get_scores_responsible_location_text(address):
 
 
 def _get_scores_responsible_title_text():
-    return '<b>{} :</b>'.format(_('SCORES_RESPONSIBLE'))
+    return '<b>{} :</b>'.format(_('Scores responsible'))
 
 
 def _get_scores_responsible_text(scores_responsible):
@@ -272,7 +272,7 @@ def _get_scores_responsible_text(scores_responsible):
         last_name = scores_responsible["last_name"] if scores_responsible['last_name'] else ""
         first_name = scores_responsible["first_name"] if scores_responsible['first_name'] else ""
         return '{} {}'.format(last_name, first_name)
-    return '{}'.format(_('none'))
+    return '{}'.format(_('None'))
 
 
 def _build_header_secretariat_address_block(program, styles):
@@ -287,7 +287,7 @@ def _build_header_secretariat_address_block(program, styles):
 
 
 def _get_email_text(secretariat_address):
-    return '{0} : {1}'.format(_('email'), secretariat_address.get('email'))
+    return '{0} : {1}'.format(_('Email'), secretariat_address.get('email'))
 
 
 def _get_location_text(secretariat_address):
@@ -307,7 +307,7 @@ def _get_phone_and_fax_text(secretariat_address):
     phone = secretariat_address.get('phone')
     fax = secretariat_address.get('fax')
     if phone:
-        phone_fax_text = "{} : {}".format(_('phone'), phone)
+        phone_fax_text = "{} : {}".format(_('Phone'), phone)
         if fax:
             phone_fax_text += " - "
             phone_fax_text += _get_fax_text(fax)
@@ -317,7 +317,7 @@ def _get_phone_and_fax_text(secretariat_address):
 
 
 def _get_fax_text(fax):
-    return "{} : {}".format(_('fax'), fax)
+    return "{} : {}".format(_('Fax'), fax)
 
 
 def _build_program_block_content(learning_unit_year, nb_students, program, styles):
@@ -334,7 +334,7 @@ def _build_program_block_content(learning_unit_year, nb_students, program, style
 
 
 def _get_program_text(nb_students, program):
-    return '''<b>{} : {} </b>({} {})'''.format(_('program'),
+    return '''<b>{} : {} </b>({} {})'''.format(_('Program'),
                                                program['acronym'],
                                                nb_students,
                                                _('students') if nb_students > 1 else _('student'))
@@ -345,11 +345,11 @@ def _get_learning_unit_year_text(learning_unit_year):
 
 
 def _get_deliberation_date_text(program):
-    return '%s : %s' % (_('deliberation_date'), program['deliberation_date'] or '')
+    return '%s : %s' % (_('Deliberation date'), program['deliberation_date'] or '')
 
 
 def _get_academic_year_text(learning_unit_year):
-    return '{} : {}  - Session : {}'.format(_('academic_year'),
+    return '{} : {}  - Session : {}'.format(_('Academic year'),
                                             learning_unit_year['academic_year'],
                                             learning_unit_year['session_number'])
 
@@ -369,7 +369,7 @@ def _build_signature_paragraph():
                     <font size=10>%s ...................................... , </font>
                     <font size=10>%s ..../..../.......... &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font>
                     <font size=10>%s</font>
-                   ''' % (_('done_at'), _('the'), _('signature')), p_signature)
+                   ''' % (_('Done at'), _('the'), _('Signature')), p_signature)
     return paragraph_signature
 
 
@@ -377,17 +377,32 @@ def _build_legend_block(decimal_scores):
     creation_date = timezone.now()
     creation_date = creation_date.strftime(DATE_FORMAT)
 
-    legend_text = str(_('justification_legend_pdf'))
-    legend_text += "<br/>%s" % (str(_('score_legend') % "0 - 20"))
+    legend_text = str(_('Justification legend: A=Absent, T=Cheating'))
+    legend_text += "<br/>%s" % (str(_('Score legend: %(score)s (0=Score of presence)').format(
+        {
+            'score': "0 - 20"
+        }
+    )))
     if decimal_scores:
-        legend_text += "<br/><font color=red>%s</font>" % _('authorized_decimal_for_this_activity')
+        legend_text += "<br/><font color=red>%s</font>" % _('Decimals authorized for this learning unit')
     else:
-        legend_text += "<br/><font color=red>%s</font>" % _('unauthorized_decimal_for_this_activity')
+        legend_text += "<br/><font color=red>%s</font>" % _('Unauthorized decimal for this learning unit')
 
     legend_text += '''<br/> %s : <a href="%s"><font color=blue><u>%s</u></font></a>''' \
-                   % (_("in_accordance_to_regulation"), _("link_to_RGEE"), _("link_to_RGEE"))
+                   % (_("In accordance to regulation's rules 104, 109 and 111. Complete rules avalaible here"), 
+                      _("https://www.uclouvain.be/enseignement-reglements.html"), 
+                      _("https://www.uclouvain.be/enseignement-reglements.html"))
 
-    legend_text += "<br/><font color=red>%s</font>" % str(_('warn_user_data_can_change') % creation_date)
+    legend_text += "<br/><font color=red>%s</font>" % str(
+        _(
+            'The data presented on this document correspond to the state of the system dated %(creation_date)s and are '
+            'likely to evolve'
+        ).format(
+            {
+                'creation_date': creation_date,
+            }
+        )
+    )
 
     return Paragraph('''<para> %s </para>''' % legend_text, _build_legend_block_style())
 
@@ -406,7 +421,7 @@ def _build_legend_block_style():
 def _write_footer(canvas, doc, styles):
     creation_date = timezone.now()
     creation_date = creation_date.strftime(DATE_FORMAT)
-    pageinfo = "%s : %s" % (_('creation_date'), creation_date)
+    pageinfo = "%s : %s" % (_('Creation date'), creation_date)
     footer = Paragraph(''' <para align=right>Page %d - %s </para>''' % (doc.page, pageinfo), styles['Normal'])
     w, h = footer.wrap(doc.width, doc.bottomMargin)
     footer.drawOn(canvas, doc.leftMargin, h)

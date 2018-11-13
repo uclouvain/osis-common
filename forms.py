@@ -56,7 +56,7 @@ class UploadDocumentFileForm(ModelForm):
         file = cleaned_data.get("file")
         if file:
             if file.size > settings.MAX_UPLOAD_SIZE:
-                self.errors['file'] = _('MAX_UPLOAD_SIZE')
+                self.errors['file'] = 'MAX_UPLOAD_SIZE'
             if file.content_type not in settings.CONTENT_TYPES:
-                self.errors['content_type'] = _(' title')
+                self.errors['content_type'] = ' title'
         return cleaned_data

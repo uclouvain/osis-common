@@ -41,9 +41,9 @@ class MessageTemplateAdmin(osis_model_admin.OsisModelAdmin):
 
 
 class MessageTemplate(models.Model):
-    FORMAT_CHOICES = (('PLAIN', _('plain')),
+    FORMAT_CHOICES = (('PLAIN', 'plain'),
                       ('HTML', 'HTML'),
-                      ('PLAIN_HTML', _('plain_and_html')))
+                      ('PLAIN_HTML', 'plain_and_html'))
 
     reference = models.CharField(max_length=50)
     subject = models.CharField(max_length=255)
