@@ -167,10 +167,10 @@ def _create_worksheet(workbook, title, sheet_num):
 
 
 def _build_worksheet_parameters(workbook, a_user, list_description=None, filters=None):
-    worksheet_parameters = workbook.create_sheet(title=str(_('parameters')))
+    worksheet_parameters = workbook.create_sheet(title='parameters')
     today = datetime.date.today()
-    worksheet_parameters.append([str(_('creation_date')), today.strftime('%d-%m-%Y')])
-    worksheet_parameters.append([str(_('created_by')), str(a_user)])
+    worksheet_parameters.append([str(_('Creation date')), today.strftime('%d-%m-%Y')])
+    worksheet_parameters.append([str(_('Created by')), str(a_user)])
     if list_description:
         worksheet_parameters.append([str(_('description')), str(list_description)])
     if filters:
@@ -191,7 +191,7 @@ def _create_worsheet_title(sheet_number, worksheet_titles):
     if worksheet_titles:
         return "{} - {}".format(current_worksheet_num, worksheet_titles)
 
-    return "{} - {}{}".format(current_worksheet_num, _('worksheet'), current_worksheet_num)
+    return "{} - {}{}".format(current_worksheet_num, _('sheet'), current_worksheet_num)
 
 
 def _is_valid(list_parameters):
@@ -291,8 +291,8 @@ def translate(string_value):
         return str(_(string_value))
     elif type(string_value) == bool:
         if string_value:
-            return _('true')
-        return _('false')
+            return _('True')
+        return _('False')
     return None
 
 

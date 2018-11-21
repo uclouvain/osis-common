@@ -289,14 +289,20 @@ def send_messages(message_content, force_sending_outside_production=False):
     attachment = message_content.get('attachment', None)
     if not html_template_ref:
         logger.error("No html template found in message content; no message/mail has been sent.")
-        return _('message_content_error')
+        return _('No email has been sent because a technical error occured.')
     if not receivers:
         logger.warning("No receivers found ; no message/mail has been sent.")
-        return _('message_content_error')
+        return _('No email has been sent because a technical error occured.')
     html_message_templates, txt_message_templates = _get_all_lang_templates([html_template_ref,
                                                                              txt_template_ref])
     if not html_message_templates:
-        return _('template_error').format(html_template_ref)
+        return _(
+            'No messages were sent : the message template %(html_template_ref)s does not exist.'
+        ).format(
+            {
+                'html_template_ref': html_template_ref
+            }
+        )
 
     for lang_code, receivers in __map_receivers_by_languages(receivers).items():
         html_table_data, txt_table_data = __make_tables_template_data(tables, lang_code)

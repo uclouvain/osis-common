@@ -28,29 +28,33 @@ from django.utils.translation import ugettext_lazy as _
 
 class MultipleModelsSerializationException(Exception):
     def __init__(self, errors=None):
-        message = _('must_give_only_one_model')
+        message = _('Only objects from the same models are allowed')
         super(MultipleModelsSerializationException, self).__init__(message)
         self.errors = errors
 
 
 class MigrationPersistanceError(Exception):
     def __init__(self, errors=None):
-        message = _('migration_persistence_error')
+        message = _('Migration persistence error')
         super(MigrationPersistanceError, self).__init__(message)
         self.errors = errors
 
 
 class OverrideSubClassError(Exception):
     def __init__(self, subclass_name, errors=None):
-        message = _('override_sublclass_error').format(subclass_name=subclass_name)
+        message = _('%(subclass_name)s is not a sub-class').format(subclass_name=subclass_name)
         super(OverrideSubClassError, self).__init__(message)
         self.errors = errors
 
 
 class OverrideMethodError(Exception):
     def __init__(self, function_name, super_classes_names, subclass_name, errors=None):
-        message = _('override_method_error').format(function_name=function_name,
-                                                    subclass_name=subclass_name,
-                                                    super_classes_names=super_classes_names)
+        message = _(
+            '%(function_name)s is not a function of a super-class of %(subclass_name)s [%(super_classes_names)s]'
+        ).format(
+            function_name=function_name,
+            subclass_name=subclass_name,
+            super_classes_names=super_classes_names
+        )
         super(OverrideMethodError, self).__init__(message)
         self.errors = errors
