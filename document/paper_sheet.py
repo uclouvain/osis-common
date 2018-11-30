@@ -214,12 +214,19 @@ def _build_exam_enrollments_table(enrollments_by_pdf_page, styles):
                                enrollment["score"],
                                Paragraph(_(enrollment["justification"]), styles['Normal']),
                                enrollment["deadline"]])
+
     table = Table(students_table, COLS_WIDTH, repeatRows=1)
     table.setStyle(TableStyle([
         ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.black),
         ('BOX', (0, 0), (-1, -1), 0.25, colors.black),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey)]))
+
+    for idx, enrollment in enumerate(enrollments_by_pdf_page,1):
+        if enrollment["enrollment_state_color"]:
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, idx), (5, idx), enrollment["enrollment_state_color"])]))
+
     return table
 
 
@@ -388,6 +395,8 @@ def _build_legend_block(decimal_scores):
     else:
         legend_text += "<br/><font color=red>%s</font>" % _('Unauthorized decimal for this learning unit')
 
+    legend_text += "<br/><span backColor=#dff0d8>%s</span>" % _('Enrolled after session starts')
+    legend_text += "<br/><span backColor=#f2dede>%s</span>" % _('Not enrolled')
     legend_text += '''<br/> %s : <a href="%s"><font color=blue><u>%s</u></font></a>''' \
                    % (_("In accordance to regulation's rules 104, 109 and 111. Complete rules avalaible here"), 
                       _("https://www.uclouvain.be/enseignement-reglements.html"), 
