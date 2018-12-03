@@ -396,7 +396,7 @@ def _build_legend_block(decimal_scores):
         legend_text += "<br/><font color=red>%s</font>" % _('Unauthorized decimal for this learning unit')
 
     legend_text += "<br/><span backColor=#dff0d8>%s</span>" % _('Enrolled after session starts')
-    legend_text += "<br/><span backColor=#f2dede>%s</span>" % _('Not enrolled')
+    legend_text += "<br/><span backColor=#f2dede>%s</span>" % _('Unsubscribed after the opening of the session')
     legend_text += '''<br/> %s : <a href="%s"><font color=blue><u>%s</u></font></a>''' \
                    % (_("In accordance to regulation's rules 104, 109 and 111. Complete rules avalaible here"), 
                       _("https://www.uclouvain.be/enseignement-reglements.html"), 
