@@ -97,6 +97,7 @@ class TestSerializeObjectOnCommit(TransactionTestCase):
         self.assertTrue(mock_post_delete.called)
         mock_post_delete.assert_called_once_with(self.model_with_user, to_delete=True)
 
+
 if hasattr(settings, 'QUEUES') and settings.QUEUES:
     class TestMessageQueueCache(TransactionTestCase):
         def test_message_queue_cache_no_insert(self):

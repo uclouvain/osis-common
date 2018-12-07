@@ -26,6 +26,8 @@
 import json
 import logging
 from unittest import skip
+from unittest.mock import patch
+
 from django.conf import settings
 from django.test import TestCase
 from osis_common.queue.callbacks import process_message
@@ -104,7 +106,8 @@ class ProcessMessage(TestCase):
         model = ModelWithUser.find_by_name('With User')
         self.assertIsNone(model)
 
-    def test_update_without_user(self):
+    @patch('osis_common.signals.publisher.post_update_from_queue.send')
+    def test_update_without_user(self, mock):
         model_without_user = get_object(model_name='modelwithoutuser',
                                         name='Without User Before Update',
                                         uuid='daf86b06-b784-4e02-9131-3098da60506c')
@@ -115,8 +118,10 @@ class ProcessMessage(TestCase):
         process_message(get_object_json(model_name='modelwithoutuser'))
         model_without_user = ModelWithoutUser.find_by_id(id=model_id)
         self.assertEqual(model_without_user.name, 'Without User')
+        self.assertTrue(mock.called)
 
-    def test_update_with_user_object_user_defined(self):
+    @patch('osis_common.signals.publisher.post_update_from_queue.send')
+    def test_update_with_user_object_user_defined(self, mock):
         model_with_user = get_object(model_name='modelwithuser',
                                      name='With User Undefined',
                                      uuid='c03a1839-6eb3-4565-b256-e0aea5ec8437',
@@ -130,8 +135,10 @@ class ProcessMessage(TestCase):
         model_with_user = ModelWithUser.find_by_id(id=model_id)
         self.assertEqual(model_with_user.name, 'With User')
         self.assertEqual(model_with_user.user, 'user1')
+        self.assertTrue(mock.called)
 
-    def test_update_with_user_object_user_undefined(self):
+    @patch('osis_common.signals.publisher.post_update_from_queue.send')
+    def test_update_with_user_object_user_undefined(self, mock):
         model_with_user = get_object(model_name='modelwithuser',
                                      name='With User Undefined',
                                      uuid='c03a1839-6eb3-4565-b256-e0aea5ec8437')
@@ -144,7 +151,4 @@ class ProcessMessage(TestCase):
         model_with_user = ModelWithUser.find_by_id(id=model_id)
         self.assertEqual(model_with_user.name, 'With User')
         self.assertIsNone(model_with_user.user)
-
-
-
-
+        self.assertTrue(mock.called)
