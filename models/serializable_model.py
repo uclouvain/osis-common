@@ -23,27 +23,27 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-import uuid
-import logging
-import json
 import datetime
+import json
+import logging
 import time
+import uuid
 
+from django.apps import apps
 from django.conf import settings
-from django.contrib import admin, messages
+from django.contrib import messages
+from django.core import serializers
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 from django.db.models import DateTimeField, DateField
-from django.core import serializers
 from django.utils.encoding import force_text
-from django.apps import apps
-from osis_common.models import message_queue_cache, osis_model_admin
-from osis_common.models.message_queue_cache import MessageQueueCache
-
 from pika.exceptions import ChannelClosed, ConnectionClosed
-from osis_common.models.exception import MultipleModelsSerializationException, MigrationPersistanceError
-from osis_common.queue import queue_sender
 
+from osis_common.models import message_queue_cache, osis_model_admin
+from osis_common.models.exception import MultipleModelsSerializationException, MigrationPersistanceError
+from osis_common.models.message_queue_cache import MessageQueueCache
+from osis_common.queue import queue_sender
+from osis_common.signals.publisher import post_update_from_queue
 
 LOGGER = logging.getLogger(settings.DEFAULT_LOGGER)
 
@@ -298,6 +298,7 @@ def _make_update(fields, model_class, persisted_obj, query_set):
     kwargs = _build_kwargs(fields, model_class)
     kwargs['id'] = persisted_obj.id
     query_set.update(**kwargs)
+    post_update_from_queue.send(sender=model_class, instance=persisted_obj)
     return persisted_obj.id
 
 
