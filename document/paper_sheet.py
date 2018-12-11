@@ -406,11 +406,11 @@ def _build_legend_block(decimal_scores):
         _(
             'The data presented on this document correspond to the state of the system dated %(creation_date)s and are '
             'likely to evolve'
-        ).format(
+        )%
             {
                 'creation_date': creation_date,
             }
-        )
+
     )
 
     return Paragraph('''<para> %s </para>''' % legend_text, _build_legend_block_style())
