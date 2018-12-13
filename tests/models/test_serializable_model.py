@@ -30,8 +30,7 @@ from django.conf import settings
 from django.test.testcases import TestCase, override_settings, TransactionTestCase
 
 from osis_common.models import message_queue_cache
-from osis_common.models.serializable_model import serialize_objects,  SerializableModel, \
-    serialize, persist, _make_upsert
+from osis_common.models.serializable_model import SerializableModel, serialize, persist, _make_upsert
 from osis_common.tests.models_for_tests.serializable_tests_models import ModelWithoutUser, ModelWithUser
 
 
