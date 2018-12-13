@@ -23,8 +23,6 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-import re
-import json
 from copy import deepcopy
 from unittest.mock import patch
 
@@ -32,52 +30,9 @@ from django.conf import settings
 from django.test.testcases import TestCase, override_settings, TransactionTestCase
 
 from osis_common.models import message_queue_cache
-from osis_common.models.exception import MultipleModelsSerializationException
-from osis_common.models.serializable_model import serialize_objects, format_data_for_migration, SerializableModel
-from osis_common.tests.models_for_tests.serializable_tests_models import ModelWithoutUser, \
-    ModelWithUser, ModelNotSerializable
-
-
-class TestSerializeObject(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.model_with_user = ModelWithUser(user='user1', name='With User')
-        cls.model_without_user = ModelWithoutUser(name='Without User')
-
-    def test_serialization_with_objecst_none(self):
-        serializabled_object = serialize_objects(None)
-        self.assertIsNone(serializabled_object)
-
-    def test_serialization_with_multiple_models(self):
-        objects_to_serialize = [self.model_with_user, self.model_without_user]
-        self.assertRaises(MultipleModelsSerializationException, serialize_objects, objects=objects_to_serialize)
-
-    def test_serialization_with_user(self):
-        objects_to_serialize = [self.model_with_user]
-        serialized_object = json.loads(serialize_objects(objects_to_serialize))
-        serialized_fields = serialized_object[0].get('fields')
-        serialized_model = serialized_object[0].get('model')
-        self.assertIsNone(serialized_fields.get('user'))
-        self.assertEqual('With User', serialized_fields.get('name'))
-        self.assertEqual('tests.modelwithuser', serialized_model)
-
-    def test_serialization_without_user(self):
-        objects_to_serialize = [self.model_without_user]
-        serialized_object = json.loads(serialize_objects(objects_to_serialize))
-        serialized_fields = serialized_object[0].get('fields')
-        serialized_model = serialized_object[0].get('model')
-        self.assertEqual('Without User', serialized_fields.get('name'))
-        self.assertEqual('tests.modelwithoutuser', serialized_model)
-
-    def test_contains_uuid_field(self):
-        self.assertTrue(getattr(self.model_with_user, 'uuid'))
-        obj = ModelNotSerializable()
-        self.assertRaises(AttributeError, getattr, obj, 'uuid')
-
-    def test__str__uuid(self):
-        serializable_model = SerializableModel()
-        result = re.match('[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}', '{}'.format(serializable_model))
-        self.assertIsNotNone(result)
+from osis_common.models.serializable_model import serialize_objects,  SerializableModel, \
+    serialize, persist, _make_upsert
+from osis_common.tests.models_for_tests.serializable_tests_models import ModelWithoutUser, ModelWithUser
 
 
 class TestSerializeObjectOnCommit(TransactionTestCase):
@@ -96,6 +51,7 @@ class TestSerializeObjectOnCommit(TransactionTestCase):
         self.model_with_user.delete()
         self.assertTrue(mock_post_delete.called)
         mock_post_delete.assert_called_once_with(self.model_with_user, to_delete=True)
+
 
 if hasattr(settings, 'QUEUES') and settings.QUEUES:
     class TestMessageQueueCache(TransactionTestCase):
@@ -153,18 +109,64 @@ if hasattr(settings, 'QUEUES') and settings.QUEUES:
             self.assertEqual(0, message_queue_cache.get_messages_to_retry().count())
 
 
-class TestFormatDataForMigration(TestCase):
+class TestPersist(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.model_with_user = ModelWithUser(user='user1', name='With User')
-        cls.model_without_user = ModelWithoutUser(name='Without User')
 
-    def test_format_with_delete(self):
-        object_to_format = [self.model_without_user]
-        formated_objects = format_data_for_migration(object_to_format, to_delete=True)
-        self.assertTrue(formated_objects.get('to_delete'))
+    @patch("osis_common.models.serializable_model._make_upsert", side_effect=None)
+    def test_persist_case_insert_new_one(self, mock_make_upsert):
+        structure_serialized = serialize(self.model_with_user, to_delete=False)
+        persist(structure_serialized)
+        mock_make_upsert.assert_called_once_with(
+            structure_serialized['fields'],
+            SerializableModel,
+            ModelWithUser
+        )
 
-    def test_format_without_delete(self):
-        object_to_format = [self.model_with_user]
-        formated_objects = format_data_for_migration(object_to_format, to_delete=False)
-        self.assertFalse(formated_objects.get('to_delete'))
+    @patch("osis_common.models.serializable_model._make_upsert", side_effect=None)
+    def test_persist_case_update_existing(self, mock_make_upsert):
+        # Save instance in order to have UUID on database
+        self.model_with_user.save()
+
+        structure_serialized = serialize(self.model_with_user, to_delete=False)
+        persist(structure_serialized)
+        mock_make_upsert.assert_called_once_with(
+            structure_serialized['fields'],
+            SerializableModel,
+            ModelWithUser,
+            instance=self.model_with_user
+        )
+
+
+class TestMakeUpsert(TestCase):
+    def test_make_upsert_case_insert(self):
+        obj = ModelWithUser(user='user1', name='With User')
+
+        structure_serialized = serialize(obj, to_delete=False)
+        pk = _make_upsert(
+            structure_serialized['fields'],
+            SerializableModel,
+            ModelWithUser
+        )
+        self.assertTrue(pk)
+        self.assertTrue(
+            ModelWithUser.objects.filter(pk=pk, user='user1', name='With User').exists()
+        )
+
+    def test_make_upsert_case_update(self):
+        obj = ModelWithUser(user='user1', name='With User')
+        obj.save()
+
+        structure_serialized = serialize(obj, to_delete=False)
+        structure_serialized['fields']['name'] = "Update name"
+        _make_upsert(
+            structure_serialized['fields'],
+            SerializableModel,
+            ModelWithUser,
+            instance=obj
+        )
+
+        obj.refresh_from_db()
+        self.assertTrue(obj.pk)
+        self.assertEqual(obj.name, "Update name")

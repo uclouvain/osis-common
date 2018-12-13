@@ -26,13 +26,6 @@
 from django.utils.translation import ugettext_lazy as _
 
 
-class MultipleModelsSerializationException(Exception):
-    def __init__(self, errors=None):
-        message = _('Only objects from the same models are allowed')
-        super(MultipleModelsSerializationException, self).__init__(message)
-        self.errors = errors
-
-
 class MigrationPersistanceError(Exception):
     def __init__(self, errors=None):
         message = _('Migration persistence error')

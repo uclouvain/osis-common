@@ -30,18 +30,17 @@ import datetime
 import time
 
 from django.conf import settings
-from django.contrib import admin, messages
+from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 from django.db.models import DateTimeField, DateField
-from django.core import serializers
 from django.utils.encoding import force_text
 from django.apps import apps
 from osis_common.models import message_queue_cache, osis_model_admin
 from osis_common.models.message_queue_cache import MessageQueueCache
 
 from pika.exceptions import ChannelClosed, ConnectionClosed
-from osis_common.models.exception import MultipleModelsSerializationException, MigrationPersistanceError
+from osis_common.models.exception import MigrationPersistanceError
 from osis_common.queue import queue_sender
 
 
@@ -159,40 +158,6 @@ def send_to_queue(instance, to_delete=False):
         LOGGER.exception('QueueServer is not installed or not launched')
 
 
-# To be deleted
-def format_data_for_migration(objects, to_delete=False):
-    """
-    Format data to fit to a specific structure.
-    :param objects: A list of model instances.
-    :param to_delete: True if these records are to be deleted on the Osis-portal side.
-                      False if these records are to insert or update on the OPsis-portal side.
-    :return: A structured dictionary containing the necessary data to migrate from Osis to Osis-portal.
-    """
-    return {'serialized_objects': serialize_objects(objects), 'to_delete': to_delete}
-
-
-# To be deleted
-def serialize_objects(objects, format='json'):
-    """
-    Serialize all objects given by parameter.
-    All objects must come from the same model. Otherwise, an exception will be thrown.
-    If the object contains a FK 'user', this field will be ignored for the serialization.
-    :param objects: List of objects to serialize.
-    :return: Json data containing serializable objects.
-    """
-    if not objects:
-        return None
-    if len({obj.__class__ for obj in objects}) > 1:
-        raise MultipleModelsSerializationException
-    model_class = objects[0].__class__
-    return serializers.serialize(format,
-                                 objects,
-                                 # indent=2,
-                                 fields=[field.name for field in model_class._meta.fields if field.name != 'user'],
-                                 use_natural_foreign_keys=True,
-                                 use_natural_primary_keys=True)
-
-
 # TODO :: If record is to delete, we don't need to send the entire object, only the UUID is necessary to send.
 # TODO :: This need to correct the algorithm to consume messages.
 def serialize(obj, to_delete, last_syncs=None):
@@ -259,18 +224,17 @@ def persist(structure):
                 fields[field_name] = persist(value)
         query_set = model_class.objects.filter(uuid=fields.get('uuid'))
         persisted_obj = query_set.first()
+        super_class = model_class.__bases__[0]
         if not persisted_obj:
-            obj_id = _make_insert(fields, model_class.__bases__[0], model_class)
+            obj_id = _make_upsert(fields, super_class, model_class)
             if obj_id:
                 return obj_id
-            else:
-                raise MigrationPersistanceError
+            raise MigrationPersistanceError
         elif _changed_since_last_synchronization(fields, structure):
-            return _make_update(fields, model_class, persisted_obj, query_set)
+            return _make_upsert(fields, super_class, model_class, instance=persisted_obj)
         else:
             return persisted_obj.id
-    else:
-        return None
+    return None
 
 
 def _convert_datetime_to_long(dtime):
@@ -294,20 +258,18 @@ def _get_field_name(field):
     return field.name
 
 
-def _make_update(fields, model_class, persisted_obj, query_set):
+def _make_upsert(fields, super_class, model_class, instance=None):
     kwargs = _build_kwargs(fields, model_class)
-    kwargs['id'] = persisted_obj.id
-    query_set.update(**kwargs)
-    return persisted_obj.id
-
-
-def _make_insert(fields, super_class, model_class):
-    kwargs = _build_kwargs(fields, model_class)
-    del kwargs['id']
-    obj = model_class(**kwargs)
-    super(super_class, obj).save(force_insert=True)
-    obj_id = obj.id
-    return obj_id
+    if instance:
+        del kwargs['id']
+        # Fields can contain only partial update of models, so we need to setattr on instance found in DB
+        for field_name, value in kwargs.items():
+            setattr(instance, field_name, value)
+        super(super_class, instance).save(force_update=True)
+    else:
+        instance = model_class(**kwargs)
+        super(super_class, instance).save(force_insert=True)
+    return instance.id
 
 
 def _build_kwargs(fields, model_class):
