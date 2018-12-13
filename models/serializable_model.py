@@ -259,14 +259,15 @@ def persist(structure):
                 fields[field_name] = persist(value)
         query_set = model_class.objects.filter(uuid=fields.get('uuid'))
         persisted_obj = query_set.first()
+        super_class = model_class.__bases__[0]
         if not persisted_obj:
-            obj_id = _make_insert(fields, model_class.__bases__[0], model_class)
+            obj_id = _make_upsert(fields, super_class, model_class)
             if obj_id:
                 return obj_id
             else:
                 raise MigrationPersistanceError
         elif _changed_since_last_synchronization(fields, structure):
-            return _make_update(fields, model_class, persisted_obj, query_set)
+            return _make_upsert(fields, super_class, model_class, existing_obj=persisted_obj)
         else:
             return persisted_obj.id
     else:
@@ -294,20 +295,36 @@ def _get_field_name(field):
     return field.name
 
 
-def _make_update(fields, model_class, persisted_obj, query_set):
-    kwargs = _build_kwargs(fields, model_class)
-    kwargs['id'] = persisted_obj.id
-    query_set.update(**kwargs)
-    return persisted_obj.id
+# def _make_update(fields, model_class, persisted_obj, super_class):
+#     kwargs = _build_kwargs(fields, model_class)
+#     kwargs['id'] = persisted_obj.id
+#     for property, value in kwargs:
+#         if hasattr(persisted_obj, property):
+#             setattr(persisted_obj, property, value)
+#     super(super_class, persisted_obj).save(force_update=True)
+#     # persisted_obj.super().save()
+#     # query_set.update(**kwargs)
+#     return persisted_obj.id
+#
+#
+# def _make_insert(fields, super_class, model_class):
+#     kwargs = _build_kwargs(fields, model_class)
+#     del kwargs['id']
+#     obj = model_class(**kwargs)
+#     super(super_class, obj).save(force_insert=True)
+#     obj_id = obj.id
+#     return obj_id
 
 
-def _make_insert(fields, super_class, model_class):
+def _make_upsert(fields, super_class, model_class, existing_obj=None):
     kwargs = _build_kwargs(fields, model_class)
-    del kwargs['id']
     obj = model_class(**kwargs)
-    super(super_class, obj).save(force_insert=True)
-    obj_id = obj.id
-    return obj_id
+    if existing_obj:
+        obj.id = existing_obj.id
+        super(super_class, obj).save(force_update=True)
+    else:
+        super(super_class, obj).save(force_insert=True)
+    return obj.id
 
 
 def _build_kwargs(fields, model_class):
