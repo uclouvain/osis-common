@@ -260,8 +260,8 @@ def _get_field_name(field):
 
 def _make_upsert(fields, super_class, model_class, instance=None):
     kwargs = _build_kwargs(fields, model_class)
+    del kwargs['id']
     if instance:
-        del kwargs['id']
         # Fields can contain only partial update of models, so we need to setattr on instance found in DB
         for field_name, value in kwargs.items():
             setattr(instance, field_name, value)
