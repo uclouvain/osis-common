@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-12-03 14:35+0100\n"
+"POT-Creation-Date: 2019-01-21 14:12+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,14 +16,14 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: models/exception.py:53
+#: models/exception.py:46
 #, python-format
 msgid ""
 "%(function_name)s is not a function of a super-class of %(subclass_name)s "
 "[%(super_classes_names)s]"
 msgstr ""
 
-#: models/exception.py:45
+#: models/exception.py:38
 #, python-format
 msgid "%(subclass_name)s is not a sub-class"
 msgstr ""
@@ -98,7 +98,7 @@ msgstr ""
 msgid "Message error : size and content"
 msgstr ""
 
-#: models/exception.py:38
+#: models/exception.py:31
 msgid "Migration persistence error"
 msgstr ""
 
@@ -117,8 +117,8 @@ msgstr ""
 msgid "None"
 msgstr ""
 
-#: models/exception.py:31
-msgid "Only objects from the same models are allowed"
+#: document/xls_build.py:170
+msgid "Parameters"
 msgstr ""
 
 #: document/paper_sheet.py:317
