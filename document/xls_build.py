@@ -167,7 +167,7 @@ def _create_worksheet(workbook, title, sheet_num):
 
 
 def _build_worksheet_parameters(workbook, a_user, list_description=None, filters=None):
-    worksheet_parameters = workbook.create_sheet(title='parameters')
+    worksheet_parameters = workbook.create_sheet(title=_('Parameters'))
     today = datetime.date.today()
     worksheet_parameters.append([str(_('Creation date')), today.strftime('%d-%m-%Y')])
     worksheet_parameters.append([str(_('Created by')), str(a_user)])
