@@ -25,7 +25,6 @@
 ##############################################################################
 from django.conf import settings
 from django.test import TestCase
-from osis_common.messaging.send_message import send_again
 from osis_common.models import message_history
 from osis_common.messaging import send_message
 from osis_common.messaging.message_config import create_receiver, create_table, create_message_content
@@ -118,16 +117,6 @@ class MessagesTestCase(TestCase):
                                                         subject_data)
         message_error = send_message.send_messages(content_wrong_html_ref)
         self.assertIsNotNone(message_error, 'A message error should be sent')
-
-    def test_send_again(self):
-        count_messages_before_send_again = len(message_history.MessageHistory.objects.all())
-        message = message_history.MessageHistory.objects.get(id=1)
-        receiver = create_receiver(message.receiver_id, 'receiver_new@mail.org', 'fr-BE')
-        message = send_again(receiver, message.id)
-        self.assertIsNotNone(message, 'Message history should have been sent again')
-        count_messages_after_send_again = len(message_history.MessageHistory.objects.all())
-        self.assertTrue(count_messages_after_send_again == count_messages_before_send_again + 1,
-                        'It should be {} messges in messages history'.format(count_messages_before_send_again + 1))
 
     def __make_receivers(self):
         receiver1 = create_receiver(1, 'receiver1@email.org', 'fr-BE')

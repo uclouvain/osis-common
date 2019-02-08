@@ -140,23 +140,6 @@ def __map_receivers_by_languages(receivers):
     return lang_dict
 
 
-def send_again(receiver, message_history_id):
-    """
-    send a message from message history again
-    :param receiver receiver of the message
-    :param message_history_id The id of the message history to send again
-    :return the sent message
-    """
-    message_history = message_history_mdl.find_by_id(message_history_id)
-    __send_and_save(receivers=(receiver, ),
-                    reference=message_history.reference,
-                    subject=message_history.subject,
-                    message=message_history.content_txt,
-                    html_message=message_history.content_html,
-                    from_email=settings.DEFAULT_FROM_EMAIL)
-    return message_history
-
-
 def __send_and_save(receivers, reference=None, **kwargs):
     """
     Send the message :
