@@ -36,6 +36,8 @@ from django.utils import timezone
 from django.utils.html import strip_tags
 
 from django.conf import settings
+
+from osis_common.messaging import mail_sender_classes
 from osis_common.models import message_history as message_history_mdl
 from osis_common.models import message_template as message_template_mdl
 from django.utils.translation import ugettext as _
@@ -163,19 +165,15 @@ def __send_and_save(receivers, reference=None, **kwargs):
             elif receiver.get('receiver_email'):
                 logger.info('Sending mail in production to {}'.format(receiver.get('receiver_email')))
                 recipient_list.append(receiver.get('receiver_email'))
-            message_history = message_history_mdl.MessageHistory(
-                reference=reference,
-                subject=kwargs.get('subject'),
-                content_txt=kwargs.get('message'),
-                content_html=kwargs.get('html_message'),
-                receiver_id=receiver.get('receiver_id'),
-                sent=timezone.now() if receiver.get('receiver_email') else None
-            )
-            message_history.save()
+
         msg = EmailMultiAlternatives(kwargs.get('subject'), kwargs.get('message'), kwargs.get('from_email'),
                                      recipient_list, attachments=__get_attachments(kwargs))
         msg.attach_alternative(kwargs.get('html_message'), "text/html")
         msg.send()
+
+    MailSenderClass = getattr(mail_sender_classes, settings.MAIL_SENDER_CLASS)
+    mail_sender = MailSenderClass(receivers=receivers, reference=None, **kwargs)
+    mail_sender.send_mail()
 
 
 def __get_attachments(attributes_message):
