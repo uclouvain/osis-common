@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-01-21 14:12+0100\n"
+"POT-Creation-Date: 2019-02-15 14:33+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -102,11 +102,11 @@ msgstr ""
 msgid "Migration persistence error"
 msgstr ""
 
-#: messaging/send_message.py:292 messaging/send_message.py:295
+#: messaging/send_message.py:203 messaging/send_message.py:206
 msgid "No email has been sent because a technical error occured."
 msgstr ""
 
-#: messaging/send_message.py:300
+#: messaging/send_message.py:212
 #, python-format
 msgid ""
 "No messages were sent : the message template %(html_template_ref)s does not "
@@ -163,6 +163,13 @@ msgstr ""
 msgid ""
 "The data presented on this document correspond to the state of the system "
 "dated %(creation_date)s and are likely to evolve"
+msgstr ""
+
+#: messaging/mail_sender_classes.py:63 tests/test_messages.py:248
+#, python-brace-format
+msgid ""
+"This is a test email sent from OSIS, only sent to {new_dest_address}. "
+"Planned recipients were : {receivers_addresses}."
 msgstr ""
 
 #: document/xls_build.py:294

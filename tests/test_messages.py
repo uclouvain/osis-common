@@ -245,7 +245,7 @@ class MailClassesTestCase(TestCase):
 
     def _assert_testing_message_history_created(self, replacement_receiver):
         testing_informations = _(
-            "This is a test email sent from OSIS, only sent to {new_dest_address}."
+            "This is a test email sent from OSIS, only sent to {new_dest_address}. "
             "Planned recipients were : {receivers_addresses}."
         ).format(
             new_dest_address=replacement_receiver,
