@@ -27,20 +27,18 @@
 """
 Utility files for message sending
 """
+import logging
 from html import unescape
 
+from django.conf import settings
 from django.template import Template, Context
 from django.template.loader import render_to_string
+from django.utils import translation
 from django.utils.html import strip_tags
-
-from django.conf import settings
 from django.utils.module_loading import import_string
+from django.utils.translation import ugettext as _
 
 from osis_common.models import message_template as message_template_mdl
-from django.utils.translation import ugettext as _
-from django.utils import translation
-
-import logging
 
 logger = logging.getLogger(settings.SEND_MAIL_LOGGER)
 

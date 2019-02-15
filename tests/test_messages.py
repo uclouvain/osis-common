@@ -31,9 +31,9 @@ from django.utils.translation import ugettext_lazy as _
 
 from base.tests.factories.person import PersonFactory
 from osis_common.messaging import mail_sender_classes
-from osis_common.models import message_history
 from osis_common.messaging import send_message, message_config
 from osis_common.messaging.message_config import create_receiver, create_table, create_message_content
+from osis_common.models import message_history
 from osis_common.models.message_history import MessageHistory
 from osis_common.models.message_template import MessageTemplate
 
