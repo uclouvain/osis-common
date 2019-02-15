@@ -26,30 +26,29 @@
 import abc
 
 from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
 from osis_common.models import message_history as message_history_mdl
 
+import logging
+
+logger = logging.getLogger(settings.SEND_MAIL_LOGGER)
+
 
 class MailSenderInterface(abc.ABC):
-    def __init__(self, receivers, reference, **kwargs):
+    def __init__(self, receivers, reference, connected_user=None, **kwargs):
         self.receivers = receivers
         self.reference = reference
+        self.connected_user = connected_user
         self.kwargs = kwargs
 
     @abc.abstractmethod
     def send_mail(self):
         pass
 
-
-class FallbackMailSender(MailSenderInterface):
-    """
-    Do not send actual email
-    Log into message_history table
-    """
-
-    def send_mail(self):
+    def create_message_history(self):
         for receiver in self.receivers:
             message_history_mdl.MessageHistory.objects.create(
                 reference=self.reference,
@@ -60,27 +59,13 @@ class FallbackMailSender(MailSenderInterface):
                 sent=timezone.now() if receiver.get('receiver_email') else None
             )
 
-
-class GenericMailSender(FallbackMailSender):
-    """
-    Send email to a generic email address (settings.COMMON_EMAIL_RECEIVER)
-    Log into message_history table
-    """
-
-    def send_mail(self):
-        receivers_addresses = [
-            receiver.get('receiver_email') for receiver in self.receivers if receiver.get('receiver_email')
-        ]
-        self.add_testing_informations_to_contents(receivers_addresses)
-        super().send_mail()
-
-    def add_testing_informations_to_contents(self, receivers_addresses):
+    def add_testing_informations_to_contents(self, original_receivers_addresses, replacement_receiver):
         testing_informations = _(
-            "This is a test email sent from OSIS, only sent to {generic_address}. "
-            "Original recipients were : {receivers_addresses}."
+            "This is a test email sent from OSIS, only sent to {new_dest_address}."
+            "Planned recipients were : {receivers_addresses}."
         ).format(
-            generic_address=settings.COMMON_EMAIL_RECEIVER,
-            receivers_addresses=', '.join(receivers_addresses)
+            new_dest_address=replacement_receiver,
+            receivers_addresses=', '.join(original_receivers_addresses)
         )
 
         self.kwargs['message'] = "{testing_informations} \n {original_message}".format(
@@ -92,23 +77,94 @@ class GenericMailSender(FallbackMailSender):
             original_message=self.kwargs.get('html_message')
         )
 
+    def build_and_send_msg(self, recipient_list):
+        msg = EmailMultiAlternatives(
+            subject=self.kwargs.get('subject'),
+            body=self.kwargs.get('message'),
+            from_email=self.kwargs.get('from_email'),
+            to=recipient_list,
+            attachments=_get_attachments(self.kwargs)
+        )
+        msg.attach_alternative(self.kwargs.get('html_message'), "text/html")
+        logger.info(
+            'Sending mail to {} (MailSenderClass : {})'.format(
+                ', '.join(recipient_list),
+                self.__class__.__name__
+            )
+        )
+        msg.send()
 
-class ConnectedUserMailSender(FallbackMailSender):
+
+class FallbackMailSender(MailSenderInterface):
     """
-    Send email to the email address of the connected user
+    Do not send actual email
     Log into message_history table
     """
 
     def send_mail(self):
-        self.kwargs['subject'] = "TESTTESTTESTTEST"
-        super().send_mail()
+        self.create_message_history()
 
 
-class MailSender(FallbackMailSender):
+class GenericMailSender(MailSenderInterface):
+    """
+    Send email to a generic email address (settings.COMMON_EMAIL_RECEIVER)
+    Log into message_history table
+    """
+
+    def send_mail(self):
+        replacement_receiver = settings.COMMON_EMAIL_RECEIVER
+        original_receivers_addresses = [
+            receiver.get('receiver_email') for receiver in self.receivers if receiver.get('receiver_email')
+        ]
+        self.add_testing_informations_to_contents(original_receivers_addresses, replacement_receiver)
+
+        self.create_message_history()
+
+        recipients_list = [replacement_receiver]
+        self.build_and_send_msg(recipients_list)
+
+
+class ConnectedUserMailSender(MailSenderInterface):
+    """
+    Send email to the email address of the connected user
+    Log into message_history table
+    """
+    def __init__(self, receivers, reference, connected_user=None, **kwargs):
+        if not connected_user:
+            raise AttributeError('The attribute connected_user is mandatory to use the ConnectedUserMailSender class')
+
+        super().__init__(receivers, reference, connected_user, **kwargs)
+
+    def send_mail(self):
+        replacement_receiver = self.connected_user.person.email
+        original_receivers_addresses = [
+            receiver.get('receiver_email') for receiver in self.receivers if receiver.get('receiver_email')
+        ]
+        self.add_testing_informations_to_contents(original_receivers_addresses, replacement_receiver)
+
+        self.create_message_history()
+
+        recipients_list = [replacement_receiver]
+        self.build_and_send_msg(recipients_list)
+
+
+class MailSender(MailSenderInterface):
     """
    Send email to the email address of the real recipient
     Log into message_history table
    """
 
     def send_mail(self):
-        super().send_mail()
+        self.create_message_history()
+
+        recipients_list = [
+            receiver.get('receiver_email') for receiver in self.receivers if receiver.get('receiver_email')
+        ]
+        self.build_and_send_msg(recipients_list)
+
+
+def _get_attachments(attributes_message):
+    attachment = attributes_message.get("attachment")
+    if attachment:
+        return [attachment]
+    return None
