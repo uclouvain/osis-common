@@ -216,6 +216,21 @@ class MailClassesTestCase(TestCase):
         mock_mail_send.assert_called_once()
 
     @patch('django.core.mail.message.EmailMessage.send')
+    def test_connected_user_mail_sender_fails_without_connected_user(self, mock_mail_send):
+        with self.assertRaises(AttributeError):
+            mail_sender_classes.ConnectedUserAndFallbackMailSender(
+                receivers=self.receivers,
+                reference="reference",
+                connected_user=None,
+                subject="test subject",
+                message="test message",
+                html_message="<p>test html message</p>",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                attachment=None
+            )
+        mock_mail_send.assert_not_called()
+
+    @patch('django.core.mail.message.EmailMessage.send')
     def test_mail_sender(self, mock_mail_send):
         mail_sender = mail_sender_classes.RealReceiverAndFallbackMailSender(
             receivers=self.receivers,
