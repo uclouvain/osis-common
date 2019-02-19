@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-02-15 14:33+0100\n"
+"POT-Creation-Date: 2019-02-19 16:21+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -165,11 +165,11 @@ msgid ""
 "dated %(creation_date)s and are likely to evolve"
 msgstr ""
 
-#: messaging/mail_sender_classes.py:63 tests/test_messages.py:248
+#: messaging/mail_sender_classes.py:130 tests/test_messages.py:262
 #, python-brace-format
 msgid ""
 "This is a test email sent from OSIS, only sent to {new_dest_address}. "
-"Planned recipients were : {receivers_addresses}."
+"Planned receivers were : {receivers_addresses}."
 msgstr ""
 
 #: document/xls_build.py:294
