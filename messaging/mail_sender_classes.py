@@ -110,10 +110,6 @@ class ConnectedUserMailSender(MasterMailSender):
 
 
 class RealReceiverMailSender(MasterMailSender):
-    """
-    Send email to the email address of the real receiver
-    Log into message_history table
-    """
     def get_real_receivers_list(self):
         return self.get_original_receivers_list()
 
