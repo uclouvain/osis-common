@@ -156,7 +156,6 @@ class MessagesTestCase(TestCase):
 
 
 class MailClassesTestCase(TestCase):
-
     def setUp(self):
         self.connected_person = PersonFactory()
         self.receiver = PersonFactory()
@@ -186,7 +185,7 @@ class MailClassesTestCase(TestCase):
 
     @patch('django.core.mail.message.EmailMessage.send')
     def test_generic_mail_sender(self, mock_mail_send):
-        mail_sender = mail_sender_classes.GenericMailSender(
+        mail_sender = mail_sender_classes.GenericAndFallbackMailSender(
             receivers=self.receivers,
             reference="reference",
             connected_user=self.connected_person.user,
@@ -202,7 +201,7 @@ class MailClassesTestCase(TestCase):
 
     @patch('django.core.mail.message.EmailMessage.send')
     def test_connected_user_mail_sender(self, mock_mail_send):
-        mail_sender = mail_sender_classes.ConnectedUserMailSender(
+        mail_sender = mail_sender_classes.ConnectedUserAndFallbackMailSender(
             receivers=self.receivers,
             reference="reference",
             connected_user=self.connected_person.user,
@@ -218,7 +217,7 @@ class MailClassesTestCase(TestCase):
 
     @patch('django.core.mail.message.EmailMessage.send')
     def test_mail_sender(self, mock_mail_send):
-        mail_sender = mail_sender_classes.MailSender(
+        mail_sender = mail_sender_classes.RealReceiverAndFallbackMailSender(
             receivers=self.receivers,
             reference="reference",
             connected_user=self.connected_person.user,
@@ -246,7 +245,7 @@ class MailClassesTestCase(TestCase):
     def _assert_testing_message_history_created(self, replacement_receiver):
         testing_informations = _(
             "This is a test email sent from OSIS, only sent to {new_dest_address}. "
-            "Planned recipients were : {receivers_addresses}."
+            "Planned receivers were : {receivers_addresses}."
         ).format(
             new_dest_address=replacement_receiver,
             receivers_addresses=', '.join([self.receiver.email])
