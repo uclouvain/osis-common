@@ -191,8 +191,9 @@ class MailClassesTestCase(TestCase):
         )
         mock_mail_send.assert_not_called()
 
+    @patch('logging.Logger.info')
     @patch('django.core.mail.message.EmailMessage.send')
-    def test_generic_mail_sender(self, mock_mail_send):
+    def test_generic_mail_sender(self, mock_mail_send, mock_logger):
         mail_sender = mail_sender_classes.GenericMailSender(
             receivers=self.receivers,
             reference="reference",
@@ -205,9 +206,15 @@ class MailClassesTestCase(TestCase):
         )
         mail_sender.send_mail()
         mock_mail_send.assert_called_once()
+        log = mock_logger.call_args[0][0]
+        self.assertEquals(
+            log,
+            'Sending mail to {} (MailSenderClass : GenericMailSender)'.format(settings.COMMON_EMAIL_RECEIVER)
+        )
 
+    @patch('logging.Logger.info')
     @patch('django.core.mail.message.EmailMessage.send')
-    def test_connected_user_mail_sender(self, mock_mail_send):
+    def test_connected_user_mail_sender(self, mock_mail_send, mock_logger):
         mail_sender = mail_sender_classes.ConnectedUserMailSender(
             receivers=self.receivers,
             reference="reference",
@@ -220,11 +227,16 @@ class MailClassesTestCase(TestCase):
         )
         mail_sender.send_mail()
         mock_mail_send.assert_called_once()
+        log = mock_logger.call_args[0][0]
+        self.assertEquals(
+            log,
+            'Sending mail to {} (MailSenderClass : ConnectedUserMailSender)'.format(self.connected_person.user.email)
+        )
 
     @patch('django.core.mail.message.EmailMessage.send')
     def test_connected_user_mail_sender_fails_without_connected_user(self, mock_mail_send):
         with self.assertRaises(AttributeError):
-            mail_sender_classes.ConnectedUserAndFallbackMailSender(
+            mail_sender_classes.ConnectedUserMailSender(
                 receivers=self.receivers,
                 reference="reference",
                 connected_user=None,
@@ -236,8 +248,9 @@ class MailClassesTestCase(TestCase):
             )
         mock_mail_send.assert_not_called()
 
+    @patch('logging.Logger.info')
     @patch('django.core.mail.message.EmailMessage.send')
-    def test_mail_sender(self, mock_mail_send):
+    def test_mail_sender(self, mock_mail_send, mock_logger):
         mail_sender = mail_sender_classes.RealReceiverMailSender(
             receivers=self.receivers,
             reference="reference",
@@ -250,3 +263,10 @@ class MailClassesTestCase(TestCase):
         )
         mail_sender.send_mail()
         mock_mail_send.assert_called_once()
+        log = mock_logger.call_args[0][0]
+        self.assertEquals(
+            log,
+            'Sending mail to {} (MailSenderClass : RealReceiverMailSender)'.format(
+                self.receivers[0].get('receiver_email')
+            )
+        )
