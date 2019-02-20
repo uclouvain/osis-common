@@ -168,7 +168,7 @@ class MailClassesTestCase(TestCase):
         ]
 
     @patch('django.core.mail.message.EmailMessage.send')
-    def test_fallback_mail_sender(self, mock_mail_send):
+    def test_message_history_mail_sender(self, mock_mail_send):
         mail_sender = mail_sender_classes.MessageHistorySender(
             receivers=self.receivers,
             reference="reference",
