@@ -205,7 +205,7 @@ class MailClassesTestCase(TestCase):
             attachment=None
         )
         mail_sender.send_mail()
-        mock_mail_send.assert_called_once()
+        self.assertEqual(mock_mail_send.call_count, 1)
         log = mock_logger.call_args[0][0]
         self.assertEquals(
             log,
@@ -226,7 +226,7 @@ class MailClassesTestCase(TestCase):
             attachment=None
         )
         mail_sender.send_mail()
-        mock_mail_send.assert_called_once()
+        self.assertEqual(mock_mail_send.call_count, 1)
         log = mock_logger.call_args[0][0]
         self.assertEquals(
             log,
@@ -248,7 +248,7 @@ class MailClassesTestCase(TestCase):
             attachment=None
         )
         mail_sender.send_mail()
-        mock_mail_send.assert_called_once()
+        self.assertEqual(mock_mail_send.call_count, 1)
 
         log = mock_logger.call_args[0][0]
         self.assertEquals(
@@ -277,7 +277,7 @@ class MailClassesTestCase(TestCase):
             attachment=None
         )
         mail_sender.send_mail()
-        mock_mail_send.assert_called_once()
+        self.assertEqual(mock_mail_send.call_count, 1)
         log = mock_logger.call_args[0][0]
         self.assertEquals(
             log,
