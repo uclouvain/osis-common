@@ -27,21 +27,18 @@
 """
 Utility files for message sending
 """
+import logging
 from html import unescape
 
-from django.core.mail import send_mail, EmailMultiAlternatives
+from django.conf import settings
 from django.template import Template, Context
 from django.template.loader import render_to_string
-from django.utils import timezone
-from django.utils.html import strip_tags
-
-from django.conf import settings
-from osis_common.models import message_history as message_history_mdl
-from osis_common.models import message_template as message_template_mdl
-from django.utils.translation import ugettext as _
 from django.utils import translation
+from django.utils.html import strip_tags
+from django.utils.module_loading import import_string
+from django.utils.translation import ugettext as _
 
-import logging
+from osis_common.models import message_template as message_template_mdl
 
 logger = logging.getLogger(settings.SEND_MAIL_LOGGER)
 
@@ -77,34 +74,6 @@ def _get_template_by_language_or_default(lang_code, html_message_templates, txt_
     return html_message_template, txt_message_template
 
 
-def __send_messages(html_message_template, txt_message_template, html_data, txt_data, receivers, subject, attachment,
-                    force_sending_outside_production=False):
-    """
-    Send a message to a list of person ,with txt and html format.
-    The messages are build according templates and data (dictionnary of template vars).
-    Messages are sent by mail and saved in history.
-    :param html_message_template: The html template of the message
-    :param txt_message_template: The txt template of the message
-    :param html_data: the data for the html_template
-    :param txt_data: the data for the txt template
-    :param receivers: The receivers list of the message
-    :param subject: The subject of the message
-    :param attachment: An attachment to the message.
-    :param force_sending_outside_production: Send the message to real receiver outside production environment
-    """
-    html_data['signature'] = render_to_string('messaging/html_email_signature.html', {
-        'logo_mail_signature_url': settings.LOGO_EMAIL_SIGNATURE_URL,
-        'logo_osis_url': settings.LOGO_OSIS_URL})
-    html_message = Template(html_message_template.template).render(Context(html_data))
-    txt_message = Template(txt_message_template.template).render(Context(txt_data))
-    __send_and_save(receivers=receivers,
-                    subject=unescape(strip_tags(subject)),
-                    message=unescape(strip_tags(txt_message)),
-                    html_message=html_message, from_email=settings.DEFAULT_FROM_EMAIL,
-                    attachment=attachment,
-                    force_sending_outside_production=force_sending_outside_production)
-
-
 def __render_table_template_as_string(table_headers, table_rows, html_format):
     """
      Render the table template as a string.
@@ -138,61 +107,6 @@ def __map_receivers_by_languages(receivers):
         else:
             lang_dict[settings.LANGUAGE_CODE].append(receiver)
     return lang_dict
-
-
-def send_again(receiver, message_history_id):
-    """
-    send a message from message history again
-    :param receiver receiver of the message
-    :param message_history_id The id of the message history to send again
-    :return the sent message
-    """
-    message_history = message_history_mdl.find_by_id(message_history_id)
-    __send_and_save(receivers=(receiver, ),
-                    reference=message_history.reference,
-                    subject=message_history.subject,
-                    message=message_history.content_txt,
-                    html_message=message_history.content_html,
-                    from_email=settings.DEFAULT_FROM_EMAIL)
-    return message_history
-
-
-def __send_and_save(receivers, reference=None, **kwargs):
-    """
-    Send the message :
-    - by mail if person.mail exists
-    Save the message in message_history table
-    :param receivers List of the receivers of the message
-    :param reference business reference of the message
-    :param kwargs List of arguments used by the django EmailMultiAlternative class.
-    The recipient_list argument is taken form the persons list.
-    """
-    recipient_list = []
-    if receivers:
-        for receiver in receivers:
-            if not settings.EMAIL_PRODUCTION_SENDING:
-                if kwargs.get('force_sending_outside_production'):
-                    logger.info('Sending mail not in production to {}'.format(receiver.get('receiver_email')))
-                    recipient_list.append(receiver.get('receiver_email'))
-                else:
-                    logger.info('Sending mail not in production to {}'.format(settings.COMMON_EMAIL_RECEIVER))
-                    recipient_list.append(settings.COMMON_EMAIL_RECEIVER)
-            elif receiver.get('receiver_email'):
-                logger.info('Sending mail in production to {}'.format(receiver.get('receiver_email')))
-                recipient_list.append(receiver.get('receiver_email'))
-            message_history = message_history_mdl.MessageHistory(
-                reference=reference,
-                subject=kwargs.get('subject'),
-                content_txt=kwargs.get('message'),
-                content_html=kwargs.get('html_message'),
-                receiver_id=receiver.get('receiver_id'),
-                sent=timezone.now() if receiver.get('receiver_email') else None
-            )
-            message_history.save()
-        msg = EmailMultiAlternatives(kwargs.get('subject'), kwargs.get('message'), kwargs.get('from_email'),
-                                     recipient_list, attachments=__get_attachments(kwargs))
-        msg.attach_alternative(kwargs.get('html_message'), "text/html")
-        msg.send()
 
 
 def __get_attachments(attributes_message):
@@ -272,55 +186,81 @@ def __apply_translation_on_row_table_data(row_data, col_indexes_to_translate):
     return tuple(row_translated)
 
 
-def send_messages(message_content, force_sending_outside_production=False):
+def send_messages(message_content, force_sending_outside_production=False, connected_user=None):
     """
     Send messages according to the message_content
     :param message_content: The message content and configuration dictionnary
     message_content is created by message_config.create_message_content function
     :param force_sending_outside_production Send the message to real receivers outside production environment
+    :param connected_user Currently connected Django user
     :return: An error message if something wrong,None else
     """
-    html_template_ref = message_content.get('html_template_ref', None)
-    txt_template_ref = message_content.get('txt_template_ref', None)
-    tables = message_content.get('tables', None)
-    receivers = message_content.get('receivers', None)
-    template_base_data = message_content.get('template_base_data', None)
-    subject_data = message_content.get('subject_data', None)
-    attachment = message_content.get('attachment', None)
+    html_template_ref = message_content.get('html_template_ref')
+    receivers = message_content.get('receivers')
+
     if not html_template_ref:
         logger.error("No html template found in message content; no message/mail has been sent.")
         return _('No email has been sent because a technical error occured.')
     if not receivers:
         logger.warning("No receivers found ; no message/mail has been sent.")
         return _('No email has been sent because a technical error occured.')
-    html_message_templates, txt_message_templates = _get_all_lang_templates([html_template_ref,
-                                                                             txt_template_ref])
+
+    html_message_templates, txt_message_templates = _get_all_lang_templates(
+        [html_template_ref, message_content.get('txt_template_ref')]
+    )
     if not html_message_templates:
-        return _(
-            'No messages were sent : the message template %(html_template_ref)s does not exist.'
-        ).format(
-            {
-                'html_template_ref': html_template_ref
-            }
+        return _('No messages were sent : the message template %(html_template_ref)s does not exist.').format(
+            {'html_template_ref': html_template_ref}
         )
 
     for lang_code, receivers in __map_receivers_by_languages(receivers).items():
-        html_table_data, txt_table_data = __make_tables_template_data(tables, lang_code)
-        html_message_template, txt_message_template = _get_template_by_language_or_default(lang_code,
-                                                                                           html_message_templates,
-                                                                                           txt_message_templates)
-        if subject_data:
-            subject = html_message_template.subject.format(**subject_data)
-        else:
-            subject = html_message_template.subject
-        html_data = template_base_data.copy()
-        html_data.update(html_table_data)
-        txt_data = template_base_data.copy()
-        txt_data.update(txt_table_data)
-        html_data['signature'] = render_to_string('messaging/html_email_signature.html', {
-            'logo_mail_signature_url': settings.LOGO_EMAIL_SIGNATURE_URL,
-            'logo_osis_url': settings.LOGO_OSIS_URL, })
-        __send_messages(html_message_template, txt_message_template, html_data, txt_data, receivers,
-                        subject, attachment, force_sending_outside_production)
+        _build_and_send_message(
+            connected_user,
+            message_content,
+            receivers,
+            html_message_templates,
+            txt_message_templates,
+            lang_code
+        )
 
     return None
+
+
+def _build_and_send_message(connected_user, message_content, receivers, html_message_templates, txt_message_templates,
+                            lang_code):
+    html_table_data, txt_table_data = __make_tables_template_data(message_content.get('tables'), lang_code)
+    html_message_template, txt_message_template = _get_template_by_language_or_default(
+        lang_code,
+        html_message_templates,
+        txt_message_templates
+    )
+
+    subject_data = message_content.get('subject_data')
+    if subject_data:
+        subject = html_message_template.subject.format(**subject_data)
+    else:
+        subject = html_message_template.subject
+
+    html_data = message_content.get('template_base_data').copy()
+    html_data.update(html_table_data)
+    txt_data = message_content.get('template_base_data').copy()
+    txt_data.update(txt_table_data)
+    html_data['signature'] = render_to_string('messaging/html_email_signature.html', {
+        'logo_mail_signature_url': settings.LOGO_EMAIL_SIGNATURE_URL,
+        'logo_osis_url': settings.LOGO_OSIS_URL, })
+    html_message = Template(html_message_template.template).render(Context(html_data))
+    txt_message = Template(txt_message_template.template).render(Context(txt_data))
+
+    for mail_sender_class in settings.MAIL_SENDER_CLASSES:
+        MailSenderClass = import_string(mail_sender_class)
+        mail_sender = MailSenderClass(
+            receivers=receivers,
+            reference=None,
+            connected_user=connected_user,
+            subject=unescape(strip_tags(subject)),
+            message=unescape(strip_tags(txt_message)),
+            html_message=html_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            attachment=message_content.get('attachment')
+        )
+        mail_sender.send_mail()

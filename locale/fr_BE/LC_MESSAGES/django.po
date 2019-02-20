@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-01-21 14:12+0100\n"
+"POT-Creation-Date: 2019-02-19 16:21+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -106,11 +106,11 @@ msgstr "Message d'erreur : taille et contenu"
 msgid "Migration persistence error"
 msgstr "Erreur de persistance de migration"
 
-#: messaging/send_message.py:292 messaging/send_message.py:295
+#: messaging/send_message.py:203 messaging/send_message.py:206
 msgid "No email has been sent because a technical error occured."
 msgstr "Aucun email n'a été envoyé à cause d'un problème technique."
 
-#: messaging/send_message.py:300
+#: messaging/send_message.py:212
 #, python-format
 msgid ""
 "No messages were sent : the message template %(html_template_ref)s does not "
@@ -173,6 +173,16 @@ msgstr ""
 "Les données présentes sur ce document correspondent à l'état du système en "
 "date du %(creation_date)s et sont susceptibles d'évoluer"
 
+#: messaging/mail_sender_classes.py:130 tests/test_messages.py:262
+#, python-brace-format
+msgid ""
+"This is a test email sent from OSIS, only sent to {new_dest_address}. "
+"Planned receivers were : {receivers_addresses}."
+msgstr ""
+"Ceci est un email de test de la plateforme OSIS, transmis uniquement à "
+"l'adresse {new_dest_address}. Les destinataires initiaux de ce message "
+"étaient : {receivers_addresses}."
+
 #: document/xls_build.py:294
 msgid "True"
 msgstr "Vrai"
@@ -217,6 +227,3 @@ msgstr "étudiants"
 #: document/paper_sheet.py:379
 msgid "the"
 msgstr "le"
-
-#~ msgid "Only objects from the same models are allowed"
-#~ msgstr "Tous les objets doivent appartenir au même modèle"
