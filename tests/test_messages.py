@@ -180,12 +180,20 @@ class MailClassesTestCase(TestCase):
             attachment=None
         )
         mail_sender.send_mail()
-        self._assert_message_history_created()
+        self.assertTrue(
+            MessageHistory.objects.get(
+                reference="reference",
+                subject="test subject",
+                content_txt="test message",
+                content_html="<p>test html message</p>",
+                receiver_id=self.receiver.pk,
+            )
+        )
         mock_mail_send.assert_not_called()
 
     @patch('django.core.mail.message.EmailMessage.send')
     def test_generic_mail_sender(self, mock_mail_send):
-        mail_sender = mail_sender_classes.GenericAndFallbackMailSender(
+        mail_sender = mail_sender_classes.GenericMailSender(
             receivers=self.receivers,
             reference="reference",
             connected_user=self.connected_person.user,
@@ -196,12 +204,11 @@ class MailClassesTestCase(TestCase):
             attachment=None
         )
         mail_sender.send_mail()
-        self._assert_testing_message_history_created(settings.COMMON_EMAIL_RECEIVER)
         mock_mail_send.assert_called_once()
 
     @patch('django.core.mail.message.EmailMessage.send')
     def test_connected_user_mail_sender(self, mock_mail_send):
-        mail_sender = mail_sender_classes.ConnectedUserAndFallbackMailSender(
+        mail_sender = mail_sender_classes.ConnectedUserMailSender(
             receivers=self.receivers,
             reference="reference",
             connected_user=self.connected_person.user,
@@ -212,7 +219,6 @@ class MailClassesTestCase(TestCase):
             attachment=None
         )
         mail_sender.send_mail()
-        self._assert_testing_message_history_created(self.connected_person.email)
         mock_mail_send.assert_called_once()
 
     @patch('django.core.mail.message.EmailMessage.send')
@@ -232,7 +238,7 @@ class MailClassesTestCase(TestCase):
 
     @patch('django.core.mail.message.EmailMessage.send')
     def test_mail_sender(self, mock_mail_send):
-        mail_sender = mail_sender_classes.RealReceiverAndFallbackMailSender(
+        mail_sender = mail_sender_classes.RealReceiverMailSender(
             receivers=self.receivers,
             reference="reference",
             connected_user=self.connected_person.user,
@@ -243,44 +249,4 @@ class MailClassesTestCase(TestCase):
             attachment=None
         )
         mail_sender.send_mail()
-        self._assert_message_history_created()
         mock_mail_send.assert_called_once()
-
-    def _assert_message_history_created(self):
-        self.assertTrue(
-            MessageHistory.objects.get(
-                reference="reference",
-                subject="test subject",
-                content_txt="test message",
-                content_html="<p>test html message</p>",
-                receiver_id=self.receiver.pk,
-            )
-        )
-
-    def _assert_testing_message_history_created(self, replacement_receiver):
-        testing_informations = _(
-            "This is a test email sent from OSIS, only sent to {new_dest_address}. "
-            "Planned receivers were : {receivers_addresses}."
-        ).format(
-            new_dest_address=replacement_receiver,
-            receivers_addresses=', '.join([self.receiver.email])
-        )
-
-        message = "{testing_informations} \n {original_message}".format(
-            testing_informations=testing_informations,
-            original_message="test message"
-        )
-        html_message = "<p>{testing_informations}</p> {original_message}".format(
-            testing_informations=testing_informations,
-            original_message="<p>test html message</p>"
-        )
-
-        self.assertTrue(
-            MessageHistory.objects.get(
-                reference="reference",
-                subject="test subject",
-                content_txt=message,
-                content_html=html_message,
-                receiver_id=self.receiver.pk,
-            )
-        )

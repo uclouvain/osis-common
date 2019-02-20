@@ -251,15 +251,16 @@ def _build_and_send_message(connected_user, message_content, receivers, html_mes
     html_message = Template(html_message_template.template).render(Context(html_data))
     txt_message = Template(txt_message_template.template).render(Context(txt_data))
 
-    MailSenderClass = import_string(settings.MAIL_SENDER_CLASS)
-    mail_sender = MailSenderClass(
-        receivers=receivers,
-        reference=None,
-        connected_user=connected_user,
-        subject=unescape(strip_tags(subject)),
-        message=unescape(strip_tags(txt_message)),
-        html_message=html_message,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        attachment=message_content.get('attachment')
-    )
-    mail_sender.send_mail()
+    for mail_sender_class in settings.MAIL_SENDER_CLASSES:
+        MailSenderClass = import_string(mail_sender_class)
+        mail_sender = MailSenderClass(
+            receivers=receivers,
+            reference=None,
+            connected_user=connected_user,
+            subject=unescape(strip_tags(subject)),
+            message=unescape(strip_tags(txt_message)),
+            html_message=html_message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            attachment=message_content.get('attachment')
+        )
+        mail_sender.send_mail()

@@ -81,7 +81,6 @@ class FallbackMailSender(MasterMailSender):
     """
     Log into message_history table
     """
-
     def send_mail(self):
         for receiver in self.receivers:
             message_history_mdl.MessageHistory.objects.create(
@@ -95,11 +94,23 @@ class FallbackMailSender(MasterMailSender):
 
 
 class GenericMailSender(MasterMailSender):
+    """
+    Add testing information to message
+    Send email to a generic email address (settings.COMMON_EMAIL_RECEIVER)
+    """
     def get_real_receivers_list(self):
         return [settings.COMMON_EMAIL_RECEIVER]
 
+    def send_mail(self):
+        add_testing_information_to_contents(self)
+        super().send_mail()
+
 
 class ConnectedUserMailSender(MasterMailSender):
+    """
+    Add testing information to message
+    Send email to the email address of the connected user
+    """
     def __init__(self, receivers, reference, connected_user=None, **kwargs):
         if not connected_user:
             raise AttributeError('The attribute connected_user is mandatory to use the ConnectedUserMailSender class')
@@ -108,8 +119,16 @@ class ConnectedUserMailSender(MasterMailSender):
     def get_real_receivers_list(self):
         return [self.connected_user.person.email]
 
+    def send_mail(self):
+        add_testing_information_to_contents(self)
+        super().send_mail()
+
 
 class RealReceiverMailSender(MasterMailSender):
+    """
+    DO NOT add testing information to message
+    Send email to the email addresses of the real receivers
+    """
     def get_real_receivers_list(self):
         return self.get_original_receivers_list()
 
@@ -138,41 +157,3 @@ def add_testing_information_to_contents(mail):
         testing_informations=testing_informations,
         original_message=mail.kwargs.get('html_message')
     )
-
-
-class GenericAndFallbackMailSender(GenericMailSender, FallbackMailSender):
-    """
-    Log into message_history table
-    Add testing information to message
-    Send email to a generic email address (settings.COMMON_EMAIL_RECEIVER)
-    """
-    def send_mail(self):
-        add_testing_information_to_contents(self)
-        FallbackMailSender.send_mail(self)
-        GenericMailSender.send_mail(self)
-
-
-class ConnectedUserAndFallbackMailSender(ConnectedUserMailSender, FallbackMailSender):
-    """
-    Log into message_history table
-    Add testing information to message
-    Send email to the email address of the connected user
-    """
-    def __init__(self, receivers, reference, connected_user, **kwargs):
-        ConnectedUserMailSender.__init__(self, receivers, reference, connected_user, **kwargs)
-
-    def send_mail(self):
-        add_testing_information_to_contents(self)
-        FallbackMailSender.send_mail(self)
-        ConnectedUserMailSender.send_mail(self)
-
-
-class RealReceiverAndFallbackMailSender(RealReceiverMailSender, FallbackMailSender):
-    """
-    Log into message_history table
-    DO NOT add testing information to message
-    Send email to the email address of the real receiver
-    """
-    def send_mail(self):
-        FallbackMailSender.send_mail(self)
-        RealReceiverMailSender.send_mail(self)
