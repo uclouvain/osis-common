@@ -77,7 +77,7 @@ class MasterMailSender(MailSenderInterface):
         msg.send()
 
 
-class FallbackMailSender(MasterMailSender):
+class MessageHistorySender(MasterMailSender):
     """
     Log into message_history table
     """
@@ -111,13 +111,13 @@ class ConnectedUserMailSender(MasterMailSender):
     Add testing information to message
     Send email to the email address of the connected user
     """
-    def __init__(self, receivers, reference, connected_user=None, **kwargs):
-        if not connected_user:
-            raise AttributeError('The attribute connected_user is mandatory to use the ConnectedUserMailSender class')
-        super().__init__(receivers, reference, connected_user, **kwargs)
-
     def get_real_receivers_list(self):
-        return [self.connected_user.person.email]
+        if self.connected_user:
+            return [self.connected_user.person.email]
+        else:
+            logger.error('ConnectedUserMailSender class was used, but no connected_user was given. '
+                         'Email will be sent to the COMMON_EMAIL_RECEIVER (from settings) instead.')
+            return [settings.COMMON_EMAIL_RECEIVER]
 
     def send_mail(self):
         add_testing_information_to_contents(self)

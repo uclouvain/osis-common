@@ -169,7 +169,7 @@ class MailClassesTestCase(TestCase):
 
     @patch('django.core.mail.message.EmailMessage.send')
     def test_fallback_mail_sender(self, mock_mail_send):
-        mail_sender = mail_sender_classes.FallbackMailSender(
+        mail_sender = mail_sender_classes.MessageHistorySender(
             receivers=self.receivers,
             reference="reference",
             connected_user=self.connected_person.user,
@@ -233,20 +233,35 @@ class MailClassesTestCase(TestCase):
             'Sending mail to {} (MailSenderClass : ConnectedUserMailSender)'.format(self.connected_person.user.email)
         )
 
+    @patch('logging.Logger.error')
+    @patch('logging.Logger.info')
     @patch('django.core.mail.message.EmailMessage.send')
-    def test_connected_user_mail_sender_fails_without_connected_user(self, mock_mail_send):
-        with self.assertRaises(AttributeError):
-            mail_sender_classes.ConnectedUserMailSender(
-                receivers=self.receivers,
-                reference="reference",
-                connected_user=None,
-                subject="test subject",
-                message="test message",
-                html_message="<p>test html message</p>",
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                attachment=None
-            )
-        mock_mail_send.assert_not_called()
+    def test_connected_user_mail_sender_without_connected_user(self, mock_mail_send, mock_logger, mock_logger_error):
+        mail_sender = mail_sender_classes.ConnectedUserMailSender(
+            receivers=self.receivers,
+            reference="reference",
+            connected_user=None,
+            subject="test subject",
+            message="test message",
+            html_message="<p>test html message</p>",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            attachment=None
+        )
+        mail_sender.send_mail()
+        mock_mail_send.assert_called_once()
+
+        log = mock_logger.call_args[0][0]
+        self.assertEquals(
+            log,
+            'Sending mail to {} (MailSenderClass : ConnectedUserMailSender)'.format(settings.COMMON_EMAIL_RECEIVER)
+        )
+
+        error_log = mock_logger_error.call_args[0][0]
+        self.assertEquals(
+            error_log,
+            'ConnectedUserMailSender class was used, but no connected_user was given. '
+            'Email will be sent to the COMMON_EMAIL_RECEIVER (from settings) instead.'
+        )
 
     @patch('logging.Logger.info')
     @patch('django.core.mail.message.EmailMessage.send')
