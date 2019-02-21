@@ -230,7 +230,7 @@ class MailClassesTestCase(TestCase):
         log = mock_logger.call_args[0][0]
         self.assertEquals(
             log,
-            'Sending mail to {} (MailSenderClass : ConnectedUserMailSender)'.format(self.connected_person.user.email)
+            'Sending mail to {} (MailSenderClass : ConnectedUserMailSender)'.format(self.connected_person.email)
         )
 
     @patch('logging.Logger.error')
