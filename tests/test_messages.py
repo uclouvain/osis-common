@@ -27,13 +27,11 @@ from unittest.mock import patch
 
 from django.conf import settings
 from django.test import TestCase
-from django.utils.translation import ugettext_lazy as _
 
 from base.tests.factories.person import PersonFactory
 from osis_common.messaging import mail_sender_classes
 from osis_common.messaging import send_message, message_config
 from osis_common.messaging.message_config import create_receiver, create_table, create_message_content
-from osis_common.messaging.send_message import send_messages
 from osis_common.models import message_history
 from osis_common.models.message_history import MessageHistory
 from osis_common.models.message_template import MessageTemplate
@@ -142,7 +140,7 @@ class MessagesTestCase(TestCase):
         receiver = PersonFactory()
         receivers = [message_config.create_receiver(receiver.id, receiver.email, None)]
         msg_content = message_config.create_message_content('template_html', 'template_txt', [], receivers, {}, {})
-        send_messages(msg_content)
+        send_message.send_messages(msg_content)
         self.assertEqual(mock_build_and_send_message.call_count, 1)
 
     def __make_receivers(self):
