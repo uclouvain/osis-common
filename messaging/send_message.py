@@ -214,14 +214,15 @@ def send_messages(message_content, force_sending_outside_production=False, conne
         )
 
     for lang_code, receivers in __map_receivers_by_languages(receivers).items():
-        _build_and_send_message(
-            connected_user,
-            message_content,
-            receivers,
-            html_message_templates,
-            txt_message_templates,
-            lang_code
-        )
+        if receivers:
+            _build_and_send_message(
+                connected_user,
+                message_content,
+                receivers,
+                html_message_templates,
+                txt_message_templates,
+                lang_code
+            )
 
     return None
 

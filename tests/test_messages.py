@@ -27,7 +27,6 @@ from unittest.mock import patch
 
 from django.conf import settings
 from django.test import TestCase
-from django.utils.translation import ugettext_lazy as _
 
 from base.tests.factories.person import PersonFactory
 from osis_common.messaging import mail_sender_classes
@@ -133,6 +132,17 @@ class MessagesTestCase(TestCase):
             connected_user=self.connected_user
         )
         self.assertIsNotNone(message_error, 'A message error should be sent')
+
+    @patch('osis_common.messaging.send_message._build_and_send_message')
+    @patch('osis_common.messaging.send_message._get_all_lang_templates')
+    def test_build_and_send_messages_called_once_with_one_receiver(
+            self, mock_get_all_lang_templates, mock_build_and_send_message):
+        mock_get_all_lang_templates.return_value = 'template_html', 'template_txt'
+        receiver = PersonFactory()
+        receivers = [message_config.create_receiver(receiver.id, receiver.email, None)]
+        msg_content = message_config.create_message_content('template_html', 'template_txt', [], receivers, {}, {})
+        send_message.send_messages(msg_content)
+        self.assertEqual(mock_build_and_send_message.call_count, 1)
 
     def __make_receivers(self):
         receiver1 = create_receiver(1, 'receiver1@email.org', 'fr-BE')
