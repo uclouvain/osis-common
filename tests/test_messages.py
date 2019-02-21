@@ -135,7 +135,8 @@ class MessagesTestCase(TestCase):
 
     @patch('osis_common.messaging.send_message._build_and_send_message')
     @patch('osis_common.messaging.send_message._get_all_lang_templates')
-    def test_build_and_send_messages_called_once(self, mock_get_all_lang_templates, mock_build_and_send_message):
+    def test_build_and_send_messages_called_once_with_one_receiver(
+            self, mock_get_all_lang_templates, mock_build_and_send_message):
         mock_get_all_lang_templates.return_value = 'template_html', 'template_txt'
         receiver = PersonFactory()
         receivers = [message_config.create_receiver(receiver.id, receiver.email, None)]
