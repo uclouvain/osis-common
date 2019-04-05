@@ -24,18 +24,18 @@
 #
 ##############################################################################
 from io import BytesIO
-from voluptuous import Schema, Any, Required, All, Url, Length, error as voluptuous_error
-from django.http import HttpResponse
+
 from django.conf import settings
+from django.http import HttpResponse
+from django.utils import timezone
+from django.utils.translation import ugettext_lazy as _
+from reportlab.lib import colors
+from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER, TA_LEFT
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.enums import TA_JUSTIFY, TA_RIGHT, TA_CENTER, TA_LEFT
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, PageBreak, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
-from reportlab.lib import colors
-from django.utils.translation import ugettext_lazy as _
-from django.utils import timezone
-
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Image, PageBreak, Table, TableStyle
+from voluptuous import Schema, Any, Required, All, Url, Length, error as voluptuous_error
 
 PAGE_SIZE = A4
 MARGIN_SIZE = 15 * mm
@@ -395,8 +395,8 @@ def _build_legend_block(decimal_scores):
     else:
         legend_text += "<br/><font color=red>%s</font>" % _('Unauthorized decimal for this learning unit')
 
-    legend_text += "<br/><span backColor=#dff0d8>%s</span>" % _('Enrolled after session starts')
-    legend_text += "<br/><span backColor=#f2dede>%s</span>" % _('Unsubscribed after the opening of the session')
+    legend_text += "<br/><span backColor=#dff0d8>%s</span>" % _('Enrolled lately')
+    legend_text += "<br/><span backColor=#f2dede>%s</span>" % _('Unsubscribed lately')
     legend_text += '''<br/> %s : <a href="%s"><font color=blue><u>%s</u></font></a>''' \
                    % (_("In accordance to regulation's rules 104, 109 and 111. Complete rules avalaible here"), 
                       _("https://www.uclouvain.be/enseignement-reglements.html"), 

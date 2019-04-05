@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-02-19 16:21+0100\n"
+"POT-Creation-Date: 2019-04-05 13:14+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -59,8 +59,8 @@ msgid "Email"
 msgstr "Email"
 
 #: document/paper_sheet.py:398
-msgid "Enrolled after session starts"
-msgstr "Inscrit après l'ouverture de la session"
+msgid "Enrolled lately"
+msgstr "Inscrit tardivement"
 
 #: document/xls_build.py:295
 msgid "False"
@@ -173,7 +173,7 @@ msgstr ""
 "Les données présentes sur ce document correspondent à l'état du système en "
 "date du %(creation_date)s et sont susceptibles d'évoluer"
 
-#: messaging/mail_sender_classes.py:130 tests/test_messages.py:262
+#: messaging/mail_sender_classes.py:145
 #, python-brace-format
 msgid ""
 "This is a test email sent from OSIS, only sent to {new_dest_address}. "
@@ -196,8 +196,8 @@ msgid "Université catholique de Louvain"
 msgstr "Université catholique de Louvain"
 
 #: document/paper_sheet.py:399
-msgid "Unsubscribed after the opening of the session"
-msgstr "Désinscrit après l'ouverture de la session"
+msgid "Unsubscribed lately"
+msgstr "Désinscrit tardivement"
 
 #: document/xls_build.py:175 templates/uploading/upload_file_list.html:49
 msgid "description"
@@ -227,3 +227,9 @@ msgstr "étudiants"
 #: document/paper_sheet.py:379
 msgid "the"
 msgstr "le"
+
+#~ msgid "Enrolled after session starts"
+#~ msgstr "Inscrit après l'ouverture de la session"
+
+#~ msgid "Unsubscribed after the opening of the session"
+#~ msgstr "Désinscrit après l'ouverture de la session"
