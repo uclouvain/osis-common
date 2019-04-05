@@ -227,9 +227,3 @@ msgstr "étudiants"
 #: document/paper_sheet.py:379
 msgid "the"
 msgstr "le"
-
-#~ msgid "Enrolled after session starts"
-#~ msgstr "Inscrit après l'ouverture de la session"
-
-#~ msgid "Unsubscribed after the opening of the session"
-#~ msgstr "Désinscrit après l'ouverture de la session"
