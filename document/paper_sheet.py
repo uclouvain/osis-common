@@ -390,11 +390,7 @@ def _build_legend_block(decimal_scores):
     creation_date = creation_date.strftime(DATE_FORMAT)
 
     legend_text = str(_('Justification legend: A=Absent, T=Cheating'))
-    legend_text += "<br/>%s" % (str(_('Score legend: %(score)s (0=Score of presence)').format(
-        {
-            'score': "0 - 20"
-        }
-    )))
+    legend_text += "<br/>%s" % (str(_('Score legend: {score} (0=Score of presence)').format(score="0 - 20")))
     if decimal_scores:
         legend_text += "<br/><font color=red>%s</font>" % _('Decimals authorized for this learning unit')
     else:

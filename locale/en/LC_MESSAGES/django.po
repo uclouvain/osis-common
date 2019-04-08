@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-04-08 15:33+0200\n"
+"POT-Creation-Date: 2019-04-08 15:44+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -36,11 +36,11 @@ msgstr ""
 msgid "Created by"
 msgstr ""
 
-#: document/paper_sheet.py:438 document/xls_build.py:172
+#: document/paper_sheet.py:434 document/xls_build.py:172
 msgid "Creation date"
 msgstr ""
 
-#: document/paper_sheet.py:399
+#: document/paper_sheet.py:395
 msgid "Decimals authorized for this learning unit"
 msgstr ""
 
@@ -56,7 +56,7 @@ msgstr ""
 msgid "Email"
 msgstr ""
 
-#: document/paper_sheet.py:403
+#: document/paper_sheet.py:399
 msgid "Enrolled lately"
 msgstr ""
 
@@ -76,7 +76,7 @@ msgstr ""
 msgid "Firstname"
 msgstr ""
 
-#: document/paper_sheet.py:406
+#: document/paper_sheet.py:402
 msgid ""
 "In accordance to regulation's rules 104, 109 and 111. Complete rules "
 "avalaible here"
@@ -138,8 +138,8 @@ msgid "Score"
 msgstr ""
 
 #: document/paper_sheet.py:393
-#, python-format
-msgid "Score legend: %(score)s (0=Score of presence)"
+#, python-brace-format
+msgid "Score legend: {score} (0=Score of presence)"
 msgstr ""
 
 #: document/paper_sheet.py:117 document/paper_sheet.py:165
@@ -158,7 +158,7 @@ msgstr ""
 msgid "Submit data"
 msgstr ""
 
-#: document/paper_sheet.py:412
+#: document/paper_sheet.py:408
 #, python-format
 msgid ""
 "The data presented on this document correspond to the state of the system "
@@ -176,7 +176,7 @@ msgstr ""
 msgid "True"
 msgstr ""
 
-#: document/paper_sheet.py:401
+#: document/paper_sheet.py:397
 msgid "Unauthorized decimal for this learning unit"
 msgstr ""
 
@@ -184,7 +184,7 @@ msgstr ""
 msgid "Université catholique de Louvain"
 msgstr ""
 
-#: document/paper_sheet.py:404
+#: document/paper_sheet.py:400
 msgid "Unsubscribed lately"
 msgstr ""
 
@@ -197,7 +197,7 @@ msgstr ""
 msgid "file"
 msgstr ""
 
-#: document/paper_sheet.py:407 document/paper_sheet.py:408
+#: document/paper_sheet.py:403 document/paper_sheet.py:404
 msgid "https://uclouvain.be/fr/decouvrir/rgee.html"
 msgstr ""
 
