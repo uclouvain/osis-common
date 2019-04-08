@@ -223,7 +223,7 @@ def _build_exam_enrollments_table(enrollments_by_pdf_page, styles):
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey)]))
 
     for idx, enrollment in enumerate(enrollments_by_pdf_page,1):
-        if enrollment["enrollment_state_color"]:
+        if enrollment.get("enrollment_state_color"):
             table.setStyle(TableStyle([
                 ('BACKGROUND', (0, idx), (5, idx), enrollment["enrollment_state_color"])]))
 
