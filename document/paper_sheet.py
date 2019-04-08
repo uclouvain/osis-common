@@ -110,7 +110,11 @@ def build_error_response():
 
 
 def build_response(data):
-    filename = "%s.pdf" % _('Score sheet')
+    luy = data.get('learning_unit_years')
+    if luy and len(luy) == 1:
+        filename = "%s.pdf" % luy[0]['acronym']
+    else:
+        filename = "%s.pdf" % _('Score sheet')
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="%s"' % filename
     pdf = build_pdf(data)
@@ -223,7 +227,7 @@ def _build_exam_enrollments_table(enrollments_by_pdf_page, styles):
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey)]))
 
     for idx, enrollment in enumerate(enrollments_by_pdf_page,1):
-        if enrollment["enrollment_state_color"]:
+        if enrollment.get("enrollment_state_color"):
             table.setStyle(TableStyle([
                 ('BACKGROUND', (0, idx), (5, idx), enrollment["enrollment_state_color"])]))
 
