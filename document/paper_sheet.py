@@ -159,12 +159,12 @@ def _write_header_and_footer(canvas, doc):
 
 
 def _write_header(canvas, doc, styles):
-    a = Image(settings.LOGO_INSTITUTION_URL, width=15*mm, height=20*mm)
+    a = Image(settings.LOGO_INSTITUTION_URL, width=60*mm, height=15*mm)
     p = Paragraph('''<para align=center>
                         <font size=16>%s</font>
                     </para>''' % (_('Score sheet')), styles["BodyText"])
 
-    data_header = [[a, '%s' % _('Université catholique de Louvain'), p], ]
+    data_header = [[a, "", p], ]
     t_header = Table(data_header, [30*mm, 100*mm, 50*mm])
     t_header.setStyle(TableStyle([]))
     w, h = t_header.wrap(doc.width, doc.topMargin)
@@ -288,7 +288,8 @@ def _get_scores_responsible_text(scores_responsible):
 
 def _build_header_secretariat_address_block(program, styles):
     secretariat_address = program['address']
-    data_structure = [[Paragraph(_get_recipient_text(secretariat_address), styles["Normal"])],
+    data_structure = [[Paragraph(_('Université catholique de Louvain'), styles["Normal"])],
+                      [Paragraph(_get_recipient_text(secretariat_address), styles["Normal"])],
                       [Paragraph(_get_location_text(secretariat_address), styles["Normal"])],
                       [Paragraph(_get_postal_code_and_city_text(secretariat_address), styles["Normal"])],
                       [Paragraph(_get_phone_and_fax_text(secretariat_address), styles["Normal"])]]
