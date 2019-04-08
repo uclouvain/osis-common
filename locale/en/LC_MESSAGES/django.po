@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-04-05 13:14+0200\n"
+"POT-Creation-Date: 2019-04-08 15:33+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -28,7 +28,7 @@ msgstr ""
 msgid "%(subclass_name)s is not a sub-class"
 msgstr ""
 
-#: document/paper_sheet.py:359
+#: document/paper_sheet.py:364
 msgid "Academic year"
 msgstr ""
 
@@ -36,27 +36,27 @@ msgstr ""
 msgid "Created by"
 msgstr ""
 
-#: document/paper_sheet.py:433 document/xls_build.py:172
+#: document/paper_sheet.py:438 document/xls_build.py:172
 msgid "Creation date"
 msgstr ""
 
-#: document/paper_sheet.py:394
+#: document/paper_sheet.py:399
 msgid "Decimals authorized for this learning unit"
 msgstr ""
 
-#: document/paper_sheet.py:355
+#: document/paper_sheet.py:360
 msgid "Deliberation date"
 msgstr ""
 
-#: document/paper_sheet.py:379
+#: document/paper_sheet.py:384
 msgid "Done at"
 msgstr ""
 
-#: document/paper_sheet.py:297
+#: document/paper_sheet.py:302
 msgid "Email"
 msgstr ""
 
-#: document/paper_sheet.py:398
+#: document/paper_sheet.py:403
 msgid "Enrolled lately"
 msgstr ""
 
@@ -64,7 +64,7 @@ msgstr ""
 msgid "False"
 msgstr ""
 
-#: document/paper_sheet.py:327
+#: document/paper_sheet.py:332
 msgid "Fax"
 msgstr ""
 
@@ -72,25 +72,25 @@ msgstr ""
 msgid "File name"
 msgstr ""
 
-#: document/paper_sheet.py:236
+#: document/paper_sheet.py:240
 msgid "Firstname"
 msgstr ""
 
-#: document/paper_sheet.py:401
+#: document/paper_sheet.py:406
 msgid ""
 "In accordance to regulation's rules 104, 109 and 111. Complete rules "
 "avalaible here"
 msgstr ""
 
-#: document/paper_sheet.py:238
-msgid "Justification"
+#: document/paper_sheet.py:242
+msgid "Justification (A,T)"
 msgstr ""
 
-#: document/paper_sheet.py:387
+#: document/paper_sheet.py:392
 msgid "Justification legend: A=Absent, T=Cheating"
 msgstr ""
 
-#: document/paper_sheet.py:235
+#: document/paper_sheet.py:239
 msgid "Lastname"
 msgstr ""
 
@@ -113,7 +113,7 @@ msgid ""
 "exist."
 msgstr ""
 
-#: document/paper_sheet.py:282
+#: document/paper_sheet.py:286
 msgid "None"
 msgstr ""
 
@@ -121,44 +121,44 @@ msgstr ""
 msgid "Parameters"
 msgstr ""
 
-#: document/paper_sheet.py:317
+#: document/paper_sheet.py:322
 msgid "Phone"
 msgstr ""
 
-#: document/paper_sheet.py:344
+#: document/paper_sheet.py:349
 msgid "Program"
 msgstr ""
 
-#: document/paper_sheet.py:234
+#: document/paper_sheet.py:238
 msgid "Reg. No."
 msgstr ""
 
-#: document/paper_sheet.py:237
+#: document/paper_sheet.py:241
 msgid "Score"
 msgstr ""
 
-#: document/paper_sheet.py:388
+#: document/paper_sheet.py:393
 #, python-format
 msgid "Score legend: %(score)s (0=Score of presence)"
 msgstr ""
 
-#: document/paper_sheet.py:113 document/paper_sheet.py:161
+#: document/paper_sheet.py:117 document/paper_sheet.py:165
 msgid "Score sheet"
 msgstr ""
 
-#: document/paper_sheet.py:274
+#: document/paper_sheet.py:278
 msgid "Scores responsible"
 msgstr ""
 
-#: document/paper_sheet.py:379
+#: document/paper_sheet.py:384
 msgid "Signature"
 msgstr ""
 
-#: document/paper_sheet.py:239
+#: document/paper_sheet.py:243
 msgid "Submit data"
 msgstr ""
 
-#: document/paper_sheet.py:407
+#: document/paper_sheet.py:412
 #, python-format
 msgid ""
 "The data presented on this document correspond to the state of the system "
@@ -176,15 +176,15 @@ msgstr ""
 msgid "True"
 msgstr ""
 
-#: document/paper_sheet.py:396
+#: document/paper_sheet.py:401
 msgid "Unauthorized decimal for this learning unit"
 msgstr ""
 
-#: document/paper_sheet.py:163
+#: document/paper_sheet.py:291
 msgid "Université catholique de Louvain"
 msgstr ""
 
-#: document/paper_sheet.py:399
+#: document/paper_sheet.py:404
 msgid "Unsubscribed lately"
 msgstr ""
 
@@ -197,22 +197,22 @@ msgstr ""
 msgid "file"
 msgstr ""
 
-#: document/paper_sheet.py:402 document/paper_sheet.py:403
-msgid "https://www.uclouvain.be/enseignement-reglements.html"
+#: document/paper_sheet.py:407 document/paper_sheet.py:408
+msgid "https://uclouvain.be/fr/decouvrir/rgee.html"
 msgstr ""
 
 #: document/xls_build.py:194
 msgid "sheet"
 msgstr ""
 
-#: document/paper_sheet.py:347
+#: document/paper_sheet.py:352
 msgid "student"
 msgstr ""
 
-#: document/paper_sheet.py:347
+#: document/paper_sheet.py:352
 msgid "students"
 msgstr ""
 
-#: document/paper_sheet.py:379
+#: document/paper_sheet.py:384
 msgid "the"
 msgstr ""

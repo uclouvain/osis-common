@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-04-05 13:14+0200\n"
+"POT-Creation-Date: 2019-04-08 15:33+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -30,7 +30,7 @@ msgstr ""
 msgid "%(subclass_name)s is not a sub-class"
 msgstr "La classe %(subclass_name)s n'est pas une sous-classe"
 
-#: document/paper_sheet.py:359
+#: document/paper_sheet.py:364
 msgid "Academic year"
 msgstr "Année académique"
 
@@ -38,27 +38,27 @@ msgstr "Année académique"
 msgid "Created by"
 msgstr "Créé par"
 
-#: document/paper_sheet.py:433 document/xls_build.py:172
+#: document/paper_sheet.py:438 document/xls_build.py:172
 msgid "Creation date"
 msgstr "Date de création"
 
-#: document/paper_sheet.py:394
+#: document/paper_sheet.py:399
 msgid "Decimals authorized for this learning unit"
 msgstr "Les notes décimales sont autorisées pour ce cours"
 
-#: document/paper_sheet.py:355
+#: document/paper_sheet.py:360
 msgid "Deliberation date"
 msgstr "Date de délibération"
 
-#: document/paper_sheet.py:379
+#: document/paper_sheet.py:384
 msgid "Done at"
 msgstr "Fait à"
 
-#: document/paper_sheet.py:297
+#: document/paper_sheet.py:302
 msgid "Email"
 msgstr "Email"
 
-#: document/paper_sheet.py:398
+#: document/paper_sheet.py:403
 msgid "Enrolled lately"
 msgstr "Inscrit tardivement"
 
@@ -66,7 +66,7 @@ msgstr "Inscrit tardivement"
 msgid "False"
 msgstr "Faux"
 
-#: document/paper_sheet.py:327
+#: document/paper_sheet.py:332
 msgid "Fax"
 msgstr "Fax"
 
@@ -74,11 +74,11 @@ msgstr "Fax"
 msgid "File name"
 msgstr "Nom de fichier"
 
-#: document/paper_sheet.py:236
+#: document/paper_sheet.py:240
 msgid "Firstname"
 msgstr "Prénom"
 
-#: document/paper_sheet.py:401
+#: document/paper_sheet.py:406
 msgid ""
 "In accordance to regulation's rules 104, 109 and 111. Complete rules "
 "avalaible here"
@@ -86,15 +86,15 @@ msgstr ""
 "Conformément aux articles 104, 109 et 111 RGEE (Règlement général des études "
 "et des examens) disponible au lien suivant"
 
-#: document/paper_sheet.py:238
-msgid "Justification"
-msgstr "Justification"
+#: document/paper_sheet.py:242
+msgid "Justification (A,T)"
+msgstr "Justification (A,T)"
 
-#: document/paper_sheet.py:387
+#: document/paper_sheet.py:392
 msgid "Justification legend: A=Absent, T=Cheating"
 msgstr "Légende pour le champ 'Justification': A=Absent, T=Tricherie"
 
-#: document/paper_sheet.py:235
+#: document/paper_sheet.py:239
 msgid "Lastname"
 msgstr "Nom"
 
@@ -119,7 +119,7 @@ msgstr ""
 "Aucun message n'a été envoyé : le modèle de message %(html_template_ref)s "
 "n'existe pas."
 
-#: document/paper_sheet.py:282
+#: document/paper_sheet.py:286
 msgid "None"
 msgstr "Aucun"
 
@@ -127,44 +127,44 @@ msgstr "Aucun"
 msgid "Parameters"
 msgstr "Paramètres"
 
-#: document/paper_sheet.py:317
+#: document/paper_sheet.py:322
 msgid "Phone"
 msgstr "Téléphone"
 
-#: document/paper_sheet.py:344
+#: document/paper_sheet.py:349
 msgid "Program"
 msgstr "Programme"
 
-#: document/paper_sheet.py:234
+#: document/paper_sheet.py:238
 msgid "Reg. No."
 msgstr "Noma"
 
-#: document/paper_sheet.py:237
+#: document/paper_sheet.py:241
 msgid "Score"
 msgstr "Note"
 
-#: document/paper_sheet.py:388
+#: document/paper_sheet.py:393
 #, python-format
 msgid "Score legend: %(score)s (0=Score of presence)"
 msgstr "Légende pour le champ 'Note chiffrée': %(score)s (0=Cote de présence)"
 
-#: document/paper_sheet.py:113 document/paper_sheet.py:161
+#: document/paper_sheet.py:117 document/paper_sheet.py:165
 msgid "Score sheet"
 msgstr "Feuille de notes"
 
-#: document/paper_sheet.py:274
+#: document/paper_sheet.py:278
 msgid "Scores responsible"
 msgstr "Responsable de notes"
 
-#: document/paper_sheet.py:379
+#: document/paper_sheet.py:384
 msgid "Signature"
 msgstr "Signature"
 
-#: document/paper_sheet.py:239
+#: document/paper_sheet.py:243
 msgid "Submit data"
 msgstr "Date de remise"
 
-#: document/paper_sheet.py:407
+#: document/paper_sheet.py:412
 #, python-format
 msgid ""
 "The data presented on this document correspond to the state of the system "
@@ -187,15 +187,15 @@ msgstr ""
 msgid "True"
 msgstr "Vrai"
 
-#: document/paper_sheet.py:396
+#: document/paper_sheet.py:401
 msgid "Unauthorized decimal for this learning unit"
 msgstr "Attention : décimales non autorisées pour ce cours"
 
-#: document/paper_sheet.py:163
+#: document/paper_sheet.py:291
 msgid "Université catholique de Louvain"
 msgstr "Université catholique de Louvain"
 
-#: document/paper_sheet.py:399
+#: document/paper_sheet.py:404
 msgid "Unsubscribed lately"
 msgstr "Désinscrit tardivement"
 
@@ -208,22 +208,24 @@ msgstr "description"
 msgid "file"
 msgstr "fichier"
 
-#: document/paper_sheet.py:402 document/paper_sheet.py:403
-msgid "https://www.uclouvain.be/enseignement-reglements.html"
+#: document/paper_sheet.py:407 document/paper_sheet.py:408
+#, fuzzy
+#| msgid "https://www.uclouvain.be/enseignement-reglements.html"
+msgid "https://uclouvain.be/fr/decouvrir/rgee.html"
 msgstr "https://uclouvain.be/fr/decouvrir/rgee.html"
 
 #: document/xls_build.py:194
 msgid "sheet"
 msgstr "feuille"
 
-#: document/paper_sheet.py:347
+#: document/paper_sheet.py:352
 msgid "student"
 msgstr "étudiant"
 
-#: document/paper_sheet.py:347
+#: document/paper_sheet.py:352
 msgid "students"
 msgstr "étudiants"
 
-#: document/paper_sheet.py:379
+#: document/paper_sheet.py:384
 msgid "the"
 msgstr "le"
