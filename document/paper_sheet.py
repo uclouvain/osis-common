@@ -404,8 +404,8 @@ def _build_legend_block(decimal_scores):
     legend_text += "<br/><span backColor=#f2dede>%s</span>" % _('Unsubscribed lately')
     legend_text += '''<br/> %s : <a href="%s"><font color=blue><u>%s</u></font></a>''' \
                    % (_("In accordance to regulation's rules 104, 109 and 111. Complete rules avalaible here"), 
-                      _("https://www.uclouvain.be/enseignement-reglements.html"), 
-                      _("https://www.uclouvain.be/enseignement-reglements.html"))
+                      _("https://uclouvain.be/fr/decouvrir/rgee.html"),
+                      _("https://uclouvain.be/fr/decouvrir/rgee.html"))
 
     legend_text += "<br/><font color=red>%s</font>" % str(
         _(
