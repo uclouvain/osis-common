@@ -239,7 +239,7 @@ def _students_table_header():
              '''%s''' % _('Lastname'),
              '''%s''' % _('Firstname'),
              '''%s''' % _('Score'),
-             '''%s''' % _('Justification'),
+             '''%s''' % _('Justification (A,T)'),
              '''%s''' % _('Submit data')
              ]]
     return data
