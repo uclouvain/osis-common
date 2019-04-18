@@ -112,7 +112,7 @@ def build_error_response():
 def build_response(data):
     luy = data.get('learning_unit_years')
     if luy and len(luy) == 1:
-        filename = "session_%s_%s_%s.pdf" % (luy[0]['academic_year'], luy[0]['session_number'], luy[0]['acronym'])
+        filename = "session_%s_%s_%s.pdf" % (luy[0]['academic_year'][:4], luy[0]['session_number'], luy[0]['acronym'])
     else:
         filename = "%s.pdf" % _('Score sheet')
     response = HttpResponse(content_type='application/pdf')
