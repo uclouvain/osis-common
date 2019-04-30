@@ -136,7 +136,10 @@ class RealReceiverMailSender(MasterMailSender):
 def _get_attachments(attributes_message):
     attachment = attributes_message.get("attachment")
     if attachment:
-        return [attachment]
+        if isinstance(attachment, list):
+            return attachment
+        else:
+            return [attachment]
     return None
 
 
