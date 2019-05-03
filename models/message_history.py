@@ -25,8 +25,9 @@
 ##############################################################################
 from django.db import models
 from django.utils import timezone
-from osis_common.models import osis_model_admin
 from django.utils.safestring import mark_safe
+
+from osis_common.models import osis_model_admin
 
 
 class MessageHistoryAdmin(osis_model_admin.OsisModelAdmin):
@@ -43,10 +44,11 @@ class MessageHistoryAdmin(osis_model_admin.OsisModelAdmin):
         return actions
 
     date_hierarchy = 'created'
-    list_display = ('receiver_id', 'reference', 'subject', 'sent', 'created')
-    readonly_fields = ('receiver_id', 'reference', 'subject', 'sent', 'created', 'content_html_safe', 'content_txt')
+    list_display = ('receiver_id', 'receiver_email', 'reference', 'subject', 'sent', 'created')
+    readonly_fields = ('receiver_id', 'receiver_email', 'reference', 'subject', 'sent', 'created', 'content_html_safe',
+                       'content_txt')
     ordering = ['-created']
-    search_fields = ['receiver_id', 'reference', 'subject']
+    search_fields = ['receiver_id', 'receiver_email', 'reference', 'subject']
 
 
 class MessageHistory(models.Model):
@@ -54,6 +56,7 @@ class MessageHistory(models.Model):
     content_txt = models.TextField()
     content_html = models.TextField()
     receiver_id = models.IntegerField(db_index=True)
+    receiver_email = models.EmailField(blank=True, null=True)
     created = models.DateTimeField(editable=False)
     sent = models.DateTimeField(null=True)
     reference = models.CharField(max_length=100, null=True, db_index=True)
