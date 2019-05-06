@@ -197,6 +197,7 @@ class MailClassesTestCase(TestCase):
                 content_txt="test message",
                 content_html="<p>test html message</p>",
                 receiver_id=self.receiver.pk,
+                receiver_email=self.receiver.email,
             )
         )
         mock_mail_send.assert_not_called()
