@@ -44,18 +44,18 @@ class MessageHistoryAdmin(osis_model_admin.OsisModelAdmin):
         return actions
 
     date_hierarchy = 'created'
-    list_display = ('receiver_id', 'receiver_email', 'reference', 'subject', 'sent', 'created')
-    readonly_fields = ('receiver_id', 'receiver_email', 'reference', 'subject', 'sent', 'created', 'content_html_safe',
+    list_display = ('receiver_person_id', 'receiver_email', 'reference', 'subject', 'sent', 'created')
+    readonly_fields = ('receiver_person_id', 'receiver_email', 'reference', 'subject', 'sent', 'created', 'content_html_safe',
                        'content_txt')
     ordering = ['-created']
-    search_fields = ['receiver_id', 'receiver_email', 'reference', 'subject']
+    search_fields = ['receiver_person_id', 'receiver_email', 'reference', 'subject']
 
 
 class MessageHistory(models.Model):
     subject = models.CharField(max_length=255)
     content_txt = models.TextField()
     content_html = models.TextField()
-    receiver_id = models.IntegerField(db_index=True)
+    receiver_person_id = models.IntegerField(db_index=True, blank=True, null=True)
     receiver_email = models.EmailField(blank=True, null=True)
     created = models.DateTimeField(editable=False)
     sent = models.DateTimeField(null=True)
@@ -86,7 +86,7 @@ def find_my_messages(person_id):
     :param person_id: The id of the person who belongs the messages
     :return: The list of messages for this person
     """
-    return MessageHistory.objects.filter(receiver_id=person_id).filter(show_to_user=True).order_by('sent')
+    return MessageHistory.objects.filter(receiver_person_id=person_id).filter(show_to_user=True).order_by('sent')
 
 
 def delete_my_messages(messages_ids):
