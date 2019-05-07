@@ -88,16 +88,16 @@ def create_table(table_template_name, header_txt, data, data_translatable=None):
     }
 
 
-def create_receiver(receiver_id, receiver_email, receiver_lang):
+def create_receiver(receiver_person_id, receiver_email, receiver_lang):
     """
     Create a receiver dict used by the sending message function.
-    :param receiver_id: The id of the receiver (usually person.id)
+    :param receiver_person_id: The id of the receiver (usually person.id)
     :param receiver_email: The eail of the receiver.
     :param receiver_lang: The language of the receiver
     :return: The dict representing the receiver of a message
     """
     return {
-        'receiver_id':      receiver_id,
-        'receiver_email':   receiver_email,
-        'receiver_lang':    receiver_lang
+        'receiver_person_id': receiver_person_id,
+        'receiver_email': receiver_email,
+        'receiver_lang': receiver_lang
     }

@@ -196,7 +196,7 @@ class MailClassesTestCase(TestCase):
                 subject="test subject",
                 content_txt="test message",
                 content_html="<p>test html message</p>",
-                receiver_id=self.receiver.pk,
+                receiver_person_id=self.receiver.pk,
                 receiver_email=self.receiver.email,
             )
         )

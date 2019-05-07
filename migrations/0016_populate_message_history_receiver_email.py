@@ -5,11 +5,10 @@ from __future__ import unicode_literals
 from django.contrib.auth.models import User
 from django.db import migrations
 
-from base.models.person import Person
-from osis_common.models.message_history import MessageHistory
-
 
 def populate_message_history_receiver_email(apps, schema_editor):
+    Person = apps.get_model("base", "Person")
+    MessageHistory = apps.get_model("osis_common", "MessageHistory")
     message_history_items = MessageHistory.objects.all()
     for item in message_history_items:
         try:

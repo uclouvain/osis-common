@@ -88,7 +88,7 @@ class MessageHistorySender(MasterMailSender):
                 subject=self.kwargs.get('subject'),
                 content_txt=self.kwargs.get('message'),
                 content_html=self.kwargs.get('html_message'),
-                receiver_id=receiver.get('receiver_id'),
+                receiver_person_id=receiver.get('receiver_person_id'),
                 receiver_email=receiver.get('receiver_email'),
                 sent=timezone.now() if receiver.get('receiver_email') else None
             )
