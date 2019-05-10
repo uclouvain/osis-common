@@ -1,4 +1,4 @@
-django-ckeditor==5.6.1
+django-ckeditor==5.2.2 # Version 5.2.2 to support PasteFromWord into CKEditor
 XlsxWriter==0.9.3
 voluptuous==0.9.3
 weasyprint==0.42.3
