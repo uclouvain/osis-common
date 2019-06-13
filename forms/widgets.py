@@ -15,7 +15,7 @@
 #
 #    This program is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #    GNU General Public License for more details.
 #
 #    A copy of this license - GNU General Public License - is available
@@ -23,25 +23,20 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from decimal import Decimal
+from django.forms.widgets import Input
 
-from django.test import TestCase
-
-from osis_common.utils import numbers
+from osis_common.utils.numbers import normalize_fraction
 
 
-class TestNumbersUtils(TestCase):
-    def test_to_float_or_zero(self):
-        input_output = [(17, 17.0), (-42, -42.0), (0, 0), (None, 0), (False, 0), ("", 0)]
-        for (inp, outp) in input_output:
-            with self.subTest(inp=inp, outp=outp):
-                self.assertEqual(numbers.to_float_or_zero(inp), outp)
+class FloatFormatInput(Input):
+    input_type = 'text'
+    template_name = 'django/forms/widgets/number.html'
 
-        with self.assertRaises(ValueError):
-            numbers.to_float_or_zero("string")
+    def __init__(self, attrs=None, render_value=False):
+        super(FloatFormatInput, self).__init__(attrs)
+        self.render_value = render_value
 
-    def test_normalize_fraction(self):
-        input_output = [(Decimal('5.00'), 5), (Decimal('3E1'), 30), (Decimal('5'), 5)]
-        for (inp, outp) in input_output:
-            with self.subTest(inp=inp, outp=outp):
-                self.assertEqual(outp, numbers.normalize_fraction(inp))
+    def get_context(self, name, value, attrs):
+        if value and self.render_value:
+            value = normalize_fraction(value)
+        return super(FloatFormatInput, self).get_context(name, value, attrs)

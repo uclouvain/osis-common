@@ -23,7 +23,12 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+from decimal import Decimal
 
 
 def to_float_or_zero(number):
     return float(number) if number else 0
+
+
+def normalize_fraction(number):
+    return number.quantize(Decimal(1)) if number == number.to_integral() else number.normalize()

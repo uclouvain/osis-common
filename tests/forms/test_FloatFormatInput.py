@@ -25,23 +25,17 @@
 ##############################################################################
 from decimal import Decimal
 
-from django.test import TestCase
+from django.test import SimpleTestCase
 
-from osis_common.utils import numbers
+from osis_common.forms.widgets import FloatFormatInput
 
 
-class TestNumbersUtils(TestCase):
-    def test_to_float_or_zero(self):
-        input_output = [(17, 17.0), (-42, -42.0), (0, 0), (None, 0), (False, 0), ("", 0)]
+class TestFloatFormatInput(SimpleTestCase):
+
+    def test_float_format_input(self):
+        input_output = [(Decimal('5.00'), '5'), (Decimal('3E1'), '30'), (Decimal('5'), '5'), (None, None)]
         for (inp, outp) in input_output:
             with self.subTest(inp=inp, outp=outp):
-                self.assertEqual(numbers.to_float_or_zero(inp), outp)
-
-        with self.assertRaises(ValueError):
-            numbers.to_float_or_zero("string")
-
-    def test_normalize_fraction(self):
-        input_output = [(Decimal('5.00'), 5), (Decimal('3E1'), 30), (Decimal('5'), 5)]
-        for (inp, outp) in input_output:
-            with self.subTest(inp=inp, outp=outp):
-                self.assertEqual(outp, numbers.normalize_fraction(inp))
+                float_format_input = FloatFormatInput(render_value=True)
+                context = float_format_input.get_context(name='yolo', value=inp, attrs=None)
+                self.assertEqual(outp, context['widget']['value'])
