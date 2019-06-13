@@ -23,6 +23,8 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+from decimal import Decimal
+
 from django.test import TestCase
 
 from osis_common.utils import numbers
@@ -37,3 +39,9 @@ class TestNumbersUtils(TestCase):
 
         with self.assertRaises(ValueError):
             numbers.to_float_or_zero("string")
+
+    def test_normalize_fraction(self):
+        input_output = [(Decimal('5.00'), 5), (Decimal('3E1'), 30), (Decimal('5'), 5)]
+        for (inp, outp) in input_output:
+            with self.subTest(inp=inp, outp=outp):
+                self.assertEqual(outp, numbers.normalize_fraction(inp))
