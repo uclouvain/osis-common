@@ -23,6 +23,8 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+from decimal import Decimal
+
 from django.forms.widgets import Input
 
 from osis_common.utils.numbers import normalize_fraction
@@ -37,6 +39,6 @@ class FloatFormatInput(Input):
         self.render_value = render_value
 
     def get_context(self, name, value, attrs):
-        if value and self.render_value:
+        if isinstance(value, Decimal) and self.render_value:
             value = normalize_fraction(value)
         return super(FloatFormatInput, self).get_context(name, value, attrs)
