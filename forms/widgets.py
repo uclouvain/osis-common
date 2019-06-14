@@ -39,6 +39,8 @@ class FloatFormatInput(Input):
         self.render_value = render_value
 
     def get_context(self, name, value, attrs):
+        if isinstance(value, float):
+            value = Decimal(value)
         if isinstance(value, Decimal) and self.render_value:
             value = normalize_fraction(value)
         return super(FloatFormatInput, self).get_context(name, value, attrs)
