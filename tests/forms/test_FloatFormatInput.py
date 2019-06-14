@@ -33,7 +33,7 @@ from osis_common.forms.widgets import FloatFormatInput
 class TestFloatFormatInput(SimpleTestCase):
 
     def test_float_format_input(self):
-        input_output = [(Decimal('5.00'), '5'), (Decimal('3E1'), '30'), (Decimal('5'), '5'), (None, None)]
+        input_output = [(Decimal('5.00'), '5'), (Decimal('3E1'), '30'), (Decimal('5'), '5'), (None, None), ('aa', 'aa')]
         for (inp, outp) in input_output:
             with self.subTest(inp=inp, outp=outp):
                 float_format_input = FloatFormatInput(render_value=True)
