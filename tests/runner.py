@@ -25,6 +25,8 @@
 ##############################################################################
 from django.conf import settings
 from django.test.runner import DiscoverRunner
+from mock import patch
+
 from osis_common.decorators import override
 from django import get_version as get_django_version
 
@@ -32,6 +34,13 @@ from osis_common.tests.functional.models.report import make_html_report
 
 
 class InstalledAppsTestRunner(DiscoverRunner):
+
+    @staticmethod
+    def mock_api_return():
+        import json
+        with open('osis_common/tests/ressources/person_roles_from_api.json') as json_file:
+            data = json.load(json_file)
+        return data
 
     @override(DiscoverRunner)
     def build_suite(self, test_labels=None, *args, **kwargs):
@@ -52,10 +61,17 @@ class InstalledAppsTestRunner(DiscoverRunner):
             print('### Virtual Dispaly: {}'.format(settings.FUNCT_TESTS_CONFIG.get('VIRTUAL_DISPLAY')))
         print('########################################################')
         print('')
+        if hasattr(settings, 'MOCK_USER_ROLES_API_CALL') and settings.MOCK_USER_ROLES_API_CALL:
+            self.patcher_api_call = patch('base.views.api.get_user_roles')
+            self.mock_api_call = self.patcher_api_call.start()
+            self.mock_api_call.return_value = self.mock_api_return()
         return super(InstalledAppsTestRunner, self).build_suite(test_labels or settings.APPS_TO_TEST, *args, **kwargs)
 
     def teardown_test_environment(self, **kwargs):
         if hasattr(settings, 'FUNCT_TESTS_CONFIG') and settings.FUNCT_TESTS_CONFIG \
                 and settings.FUNCT_TESTS_CONFIG.get('HTML_REPORTS') and settings.FUNCT_TESTS_CONFIG.get('HTML_REPORTS_DIR'):
             make_html_report()
+        if hasattr(settings, 'MOCK_USER_ROLES_API_CALL') and settings.MOCK_USER_ROLES_API_CALL:
+            self.patcher_api_call.stop()
         super(InstalledAppsTestRunner, self).teardown_test_environment(**kwargs)
+

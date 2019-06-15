@@ -1,0 +1,18 @@
+{
+  "global_id": "12345678",
+  "roles": {
+      "reddot": {
+        "description": "Test reddot roles from api",
+        "scope": ["PHYS1BA", "BIOL1BA"]
+      },
+      "program_manager": {
+        "description": "Test reddot roles from api",
+        "scope": [
+          {"acronym":  "PHYS1BA", "year": "2017"},
+          {"acronym":  "PHYS1BA", "year": "2018"},
+          {"acronym":  "BIOL1BA", "year": "2017"},
+          {"acronym":  "BIOL1BA", "year": "2018"}
+        ]
+      }
+  }
+}
