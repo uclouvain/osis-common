@@ -62,7 +62,7 @@ class InstalledAppsTestRunner(DiscoverRunner):
         print('########################################################')
         print('')
         if hasattr(settings, 'MOCK_USER_ROLES_API_CALL') and settings.MOCK_USER_ROLES_API_CALL:
-            self.user_roles_api_call = patch(settings.get('USER_ROLES_API_MOCKED_FUNCT'))
+            self.user_roles_api_call = patch(settings.USER_ROLES_API_MOCKED_FUNCT)
             self.mock_user_roles_api_call = self.user_roles_api_call.start()
             self.mock_user_roles_api_call.return_value = self.mock_user_roles_api_return()
         return super(InstalledAppsTestRunner, self).build_suite(test_labels or settings.APPS_TO_TEST, *args, **kwargs)
