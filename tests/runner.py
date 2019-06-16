@@ -36,7 +36,7 @@ from osis_common.tests.functional.models.report import make_html_report
 class InstalledAppsTestRunner(DiscoverRunner):
 
     @staticmethod
-    def mock_api_return():
+    def mock_user_roles_api_return():
         import json
         with open('osis_common/tests/ressources/person_roles_from_api.json') as json_file:
             data = json.load(json_file)
@@ -62,9 +62,9 @@ class InstalledAppsTestRunner(DiscoverRunner):
         print('########################################################')
         print('')
         if hasattr(settings, 'MOCK_USER_ROLES_API_CALL') and settings.MOCK_USER_ROLES_API_CALL:
-            self.patcher_api_call = patch('base.views.api.get_user_roles')
-            self.mock_api_call = self.patcher_api_call.start()
-            self.mock_api_call.return_value = self.mock_api_return()
+            self.user_roles_api_call = patch(settings.get('USER_ROLES_API_MOCKED_FUCNT'))
+            self.mock_user_roles_api_call = self.user_roles_api_call.start()
+            self.mock_user_roles_api_call.return_value = self.mock_user_roles_api_return()
         return super(InstalledAppsTestRunner, self).build_suite(test_labels or settings.APPS_TO_TEST, *args, **kwargs)
 
     def teardown_test_environment(self, **kwargs):
@@ -72,6 +72,6 @@ class InstalledAppsTestRunner(DiscoverRunner):
                 and settings.FUNCT_TESTS_CONFIG.get('HTML_REPORTS') and settings.FUNCT_TESTS_CONFIG.get('HTML_REPORTS_DIR'):
             make_html_report()
         if hasattr(settings, 'MOCK_USER_ROLES_API_CALL') and settings.MOCK_USER_ROLES_API_CALL:
-            self.patcher_api_call.stop()
+            self.user_roles_api_call.stop()
         super(InstalledAppsTestRunner, self).teardown_test_environment(**kwargs)
 
