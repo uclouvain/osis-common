@@ -44,3 +44,19 @@ class DecimalFormatInput(Input):
         if isinstance(value, Decimal) and self.render_value:
             value = normalize_fraction(value)
         return super(DecimalFormatInput, self).get_context(name, value, attrs)
+
+
+class FloatFormatInput(Input):
+    input_type = 'text'
+    template_name = 'django/forms/widgets/number.html'
+
+    def __init__(self, attrs=None, render_value=False):
+        super(DecimalFormatInput, self).__init__(attrs)
+        self.render_value = render_value
+
+    def get_context(self, name, value, attrs):
+        if isinstance(value, float):
+            value = Decimal(value)
+        if isinstance(value, Decimal) and self.render_value:
+            value = normalize_fraction(value)
+        return super(DecimalFormatInput, self).get_context(name, value, attrs)
