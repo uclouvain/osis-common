@@ -135,6 +135,48 @@ class TestPaperSheet(TestCase):
         self.assertIsNotNone(http_response.content)
         self.assertEqual(http_response['content-type'], 'application/pdf')
 
+    def test_warn_when_legend_updated(self):
+        """
+            If this test fails, that means you updated the legend.
+            Make sure this does not break the page layout, especially when the list is splitted on multiple pages.
+        """
+
+        paragraph = paper_sheet._build_legend_block(True)
+        self.assertEqual(
+            paragraph.text,
+            (
+                """<para> Légende pour le champ 'Justification': A=Absent, T=Tricherie<br/>Légende pour le champ """
+                """'Note chiffrée': 0 - 20 (0=Cote de présence)<br/><font color=red>Les notes décimales sont """
+                """autorisées pour ce cours</font><br/><span backColor=#dff0d8>&nbsp; Inscrit tardivement &nbsp;"""
+                """""""</span> - <span backColor=#f2dede>&nbsp; Désinscrit tardivement &nbsp;</span><br/> """
+                """Conformément aux articles 104, 109 et 111 RGEE (Règlement général des études et des examens) """
+                """disponible au lien suivant : <a href="https://uclouvain.be/fr/decouvrir/rgee.html"><font """
+                """color=blue><u>https://uclouvain.be/fr/decouvrir/rgee.html</u></font></a><br/><font color=red>"""
+                """Les données présentes sur ce document correspondent à l'état du système en date du 21/06/2019 et """
+                """sont susceptibles d'évoluer</font> </para>"""
+            ),
+            "If you update the legend, make sure this does not break the page layout, "
+            "especially when the list is splitted on multiple pages."
+        )
+
+        paragraph = paper_sheet._build_legend_block(False)
+        self.assertEqual(
+            paragraph.text,
+            (
+                """<para> Légende pour le champ 'Justification': A=Absent, T=Tricherie<br/>Légende pour le champ """
+                """'Note chiffrée': 0 - 20 (0=Cote de présence)<br/><font color=red>Attention : décimales non """
+                """autorisées pour ce cours</font><br/><span backColor=#dff0d8>&nbsp; Inscrit tardivement &nbsp;"""
+                """""""</span> - <span backColor=#f2dede>&nbsp; Désinscrit tardivement &nbsp;</span><br/> """
+                """Conformément aux articles 104, 109 et 111 RGEE (Règlement général des études et des examens) """
+                """disponible au lien suivant : <a href="https://uclouvain.be/fr/decouvrir/rgee.html"><font """
+                """color=blue><u>https://uclouvain.be/fr/decouvrir/rgee.html</u></font></a><br/><font color=red>"""
+                """Les données présentes sur ce document correspondent à l'état du système en date du 21/06/2019 et """
+                """sont susceptibles d'évoluer</font> </para>"""
+            ),
+            "If you update the legend, make sure this does not break the page layout, "
+            "especially when the list is splitted on multiple pages."
+        )
+
 
 def getRightData() :
     #Return a valid template data
