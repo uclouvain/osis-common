@@ -24,10 +24,9 @@
 #
 ##############################################################################
 import json
+import logging
 
 import pika
-from pika import exceptions
-import logging
 from django.conf import settings
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
@@ -81,10 +80,12 @@ def send_message(queue_name, message, connection=None, channel=None):
     channel.confirm_delivery()
 
     try:
-        channel.basic_publish(exchange='',
-                              routing_key=queue_name,
-                              body=json.dumps(message),
-                              properties=pika.BasicProperties(content_type='application/json', delivery_mode=2))
+        channel.basic_publish(
+            exchange='',
+            routing_key=queue_name,
+            body=json.dumps(message),
+            properties=pika.BasicProperties(content_type='application/json', delivery_mode=2)
+        )
     except Exception:
         logger.exception("Exception in queue")
     finally:
