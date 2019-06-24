@@ -39,7 +39,7 @@ from voluptuous import Schema, Any, Required, All, Url, Length, error as voluptu
 
 PAGE_SIZE = A4
 MARGIN_SIZE = 15 * mm
-COLS_WIDTH = [20*mm, 40*mm, 40*mm, 15*mm, 30*mm, 30*mm]
+COLS_WIDTH = [20*mm, 40*mm, 35*mm, 15*mm, 35*mm, 30*mm]
 STUDENTS_PER_PAGE = 20
 DATE_FORMAT = "%d/%m/%Y"
 
