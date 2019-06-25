@@ -27,15 +27,20 @@ from decimal import Decimal
 
 from django.test import SimpleTestCase
 
-from osis_common.forms.widgets import FloatFormatInput
+from osis_common.forms.widgets import DecimalFormatInput
 
 
 class TestFloatFormatInput(SimpleTestCase):
 
     def test_float_format_input(self):
-        input_output = [(Decimal('5.00'), '5'), (Decimal('3E1'), '30'), (Decimal('5'), '5'), (None, None), ('aa', 'aa')]
+        input_output = [(Decimal('5.00'), '5'),
+                        (Decimal('3E1'), '30'),
+                        (Decimal('5'), '5'),
+                        (None, None),
+                        ('aa', 'aa'),
+                        (5.0, '5')]
         for (inp, outp) in input_output:
             with self.subTest(inp=inp, outp=outp):
-                float_format_input = FloatFormatInput(render_value=True)
+                float_format_input = DecimalFormatInput(render_value=True)
                 context = float_format_input.get_context(name='yolo', value=inp, attrs=None)
                 self.assertEqual(outp, context['widget']['value'])

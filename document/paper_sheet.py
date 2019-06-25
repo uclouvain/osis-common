@@ -39,8 +39,8 @@ from voluptuous import Schema, Any, Required, All, Url, Length, error as voluptu
 
 PAGE_SIZE = A4
 MARGIN_SIZE = 15 * mm
-COLS_WIDTH = [20*mm, 35*mm, 35*mm, 15*mm, 35*mm, 35*mm]
-STUDENTS_PER_PAGE = 24
+COLS_WIDTH = [20*mm, 40*mm, 35*mm, 15*mm, 35*mm, 30*mm]
+STUDENTS_PER_PAGE = 20
 DATE_FORMAT = "%d/%m/%Y"
 
 
@@ -396,8 +396,8 @@ def _build_legend_block(decimal_scores):
     else:
         legend_text += "<br/><font color=red>%s</font>" % _('Unauthorized decimal for this learning unit')
 
-    legend_text += "<br/><span backColor=#dff0d8>%s</span>" % _('Enrolled lately')
-    legend_text += "<br/><span backColor=#f2dede>%s</span>" % _('Unsubscribed lately')
+    legend_text += "<br/><span backColor=#dff0d8>&nbsp; %s &nbsp;</span>" % _('Enrolled lately')
+    legend_text += " - <span backColor=#f2dede>&nbsp; %s &nbsp;</span>" % _('Unsubscribed lately')
     legend_text += '''<br/> %s : <a href="%s"><font color=blue><u>%s</u></font></a>''' \
                    % (_("In accordance to regulation's rules 104, 109 and 111. Complete rules avalaible here"), 
                       _("https://uclouvain.be/fr/decouvrir/rgee.html"),
