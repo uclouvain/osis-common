@@ -33,5 +33,7 @@ def to_float_or_zero(number):
 def normalize_fraction(number):
     if number is None:
         return ''
+    elif isinstance(number, int):
+        return number
     else:
-        return number.quantize(Decimal(1)) if number == number.to_integral() else number.normalize()
+        return number.quantize(Decimal(1)) if number == Decimal(number).to_integral() else number.normalize()
