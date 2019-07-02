@@ -63,8 +63,8 @@ class MessagesTestCase(TestCase):
         # Lang exists
         html_message_template, txt_message_template = send_message._get_template_by_language_or_default(
             'en', html_message_templates, txt_message_templates)
-        self.assertEquals(html_message_template.language, 'en', 'The language should exists')
-        self.assertEquals(txt_message_template.language, 'en', 'The language should exists')
+        self.assertEqual(html_message_template.language, 'en', 'The language should exists')
+        self.assertEqual(txt_message_template.language, 'en', 'The language should exists')
 
         # Lang does not exists
         html_message_template, txt_message_template = send_message._get_template_by_language_or_default(
@@ -73,8 +73,8 @@ class MessagesTestCase(TestCase):
             txt_message_templates)
         self.assertNotEqual(html_message_template.language, 'pt_BR', 'The language does not exists')
         self.assertNotEqual(txt_message_template.language, 'pt_BR', 'The language does not exists')
-        self.assertEquals(html_message_template.language, settings.LANGUAGE_CODE, 'The default language is taken')
-        self.assertEquals(txt_message_template.language, settings.LANGUAGE_CODE, 'The default language is taken')
+        self.assertEqual(html_message_template.language, settings.LANGUAGE_CODE, 'The default language is taken')
+        self.assertEqual(txt_message_template.language, settings.LANGUAGE_CODE, 'The default language is taken')
 
     def test_send_messages(self):
         count_messages_before_send = len(message_history.MessageHistory.objects.all())
@@ -218,7 +218,7 @@ class MailClassesTestCase(TestCase):
         mail_sender.send_mail()
         self.assertEqual(mock_mail_send.call_count, 1)
         log = mock_logger.call_args[0][0]
-        self.assertEquals(
+        self.assertEqual(
             log,
             'Sending mail to {} (MailSenderClass : GenericMailSender)'.format(settings.COMMON_EMAIL_RECEIVER)
         )
@@ -239,7 +239,7 @@ class MailClassesTestCase(TestCase):
         mail_sender.send_mail()
         self.assertEqual(mock_mail_send.call_count, 1)
         log = mock_logger.call_args[0][0]
-        self.assertEquals(
+        self.assertEqual(
             log,
             'Sending mail to {} (MailSenderClass : ConnectedUserMailSender)'.format(self.connected_person.email)
         )
@@ -262,13 +262,13 @@ class MailClassesTestCase(TestCase):
         self.assertEqual(mock_mail_send.call_count, 1)
 
         log = mock_logger.call_args[0][0]
-        self.assertEquals(
+        self.assertEqual(
             log,
             'Sending mail to {} (MailSenderClass : ConnectedUserMailSender)'.format(settings.COMMON_EMAIL_RECEIVER)
         )
 
         error_log = mock_logger_error.call_args[0][0]
-        self.assertEquals(
+        self.assertEqual(
             error_log,
             'ConnectedUserMailSender class was used, but no connected_user was given. '
             'Email will be sent to the COMMON_EMAIL_RECEIVER (from settings) instead.'
@@ -290,7 +290,7 @@ class MailClassesTestCase(TestCase):
         mail_sender.send_mail()
         self.assertEqual(mock_mail_send.call_count, 1)
         log = mock_logger.call_args[0][0]
-        self.assertEquals(
+        self.assertEqual(
             log,
             'Sending mail to {} (MailSenderClass : RealReceiverMailSender)'.format(
                 self.receivers[0].get('receiver_email')
