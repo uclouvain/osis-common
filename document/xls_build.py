@@ -24,21 +24,22 @@
 #
 ##############################################################################
 import datetime
-import re
 import logging
+import re
 
-from openpyxl.writer.excel import save_virtual_workbook
-from openpyxl import Workbook
-from django.utils.translation import ugettext_lazy as _
-from django.http import HttpResponse
 from django.conf import settings
-from openpyxl.styles import Color, Style, PatternFill
+from django.http import HttpResponse
+from django.utils.translation import ugettext_lazy as _
+from openpyxl import Workbook
+from openpyxl.styles import Color, Style, PatternFill, Alignment
 from openpyxl.styles import Font
 from openpyxl.styles.borders import Border, Side, BORDER_THIN
+from openpyxl.writer.excel import save_virtual_workbook
 
 CONTENT_TYPE_XLS = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=binary'
 
-FIRST_DATA_LINE = 2
+FIRST_DATA_ROW_NUMBER = 2
+FIRST_DATA_COL_NUMBER = 1
 MAX_COL_WIDTH = 50
 XLS_EXTENSION = 'xlsx'
 OPENPYXL_STRING_FORMAT = '@'
@@ -115,7 +116,7 @@ def _build_worksheet(worksheet_data, workbook, sheet_number):
     _add_column_headers(worksheet_data.get(HEADER_TITLES_KEY), a_worksheet)
     _add_content(content, a_worksheet)
     _adjust_column_width(a_worksheet)
-    _adapt_format_for_string_with_numbers(a_worksheet, content)
+    _format_all_cells_except_header_line(a_worksheet, content)
     _coloring_rows(a_worksheet, worksheet_data.get(COLORED_ROWS, None))
     _coloring_cols(a_worksheet, worksheet_data.get(COLORED_COLS, None))
     _styling_cells(a_worksheet, worksheet_data.get(STYLED_CELLS, None))
@@ -200,20 +201,24 @@ def _is_valid(list_parameters):
     return False
 
 
-def _adapt_format_for_string_with_numbers(worksheet1, worksheet_content):
+def _format_all_cells_except_header_line(worksheet1, worksheet_content):
+    for row_number, row in enumerate(worksheet_content, FIRST_DATA_ROW_NUMBER):
+        for col_number, cell in enumerate(row, FIRST_DATA_COL_NUMBER):
+            _adapt_format_for_string_with_numbers(worksheet1, cell, row_number, col_number)
+            _align_cells_content(worksheet1, row_number, col_number, horizontal='left', vertical='top')
+
+
+def _align_cells_content(worksheet1, row_number, col_number, horizontal, vertical):
+    worksheet1.cell(column=col_number, row=row_number).alignment = Alignment(horizontal=horizontal, vertical=vertical)
+
+
+def _adapt_format_for_string_with_numbers(worksheet1, cell, row_number, col_number):
     """
-    Necessary, otherwise the string which contains only numbers considered as a number and set with a quote while
-    looking at the input line
+        Prevent the strings which contains only numbers to be considered as a number and set with a quote while
+        looking at the input line
     """
-    num_corresponding_row = FIRST_DATA_LINE
-    for record in worksheet_content:
-        num_corresponding_column = 1
-        for element in record:
-            if type(element) is str and re.match(r'^[0-9]+$', element):
-                worksheet1.cell(column=num_corresponding_column,
-                                row=num_corresponding_row).number_format = OPENPYXL_STRING_FORMAT
-            num_corresponding_column += 1
-        num_corresponding_row += 1
+    if type(cell) is str and re.match(r'^[0-9]+$', cell):
+        worksheet1.cell(column=col_number, row=row_number).number_format = OPENPYXL_STRING_FORMAT
 
 
 def _is_checked_file_parameters_list(list_parameters):
