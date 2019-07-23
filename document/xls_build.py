@@ -90,18 +90,16 @@ def _create_xls(parameters_dict, filters=None):
     filename = _build_filename(parameters_dict.get(FILENAME_KEY))
 
     workbook = Workbook(encoding='utf-8')
-    sheet_number = 0
-    for worksheet_data in parameters_dict.get(WORKSHEETS_DATA):
+    for sheet_number, worksheet_data in enumerate(parameters_dict.get(WORKSHEETS_DATA)):
         _build_worksheet(worksheet_data,  workbook, sheet_number)
-        sheet_number += 1
 
-    _build_worksheet_parameters(workbook,
-                                parameters_dict.get(USER_KEY),
-                                parameters_dict.get(LIST_DESCRIPTION_KEY),
-                                filters)
-    response = HttpResponse(
-        save_virtual_workbook(workbook),
-        content_type=CONTENT_TYPE_XLS)
+    _build_worksheet_parameters(
+        workbook,
+        parameters_dict.get(USER_KEY),
+        parameters_dict.get(LIST_DESCRIPTION_KEY),
+        filters
+    )
+    response = HttpResponse(save_virtual_workbook(workbook), content_type=CONTENT_TYPE_XLS)
     response['Content-Disposition'] = "%s%s" % ("attachment; filename=", filename)
 
     return response
@@ -116,10 +114,10 @@ def _build_worksheet(worksheet_data, workbook, sheet_number):
     _add_column_headers(worksheet_data.get(HEADER_TITLES_KEY), a_worksheet)
     _add_content(content, a_worksheet)
     _adjust_column_width(a_worksheet)
-    _format_all_cells_except_header_line(a_worksheet, content)
     _coloring_rows(a_worksheet, worksheet_data.get(COLORED_ROWS, None))
     _coloring_cols(a_worksheet, worksheet_data.get(COLORED_COLS, None))
     _styling_cells(a_worksheet, worksheet_data.get(STYLED_CELLS, None))
+    _format_all_cells_except_header_line(a_worksheet, content)
 
 
 def _add_column_headers(headers_title, worksheet1):
