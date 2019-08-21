@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-04-08 15:44+0200\n"
+"POT-Creation-Date: 2019-08-21 15:44+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,7 +16,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: models/exception.py:46
 #, python-format
 msgid ""
 "%(function_name)s is not a function of a super-class of %(subclass_name)s "
@@ -25,60 +24,46 @@ msgstr ""
 "La fonction %(function_name)s n'est pas une fonction d'une super classe de "
 "%(subclass_name)s [%(super_classes_names)s]"
 
-#: models/exception.py:38
 #, python-format
 msgid "%(subclass_name)s is not a sub-class"
 msgstr "La classe %(subclass_name)s n'est pas une sous-classe"
 
-#: document/paper_sheet.py:364
 msgid "Academic year"
 msgstr "Année académique"
 
-#: document/xls_build.py:173
 msgid "Created by"
 msgstr "Créé par"
 
-#: document/paper_sheet.py:434 document/xls_build.py:172
 msgid "Creation date"
 msgstr "Date de création"
 
-#: document/paper_sheet.py:395
 msgid "Decimals authorized for this learning unit"
 msgstr "Les notes décimales sont autorisées pour ce cours"
 
-#: document/paper_sheet.py:360
 msgid "Deliberation date"
 msgstr "Date de délibération"
 
-#: document/paper_sheet.py:384
 msgid "Done at"
 msgstr "Fait à"
 
-#: document/paper_sheet.py:302
 msgid "Email"
 msgstr "Email"
 
-#: document/paper_sheet.py:399
 msgid "Enrolled lately"
 msgstr "Inscrit tardivement"
 
-#: document/xls_build.py:295
 msgid "False"
 msgstr "Faux"
 
-#: document/paper_sheet.py:332
 msgid "Fax"
 msgstr "Fax"
 
-#: templates/uploading/upload_file_list.html:33
 msgid "File name"
 msgstr "Nom de fichier"
 
-#: document/paper_sheet.py:240
 msgid "Firstname"
 msgstr "Prénom"
 
-#: document/paper_sheet.py:402
 msgid ""
 "In accordance to regulation's rules 104, 109 and 111. Complete rules "
 "avalaible here"
@@ -86,31 +71,24 @@ msgstr ""
 "Conformément aux articles 104, 109 et 111 RGEE (Règlement général des études "
 "et des examens) disponible au lien suivant"
 
-#: document/paper_sheet.py:242
 msgid "Justification (A,T)"
 msgstr "Justification (A,T)"
 
-#: document/paper_sheet.py:392
 msgid "Justification legend: A=Absent, T=Cheating"
 msgstr "Légende pour le champ 'Justification': A=Absent, T=Tricherie"
 
-#: document/paper_sheet.py:239
 msgid "Lastname"
 msgstr "Nom"
 
-#: templates/uploading/upload_file_form.html:39
 msgid "Message error : size and content"
 msgstr "Message d'erreur : taille et contenu"
 
-#: models/exception.py:31
 msgid "Migration persistence error"
 msgstr "Erreur de persistance de migration"
 
-#: messaging/send_message.py:203 messaging/send_message.py:206
 msgid "No email has been sent because a technical error occured."
 msgstr "Aucun email n'a été envoyé à cause d'un problème technique."
 
-#: messaging/send_message.py:212
 #, python-format
 msgid ""
 "No messages were sent : the message template %(html_template_ref)s does not "
@@ -119,52 +97,40 @@ msgstr ""
 "Aucun message n'a été envoyé : le modèle de message %(html_template_ref)s "
 "n'existe pas."
 
-#: document/paper_sheet.py:286
 msgid "None"
 msgstr "Aucun"
 
-#: document/xls_build.py:170
 msgid "Parameters"
 msgstr "Paramètres"
 
-#: document/paper_sheet.py:322
 msgid "Phone"
 msgstr "Téléphone"
 
-#: document/paper_sheet.py:349
 msgid "Program"
 msgstr "Programme"
 
-#: document/paper_sheet.py:238
 msgid "Reg. No."
 msgstr "Noma"
 
-#: document/paper_sheet.py:241
 msgid "Score"
 msgstr "Note"
 
-#: document/paper_sheet.py:393
 #, python-brace-format
 msgid "Score legend: {score} (0=Score of presence)"
 msgstr "Légende pour le champ 'Note chiffrée': {score} (0=Cote de présence)"
 
-#: document/paper_sheet.py:117 document/paper_sheet.py:165
 msgid "Score sheet"
 msgstr "Feuille de notes"
 
-#: document/paper_sheet.py:278
 msgid "Scores responsible"
 msgstr "Responsable de notes"
 
-#: document/paper_sheet.py:384
 msgid "Signature"
 msgstr "Signature"
 
-#: document/paper_sheet.py:243
 msgid "Submit data"
 msgstr "Date de remise"
 
-#: document/paper_sheet.py:408
 #, python-format
 msgid ""
 "The data presented on this document correspond to the state of the system "
@@ -173,7 +139,6 @@ msgstr ""
 "Les données présentes sur ce document correspondent à l'état du système en "
 "date du %(creation_date)s et sont susceptibles d'évoluer"
 
-#: messaging/mail_sender_classes.py:145
 #, python-brace-format
 msgid ""
 "This is a test email sent from OSIS, only sent to {new_dest_address}. "
@@ -183,49 +148,37 @@ msgstr ""
 "l'adresse {new_dest_address}. Les destinataires initiaux de ce message "
 "étaient : {receivers_addresses}."
 
-#: document/xls_build.py:294
 msgid "True"
 msgstr "Vrai"
 
-#: document/paper_sheet.py:397
 msgid "Unauthorized decimal for this learning unit"
 msgstr "Attention : décimales non autorisées pour ce cours"
 
-#: document/paper_sheet.py:291
 msgid "Université catholique de Louvain"
 msgstr "Université catholique de Louvain"
 
-#: document/paper_sheet.py:400
 msgid "Unsubscribed lately"
 msgstr "Désinscrit tardivement"
 
-#: document/xls_build.py:175 templates/uploading/upload_file_list.html:49
 msgid "description"
 msgstr "description"
 
-#: templates/uploading/upload_file_form.html:30
-#: templates/uploading/upload_file_list.html:41
 msgid "file"
 msgstr "fichier"
 
-#: document/paper_sheet.py:403 document/paper_sheet.py:404
 #, fuzzy
 #| msgid "https://www.uclouvain.be/enseignement-reglements.html"
 msgid "https://uclouvain.be/fr/decouvrir/rgee.html"
 msgstr "https://uclouvain.be/fr/decouvrir/rgee.html"
 
-#: document/xls_build.py:194
 msgid "sheet"
 msgstr "feuille"
 
-#: document/paper_sheet.py:352
 msgid "student"
 msgstr "étudiant"
 
-#: document/paper_sheet.py:352
 msgid "students"
 msgstr "étudiants"
 
-#: document/paper_sheet.py:384
 msgid "the"
 msgstr "le"
