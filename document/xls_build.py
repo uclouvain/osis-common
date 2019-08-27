@@ -112,11 +112,6 @@ def _build_worksheet(worksheet_data, workbook, sheet_number):
     a_worksheet = _create_worksheet(workbook,
                                     _create_worsheet_title(sheet_number, worksheet_data.get(WORKSHEET_TITLE_KEY)),
                                     sheet_number)
-    if worksheet_data.get(ROW_HEIGHT, None):
-        _adjust_row_height(a_worksheet,
-                           worksheet_data.get(ROW_HEIGHT).get('height', None),
-                           worksheet_data.get(ROW_HEIGHT).get('start', 1),
-                           worksheet_data.get(ROW_HEIGHT).get('stop', 1))
     _add_column_headers(worksheet_data.get(HEADER_TITLES_KEY), a_worksheet)
     _add_content(content, a_worksheet)
     _adjust_column_width(a_worksheet)
@@ -124,6 +119,12 @@ def _build_worksheet(worksheet_data, workbook, sheet_number):
     _coloring_cols(a_worksheet, worksheet_data.get(COLORED_COLS, None))
     _styling_cells(a_worksheet, worksheet_data.get(STYLED_CELLS, None))
     _format_all_cells_except_header_line(a_worksheet, content)
+    if worksheet_data.get(ROW_HEIGHT, None):
+        _adjust_row_height(a_worksheet,
+                           worksheet_data.get(ROW_HEIGHT).get('height', None),
+                           worksheet_data.get(ROW_HEIGHT).get('start', 1),
+                           worksheet_data.get(ROW_HEIGHT).get('stop', 1))
+
 
 
 def _add_column_headers(headers_title, worksheet1):
