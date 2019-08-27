@@ -74,6 +74,7 @@ HEADER_TITLES = 'param_header_titles'
 WS_TITLE = 'param_worksheet_title'
 
 FONT_GREEN = Font(color=Color('5CB85C'))
+ROW_HEIGHT = 'row_height'
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
@@ -111,6 +112,11 @@ def _build_worksheet(worksheet_data, workbook, sheet_number):
     a_worksheet = _create_worksheet(workbook,
                                     _create_worsheet_title(sheet_number, worksheet_data.get(WORKSHEET_TITLE_KEY)),
                                     sheet_number)
+    if worksheet_data.get(ROW_HEIGHT, None):
+        _adjust_row_height(a_worksheet,
+                           worksheet_data.get(ROW_HEIGHT).get('height', None),
+                           worksheet_data.get(ROW_HEIGHT).get('start', 1),
+                           worksheet_data.get(ROW_HEIGHT).get('stop', 1))
     _add_column_headers(worksheet_data.get(HEADER_TITLES_KEY), a_worksheet)
     _add_content(content, a_worksheet)
     _adjust_column_width(a_worksheet)
@@ -309,6 +315,7 @@ def prepare_xls_parameters_list(working_sheets_data, parameters):
                   WORKSHEET_TITLE_KEY: _(parameters.get(WS_TITLE, None)),
                   STYLED_CELLS: parameters.get(STYLED_CELLS, None),
                   COLORED_ROWS: parameters.get(COLORED_ROWS, None),
+                  ROW_HEIGHT: parameters.get(ROW_HEIGHT, None)
                   }
                  ]}
 
@@ -327,3 +334,10 @@ def _set_cell_style(a_style, cell_number, ws):
     ft = a_style
     cell.style = ft
 
+
+def _adjust_row_height(ws, height, start=1, stop=1):
+    if height:
+        index = start
+        while index <= stop:
+            ws.row_dimensions[index].height = height
+            index += 1

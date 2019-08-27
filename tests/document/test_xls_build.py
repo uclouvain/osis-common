@@ -91,6 +91,25 @@ class TestXlsBuild(TestCase):
         self.assertEqual(alignments.horizontal, 'left')
         self.assertEqual(alignments.vertical, 'top')
 
+    def test_adjust_row_height(self):
+        data = {xls_build.LIST_DESCRIPTION_KEY: 'Liste de cours',
+                xls_build.FILENAME_KEY: 'fichier_test',
+                xls_build.USER_KEY: 'Dupuis',
+                xls_build.WORKSHEETS_DATA:
+                    [{xls_build.CONTENT_KEY: [['Col1 Row1']],
+                      xls_build.HEADER_TITLES_KEY: ['Acronym'],
+                      xls_build.ROW_HEIGHT: {'height': 30, 'start': 1, 'stop': 3}
+                      },
+                     ]}
+        workbook = Workbook(encoding='utf-8')
+        worksheet_data = data.get(xls_build.WORKSHEETS_DATA)[0]
+        _build_worksheet(worksheet_data, workbook, 0)
+
+        self.assertEqual(workbook.worksheets[0].row_dimensions[1].height, 30)
+        self.assertEqual(workbook.worksheets[0].row_dimensions[2].height, 30)
+        self.assertEqual(workbook.worksheets[0].row_dimensions[3].height, 30)
+        self.assertNotEqual(workbook.worksheets[0].row_dimensions[4].height, 30)
+
 
 def get_valid_xls_data():
     # Return a valid template data
