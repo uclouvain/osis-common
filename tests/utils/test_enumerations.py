@@ -34,5 +34,5 @@ class TestEnumerations(TestCase):
         class Enum(ChoiceEnum):
             TEST = 'TESTE'
 
-        self.assertEquals(Enum.choices()[0], (Enum.TEST.value, Enum.TEST.value))
+        self.assertEqual(Enum.choices()[0], (Enum.TEST.value, Enum.TEST.value))
 

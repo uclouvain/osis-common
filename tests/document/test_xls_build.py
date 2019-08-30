@@ -24,16 +24,19 @@
 #
 ##############################################################################
 import datetime
+
 from django.test.testcases import TestCase
+from openpyxl import Workbook
+
 from osis_common.document import xls_build
-from osis_common.document.xls_build import CONTENT_TYPE_XLS
+from osis_common.document.xls_build import CONTENT_TYPE_XLS, _build_worksheet
 
 TODAY = datetime.date.today()
 
 
 class TestXlsBuild(TestCase):
     def test_valid_data(self):
-        data = getRightData()
+        data = get_valid_xls_data()
         self.assertTrue(xls_build._is_valid(data))
 
     def test_data_empty(self):
@@ -73,14 +76,42 @@ class TestXlsBuild(TestCase):
         self.assertTrue(xls_build._is_checked_worsheets_data(data))
 
     def test_check_xls_generation(self):
-        data = getRightData()
+        data = get_valid_xls_data()
         http_response = xls_build._create_xls(data)
         self.assertEqual(http_response.status_code, 200)
         self.assertIsNotNone(http_response.content)
         self.assertEqual(http_response['content-type'], CONTENT_TYPE_XLS)
 
+    def test_check_xls_cells_alignment(self):
+        data = get_valid_xls_data()
+        workbook = Workbook(encoding='utf-8')
+        worksheet_data = data.get(xls_build.WORKSHEETS_DATA)[0]
+        _build_worksheet(worksheet_data, workbook, 0)
+        alignments = workbook._alignments[1]
+        self.assertEqual(alignments.horizontal, 'left')
+        self.assertEqual(alignments.vertical, 'top')
 
-def getRightData():
+    def test_adjust_row_height(self):
+        data = {xls_build.LIST_DESCRIPTION_KEY: 'Liste de cours',
+                xls_build.FILENAME_KEY: 'fichier_test',
+                xls_build.USER_KEY: 'Dupuis',
+                xls_build.WORKSHEETS_DATA:
+                    [{xls_build.CONTENT_KEY: [['Col1 Row1']],
+                      xls_build.HEADER_TITLES_KEY: ['Acronym'],
+                      xls_build.ROW_HEIGHT: {'height': 30, 'start': 1, 'stop': 3}
+                      },
+                     ]}
+        workbook = Workbook(encoding='utf-8')
+        worksheet_data = data.get(xls_build.WORKSHEETS_DATA)[0]
+        _build_worksheet(worksheet_data, workbook, 0)
+
+        self.assertEqual(workbook.worksheets[0].row_dimensions[1].height, 30)
+        self.assertEqual(workbook.worksheets[0].row_dimensions[2].height, 30)
+        self.assertEqual(workbook.worksheets[0].row_dimensions[3].height, 30)
+        self.assertNotEqual(workbook.worksheets[0].row_dimensions[4].height, 30)
+
+
+def get_valid_xls_data():
     # Return a valid template data
     return {xls_build.LIST_DESCRIPTION_KEY: 'Liste de cours',
             xls_build.FILENAME_KEY: 'fichier_test',

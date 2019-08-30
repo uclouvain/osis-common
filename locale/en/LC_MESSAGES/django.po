@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-04-08 15:44+0200\n"
+"POT-Creation-Date: 2019-08-21 15:44+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,203 +16,156 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: models/exception.py:46
 #, python-format
 msgid ""
 "%(function_name)s is not a function of a super-class of %(subclass_name)s "
 "[%(super_classes_names)s]"
 msgstr ""
 
-#: models/exception.py:38
 #, python-format
 msgid "%(subclass_name)s is not a sub-class"
 msgstr ""
 
-#: document/paper_sheet.py:364
 msgid "Academic year"
 msgstr ""
 
-#: document/xls_build.py:173
 msgid "Created by"
 msgstr ""
 
-#: document/paper_sheet.py:434 document/xls_build.py:172
 msgid "Creation date"
 msgstr ""
 
-#: document/paper_sheet.py:395
 msgid "Decimals authorized for this learning unit"
 msgstr ""
 
-#: document/paper_sheet.py:360
 msgid "Deliberation date"
 msgstr ""
 
-#: document/paper_sheet.py:384
 msgid "Done at"
 msgstr ""
 
-#: document/paper_sheet.py:302
 msgid "Email"
 msgstr ""
 
-#: document/paper_sheet.py:399
 msgid "Enrolled lately"
 msgstr ""
 
-#: document/xls_build.py:295
 msgid "False"
 msgstr ""
 
-#: document/paper_sheet.py:332
 msgid "Fax"
 msgstr ""
 
-#: templates/uploading/upload_file_list.html:33
 msgid "File name"
 msgstr ""
 
-#: document/paper_sheet.py:240
 msgid "Firstname"
 msgstr ""
 
-#: document/paper_sheet.py:402
 msgid ""
 "In accordance to regulation's rules 104, 109 and 111. Complete rules "
 "avalaible here"
 msgstr ""
 
-#: document/paper_sheet.py:242
 msgid "Justification (A,T)"
 msgstr ""
 
-#: document/paper_sheet.py:392
 msgid "Justification legend: A=Absent, T=Cheating"
 msgstr ""
 
-#: document/paper_sheet.py:239
 msgid "Lastname"
 msgstr ""
 
-#: templates/uploading/upload_file_form.html:39
 msgid "Message error : size and content"
 msgstr ""
 
-#: models/exception.py:31
 msgid "Migration persistence error"
 msgstr ""
 
-#: messaging/send_message.py:203 messaging/send_message.py:206
 msgid "No email has been sent because a technical error occured."
 msgstr ""
 
-#: messaging/send_message.py:212
 #, python-format
 msgid ""
 "No messages were sent : the message template %(html_template_ref)s does not "
 "exist."
 msgstr ""
 
-#: document/paper_sheet.py:286
 msgid "None"
 msgstr ""
 
-#: document/xls_build.py:170
 msgid "Parameters"
 msgstr ""
 
-#: document/paper_sheet.py:322
 msgid "Phone"
 msgstr ""
 
-#: document/paper_sheet.py:349
 msgid "Program"
 msgstr ""
 
-#: document/paper_sheet.py:238
 msgid "Reg. No."
 msgstr ""
 
-#: document/paper_sheet.py:241
 msgid "Score"
 msgstr ""
 
-#: document/paper_sheet.py:393
 #, python-brace-format
 msgid "Score legend: {score} (0=Score of presence)"
 msgstr ""
 
-#: document/paper_sheet.py:117 document/paper_sheet.py:165
 msgid "Score sheet"
 msgstr ""
 
-#: document/paper_sheet.py:278
 msgid "Scores responsible"
 msgstr ""
 
-#: document/paper_sheet.py:384
 msgid "Signature"
 msgstr ""
 
-#: document/paper_sheet.py:243
 msgid "Submit data"
 msgstr ""
 
-#: document/paper_sheet.py:408
 #, python-format
 msgid ""
 "The data presented on this document correspond to the state of the system "
 "dated %(creation_date)s and are likely to evolve"
 msgstr ""
 
-#: messaging/mail_sender_classes.py:145
 #, python-brace-format
 msgid ""
 "This is a test email sent from OSIS, only sent to {new_dest_address}. "
 "Planned receivers were : {receivers_addresses}."
 msgstr ""
 
-#: document/xls_build.py:294
 msgid "True"
 msgstr ""
 
-#: document/paper_sheet.py:397
 msgid "Unauthorized decimal for this learning unit"
 msgstr ""
 
-#: document/paper_sheet.py:291
 msgid "Université catholique de Louvain"
 msgstr ""
 
-#: document/paper_sheet.py:400
 msgid "Unsubscribed lately"
 msgstr ""
 
-#: document/xls_build.py:175 templates/uploading/upload_file_list.html:49
 msgid "description"
 msgstr ""
 
-#: templates/uploading/upload_file_form.html:30
-#: templates/uploading/upload_file_list.html:41
 msgid "file"
 msgstr ""
 
-#: document/paper_sheet.py:403 document/paper_sheet.py:404
 msgid "https://uclouvain.be/fr/decouvrir/rgee.html"
 msgstr ""
 
-#: document/xls_build.py:194
 msgid "sheet"
 msgstr ""
 
-#: document/paper_sheet.py:352
 msgid "student"
 msgstr ""
 
-#: document/paper_sheet.py:352
 msgid "students"
 msgstr ""
 
-#: document/paper_sheet.py:384
 msgid "the"
 msgstr ""
