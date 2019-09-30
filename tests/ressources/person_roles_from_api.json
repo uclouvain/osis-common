@@ -8,10 +8,10 @@
       "program_manager": {
         "description": "Test reddot roles from api",
         "scope": [
-          {"acronym":  "PHYS1BA", "year": "2017"},
-          {"acronym":  "PHYS1BA", "year": "2018"},
-          {"acronym":  "BIOL1BA", "year": "2017"},
-          {"acronym":  "BIOL1BA", "year": "2018"}
+          {"acronym":  "PHYS1BA", "year": 2017},
+          {"acronym":  "PHYS1BA", "year": 2018},
+          {"acronym":  "BIOL1BA", "year": 2017},
+          {"acronym":  "BIOL1BA", "year": 2018}
         ]
       }
   }
