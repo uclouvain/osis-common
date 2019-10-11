@@ -109,16 +109,6 @@ def __map_receivers_by_languages(receivers):
     return lang_dict
 
 
-def __get_attachments(attributes_message):
-    attachment = attributes_message.get("attachment")
-    if attachment:
-        if isinstance(attachment, list):
-            return attachment
-        else:
-            return [attachment]
-    return None
-
-
 def __make_tables_template_data(tables, lang_code):
     """
     Make table from data and header to insert into messages.
