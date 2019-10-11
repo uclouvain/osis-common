@@ -24,10 +24,10 @@
 #
 ##############################################################################
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import models
 from django.db.models.fields import CharField
 
 from osis_common.models.serializable_model import SerializableModel
-from django.db import models
 
 
 class ModelWithUser(SerializableModel):

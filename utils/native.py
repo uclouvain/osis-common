@@ -26,9 +26,9 @@
 import re
 
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.db import connection
 from django.db import transaction
-from django.core.exceptions import PermissionDenied
 
 
 @transaction.atomic

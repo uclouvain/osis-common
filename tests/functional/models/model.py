@@ -1,14 +1,13 @@
-from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+import pyvirtualdisplay
 from django.conf import settings
+from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.test import tag
 from django.urls import reverse
 from django.utils import translation
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-
-import pyvirtualdisplay
+from selenium.webdriver.support.ui import WebDriverWait
 
 from osis_common.tests.functional.models.report import TestClassReport, TestFunctionReport, StaticReportHAndler, \
     TestAppReport

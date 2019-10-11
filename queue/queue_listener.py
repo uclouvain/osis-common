@@ -24,15 +24,14 @@
 #
 ##############################################################################
 import json
+import logging
+import threading
 import traceback
 
-
 import pika
-import uuid
-from pika.exceptions import ConnectionClosed
 from django.conf import settings
-import threading
-import logging
+from pika.exceptions import ConnectionClosed
+
 from osis_common.models.queue_exception import QueueException
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)

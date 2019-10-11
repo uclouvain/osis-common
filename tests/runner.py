@@ -23,13 +23,12 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+from django import get_version as get_django_version
 from django.conf import settings
 from django.test.runner import DiscoverRunner
 from mock import patch
 
 from osis_common.decorators import override
-from django import get_version as get_django_version
-
 from osis_common.tests.functional.models.report import make_html_report
 
 

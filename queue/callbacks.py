@@ -24,14 +24,14 @@
 #
 ##############################################################################
 import json
-import traceback
 import logging
+import traceback
 
 from django.conf import settings
 from django.core.exceptions import FieldDoesNotExist
-from psycopg2._psycopg import OperationalError as PsycopOperationalError, InterfaceError as  PsycopInterfaceError
-from django.db.utils import OperationalError as DjangoOperationalError, InterfaceError as DjangoInterfaceError
 from django.db import connection
+from django.db.utils import OperationalError as DjangoOperationalError, InterfaceError as DjangoInterfaceError
+from psycopg2._psycopg import OperationalError as PsycopOperationalError, InterfaceError as  PsycopInterfaceError
 
 from osis_common.models.queue_exception import QueueException
 

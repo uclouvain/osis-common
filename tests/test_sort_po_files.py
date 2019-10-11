@@ -24,11 +24,12 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from django.conf import settings
-
-from django.test import SimpleTestCase
-import osis_common.scripts.sort_po_files as sort_po_files
 import os
+
+from django.conf import settings
+from django.test import SimpleTestCase
+
+import osis_common.scripts.sort_po_files as sort_po_files
 
 
 class SortPoCase(SimpleTestCase):

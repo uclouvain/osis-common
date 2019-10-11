@@ -27,7 +27,7 @@ from ckeditor.widgets import CKEditorWidget
 from django import forms
 from django.conf import settings
 from django.forms import ModelForm
-from django.utils.translation import ugettext_lazy as _
+
 from osis_common.models import message_template
 from osis_common.models.document_file import DocumentFile
 
