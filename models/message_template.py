@@ -24,10 +24,10 @@
 #
 ##############################################################################
 from ckeditor.fields import RichTextField
-from django.db import models
-from osis_common.models import osis_model_admin
-from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
+from django.db import models
+
+from osis_common.models import osis_model_admin
 
 
 class MessageTemplateAdmin(osis_model_admin.OsisModelAdmin):
