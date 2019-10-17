@@ -42,9 +42,11 @@ cd BASE_DIR
 python3 manage.py shell
 from osis_common.scripts import po_to_excel
 """
-from django.conf import settings
-import xlsxwriter
 import os
+
+import xlsxwriter
+from django.conf import settings
+
 from osis_common.scripts import sort_po_files
 
 

@@ -24,8 +24,9 @@
 #
 ##############################################################################
 from django.db import models
-from osis_common.models import osis_model_admin
 from django.utils import timezone
+
+from osis_common.models import osis_model_admin
 
 
 class ApplicationNoticeAdmin(osis_model_admin.OsisModelAdmin):

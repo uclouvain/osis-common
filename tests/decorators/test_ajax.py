@@ -23,8 +23,8 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from django.test import TestCase, RequestFactory
 from django.core.exceptions import PermissionDenied
+from django.test import TestCase, RequestFactory
 
 from osis_common.decorators.ajax import ajax_required
 

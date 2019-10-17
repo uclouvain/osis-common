@@ -23,13 +23,15 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+import logging
+
 from django.conf import settings
 from django.test.testcases import TestCase
+
 from osis_common.decorators.override import _check_super_class_method
 from osis_common.models.exception import OverrideMethodError, OverrideSubClassError
 from osis_common.tests.models_for_tests.override_tests_models import WrongOverrideMethod, \
     GoodOverrideChild, ClassToOverride, NotASubClass
-import logging
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 

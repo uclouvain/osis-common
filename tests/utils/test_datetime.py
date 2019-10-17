@@ -29,7 +29,7 @@ import factory
 import factory.fuzzy
 from django.test import TestCase
 
-from osis_common.utils.datetime import get_tzinfo, is_in_chronological_order, convert_datetime_to_date, \
+from osis_common.utils.datetime import is_in_chronological_order, convert_datetime_to_date, \
     convert_date_to_datetime
 
 

@@ -24,7 +24,9 @@
 #
 ##############################################################################
 from unittest.mock import Mock
+
 from django.test.testcases import TestCase
+
 from osis_common.decorators.deprecated import deprecated
 
 

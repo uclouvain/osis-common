@@ -25,12 +25,12 @@
 ##############################################################################
 import json
 import logging
-from unittest import skip
+
 from django.conf import settings
 from django.test import TestCase
+
 from osis_common.queue.callbacks import process_message
 from osis_common.tests.models_for_tests.serializable_tests_models import ModelWithUser, ModelWithoutUser
-
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
