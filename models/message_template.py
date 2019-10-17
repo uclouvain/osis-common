@@ -61,8 +61,3 @@ class MessageTemplate(models.Model):
 def find_by_reference(reference):
     message_template = MessageTemplate.objects.filter(reference=reference)
     return message_template
-
-
-def find_by_reference_and_language(reference, language=settings.LANGUAGE_CODE):
-    message_template = MessageTemplate.objects.get(reference=reference, language=language)
-    return message_template
