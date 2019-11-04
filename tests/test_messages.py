@@ -35,7 +35,7 @@ from osis_common.messaging.message_config import create_receiver, create_table, 
 from osis_common.models import message_history
 from osis_common.models.message_history import MessageHistory
 from osis_common.models.message_template import MessageTemplate
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 
 class MessagesTestCase(TestCase):
