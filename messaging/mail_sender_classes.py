@@ -29,7 +29,7 @@ import logging
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import ugettext_lazy as _
 
 from osis_common.models import message_history as message_history_mdl
 
@@ -114,7 +114,13 @@ class ConnectedUserMailSender(MasterMailSender):
     """
     def get_real_receivers_list(self):
         if self.connected_user:
-            return [self.connected_user.person.email]
+            if self.connected_user.person.email:
+                return [self.connected_user.person.email]
+            else:
+                logger.error('ConnectedUserMailSender class was used, but no connected_user email was given. '
+                             'Email will be sent to the COMMON_EMAIL_RECEIVER (from settings) instead.')
+                return [settings.COMMON_EMAIL_RECEIVER]
+
         else:
             logger.error('ConnectedUserMailSender class was used, but no connected_user was given. '
                          'Email will be sent to the COMMON_EMAIL_RECEIVER (from settings) instead.')
@@ -149,8 +155,8 @@ def add_testing_information_to_contents(mail):
         "This is a test email sent from OSIS, only sent to {new_dest_address}. "
         "Planned receivers were : {receivers_addresses}."
     ).format(
-        new_dest_address=', '.join(mail.real_receivers_list),
-        receivers_addresses=', '.join(mail.original_receivers_list)
+        new_dest_address=', '.join(filter(None, mail.real_receivers_list)),
+        receivers_addresses=', '.join(filter(None, mail.original_receivers_list))
     )
 
     mail.kwargs['message'] = "{testing_informations} \n {original_message}".format(

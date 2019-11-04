@@ -35,6 +35,7 @@ from osis_common.messaging.message_config import create_receiver, create_table, 
 from osis_common.models import message_history
 from osis_common.models.message_history import MessageHistory
 from osis_common.models.message_template import MessageTemplate
+from django.utils.translation import ugettext_lazy as _
 
 
 class MessagesTestCase(TestCase):
@@ -296,3 +297,41 @@ class MailClassesTestCase(TestCase):
                 self.receivers[0].get('receiver_email')
             )
         )
+
+    @patch('logging.Logger.error')
+    def test_add_testing_information_to_contents_missing_email(self, mock_logger_error):
+        connected_user_missing_email = PersonFactory(email=None).user
+        mail_sender = mail_sender_classes.ConnectedUserMailSender(
+            receivers=self.receivers,
+            reference="reference",
+            connected_user=connected_user_missing_email,
+            subject="test subject",
+            message="test message",
+            html_message="<p>test html message</p>",
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            attachment=None
+        )
+        email_message = mail_sender.kwargs['message']
+
+        dest_email = 'dest@gmail.com'
+        mail_sender.real_receivers_list = [None, dest_email]
+
+        receiver_email = 'receiver@gmail.com'
+        mail_sender.original_receivers_list = [receiver_email, None]
+
+        mail_sender_classes.add_testing_information_to_contents(mail_sender)
+
+        error_log = mock_logger_error.call_args[0][0]
+        self.assertEqual(
+            error_log,
+            'ConnectedUserMailSender class was used, but no connected_user email was given. '
+            'Email will be sent to the COMMON_EMAIL_RECEIVER (from settings) instead.'
+        )
+
+        expected_message = "{} \n {}".format(
+            _('This is a test email sent from OSIS, only sent to {new_dest_address}. '
+              'Planned receivers were : {receivers_addresses}.').format(new_dest_address=dest_email,
+                                                                        receivers_addresses=receiver_email),
+            email_message)
+
+        self.assertEqual(mail_sender.kwargs['message'], expected_message)
