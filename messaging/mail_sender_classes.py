@@ -113,16 +113,11 @@ class ConnectedUserMailSender(MasterMailSender):
     Send email to the email address of the connected user
     """
     def get_real_receivers_list(self):
-        if self.connected_user:
-            if self.connected_user.person.email:
-                return [self.connected_user.person.email]
-            else:
-                logger.error('ConnectedUserMailSender class was used, but no connected_user email was given. '
-                             'Email will be sent to the COMMON_EMAIL_RECEIVER (from settings) instead.')
-                return [settings.COMMON_EMAIL_RECEIVER]
-
+        if self.connected_user and self.connected_user.person.email:
+            return [self.connected_user.person.email]
         else:
-            logger.error('ConnectedUserMailSender class was used, but no connected_user was given. '
+            missing_field = 'connected_user' + (' email' if self.connected_user else '')
+            logger.error('ConnectedUserMailSender class was used, but no ' + missing_field + ' was given. '
                          'Email will be sent to the COMMON_EMAIL_RECEIVER (from settings) instead.')
             return [settings.COMMON_EMAIL_RECEIVER]
 
