@@ -113,10 +113,11 @@ class ConnectedUserMailSender(MasterMailSender):
     Send email to the email address of the connected user
     """
     def get_real_receivers_list(self):
-        if self.connected_user:
+        if self.connected_user and self.connected_user.person.email:
             return [self.connected_user.person.email]
         else:
-            logger.error('ConnectedUserMailSender class was used, but no connected_user was given. '
+            missing_field = 'connected_user' + (' email' if self.connected_user else '')
+            logger.error('ConnectedUserMailSender class was used, but no ' + missing_field + ' was given. '
                          'Email will be sent to the COMMON_EMAIL_RECEIVER (from settings) instead.')
             return [settings.COMMON_EMAIL_RECEIVER]
 
@@ -149,8 +150,8 @@ def add_testing_information_to_contents(mail):
         "This is a test email sent from OSIS, only sent to {new_dest_address}. "
         "Planned receivers were : {receivers_addresses}."
     ).format(
-        new_dest_address=', '.join(mail.real_receivers_list),
-        receivers_addresses=', '.join(mail.original_receivers_list)
+        new_dest_address=', '.join(filter(None, mail.real_receivers_list)),
+        receivers_addresses=', '.join(filter(None, mail.original_receivers_list))
     )
 
     mail.kwargs['message'] = "{testing_informations} \n {original_message}".format(
