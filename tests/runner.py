@@ -23,6 +23,9 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+import unittest
+
+import time
 from django import get_version as get_django_version
 from django.conf import settings
 from django.test.runner import DiscoverRunner
@@ -32,7 +35,43 @@ from osis_common.decorators import override
 from osis_common.tests.functional.models.report import make_html_report
 
 
+class DebugTimeTextTestResult(unittest.TextTestResult):
+    def __init__(self, stream, descriptions, verbosity):
+        self.test_timings = []
+        super().__init__(stream, descriptions, verbosity)
+
+    def startTest(self, test):
+        self._test_started_at = time.time()
+        super().startTest(test)
+
+    def addSuccess(self, test):
+        time_elapsed = time.time() - self._test_started_at
+        test_name = self.getDescription(test)
+        self.test_timings.append((test_name, time_elapsed))
+        super().addSuccess(test)
+
+
+class DebugTimeTestRunner(unittest.TextTestRunner):
+    resultclass = DebugTimeTextTestResult
+    stream = None
+
+    def run(self, test):
+        result = super().run(test)
+        slow_test_threshold = self.get_slow_test_threshold()
+        test_timings_sorted = sorted(result.test_timings, key=lambda tup: tup[1], reverse=True)
+
+        self.stream.writeln("\n {} slow tests (>{:.03}s):".format(len(test_timings_sorted), slow_test_threshold))
+        for test_name, time_elapsed in test_timings_sorted:
+            if time_elapsed > slow_test_threshold:
+                self.stream.writeln("({:.03}s) {}".format(time_elapsed, test_name))
+        return result
+
+    def get_slow_test_threshold(self):
+        return getattr(settings, 'SLOW_TEST_THRESHOLD', 0.8)
+
+
 class InstalledAppsTestRunner(DiscoverRunner):
+    test_runner = DebugTimeTestRunner
 
     @staticmethod
     def mock_user_roles_api_return():
