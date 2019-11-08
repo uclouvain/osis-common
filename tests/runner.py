@@ -31,7 +31,6 @@ from django.conf import settings
 from django.test.runner import DiscoverRunner
 from mock import patch
 
-from osis_common.decorators import override
 from osis_common.tests.functional.models.report import make_html_report
 
 
@@ -82,7 +81,6 @@ class InstalledAppsTestRunner(DiscoverRunner):
             data = json.load(json_file)
         return data
 
-    # @override(DiscoverRunner)
     def build_suite(self, test_labels=None, *args, **kwargs):
         django_version = get_django_version()
         if hasattr(settings, 'TESTS_TYPES') and settings.TESTS_TYPES == 'ALL':
