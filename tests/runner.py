@@ -58,12 +58,14 @@ class DebugTimeTestRunner(unittest.TextTestRunner):
     def run(self, test):
         result = super().run(test)
         slow_test_threshold = self.get_slow_test_threshold()
-        test_timings_sorted = sorted(result.test_timings, key=lambda tup: tup[1], reverse=True)
+        slowest_test_timings = filter(
+            lambda test_name__time_elapsed: test_name__time_elapsed[1] > slow_test_threshold, result.test_timings
+        )
+        slowest_test_timings = sorted(slowest_test_timings, key=lambda tup: tup[1], reverse=True)
 
-        self.stream.writeln("\n {} slow tests (>{:.03}s):".format(len(test_timings_sorted), slow_test_threshold))
-        for test_name, time_elapsed in test_timings_sorted:
-            if time_elapsed > slow_test_threshold:
-                self.stream.writeln("({:.03}s) {}".format(time_elapsed, test_name))
+        self.stream.writeln("\n {} slow tests (>{:.03}s):".format(len(slowest_test_timings), slow_test_threshold))
+        for test_name, time_elapsed in slowest_test_timings:
+            self.stream.writeln("({:.03}s) {}".format(time_elapsed, test_name))
         return result
 
     def get_slow_test_threshold(self):
@@ -80,7 +82,7 @@ class InstalledAppsTestRunner(DiscoverRunner):
             data = json.load(json_file)
         return data
 
-    @override(DiscoverRunner)
+    # @override(DiscoverRunner)
     def build_suite(self, test_labels=None, *args, **kwargs):
         django_version = get_django_version()
         if hasattr(settings, 'TESTS_TYPES') and settings.TESTS_TYPES == 'ALL':
