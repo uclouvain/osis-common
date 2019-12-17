@@ -300,7 +300,7 @@ class MailClassesTestCase(TestCase):
 
     @patch('logging.Logger.error')
     def test_add_testing_information_to_contents_missing_email(self, mock_logger_error):
-        connected_user_missing_email = PersonFactory(email=None).user
+        connected_user_missing_email = PersonFactory(email="").user
         mail_sender = mail_sender_classes.ConnectedUserMailSender(
             receivers=self.receivers,
             reference="reference",
