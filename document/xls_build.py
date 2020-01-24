@@ -214,7 +214,9 @@ def _format_all_cells_except_header_line(worksheet1, worksheet_content):
 
 
 def _align_cells_content(worksheet1, row_number, col_number, horizontal, vertical):
-    worksheet1.cell(column=col_number, row=row_number).alignment = Alignment(horizontal=horizontal, vertical=vertical)
+    worksheet1.cell(column=col_number, row=row_number).alignment = Alignment(horizontal=horizontal,
+                                                                             vertical=vertical,
+                                                                             wrapText=True)
 
 
 def _adapt_format_for_string_with_numbers(worksheet1, cell, row_number, col_number):
