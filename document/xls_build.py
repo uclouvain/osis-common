@@ -126,9 +126,8 @@ def _build_worksheet(worksheet_data, workbook, sheet_number):
                            worksheet_data.get(ROW_HEIGHT).get('stop', 1))
 
 
-
 def _add_column_headers(headers_title, worksheet1):
-    worksheet1.append(headers_title)
+    worksheet1.append(_ensure_str_instance(headers_title))
 
 
 def _add_content(content, a_worksheet_param):
@@ -344,3 +343,7 @@ def _adjust_row_height(ws, height, start=1, stop=1):
         while index <= stop:
             ws.row_dimensions[index].height = height
             index += 1
+
+
+def _ensure_str_instance(headers_title):
+    return [str(title)for title in headers_title]
