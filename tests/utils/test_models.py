@@ -30,6 +30,7 @@ from base.tests.factories.person import PersonFactory
 from osis_common.utils.models import get_object_or_none
 
 
+# TODO : mock a django model to dissociate osis_common from base.person
 class UtilsTest(TestCase):
 
     def test_get_object_or_none_exists(self):
