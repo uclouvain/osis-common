@@ -64,6 +64,13 @@ STYLE_BORDER_TOP = Style(
                  ),
     )
 )
+STYLE_BORDER_BOTTOM = Style(
+    border=Border(
+        bottom=Side(border_style=BORDER_THIN,
+                    color=Color('FF000000')
+                    ),
+    )
+)
 
 STYLE_MODIFIED = Style(font=Font(color=Color('5CB85C')),)
 
