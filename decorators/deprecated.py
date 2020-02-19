@@ -23,8 +23,8 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-import warnings
 import functools
+import warnings
 
 
 def deprecated(func):

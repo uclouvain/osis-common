@@ -29,7 +29,7 @@ import re
 
 from django.conf import settings
 from django.http import HttpResponse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from openpyxl import Workbook
 from openpyxl.styles import Color, Style, PatternFill, Alignment
 from openpyxl.styles import Font
@@ -62,6 +62,13 @@ STYLE_BORDER_TOP = Style(
         top=Side(border_style=BORDER_THIN,
                  color=Color('FF000000')
                  ),
+    )
+)
+STYLE_BORDER_BOTTOM = Style(
+    border=Border(
+        bottom=Side(border_style=BORDER_THIN,
+                    color=Color('FF000000')
+                    ),
     )
 )
 
@@ -126,9 +133,8 @@ def _build_worksheet(worksheet_data, workbook, sheet_number):
                            worksheet_data.get(ROW_HEIGHT).get('stop', 1))
 
 
-
 def _add_column_headers(headers_title, worksheet1):
-    worksheet1.append(headers_title)
+    worksheet1.append(_ensure_str_instance(headers_title))
 
 
 def _add_content(content, a_worksheet_param):
@@ -214,7 +220,9 @@ def _format_all_cells_except_header_line(worksheet1, worksheet_content):
 
 
 def _align_cells_content(worksheet1, row_number, col_number, horizontal, vertical):
-    worksheet1.cell(column=col_number, row=row_number).alignment = Alignment(horizontal=horizontal, vertical=vertical)
+    worksheet1.cell(column=col_number, row=row_number).alignment = Alignment(horizontal=horizontal,
+                                                                             vertical=vertical,
+                                                                             wrapText=True)
 
 
 def _adapt_format_for_string_with_numbers(worksheet1, cell, row_number, col_number):
@@ -342,3 +350,7 @@ def _adjust_row_height(ws, height, start=1, stop=1):
         while index <= stop:
             ws.row_dimensions[index].height = height
             index += 1
+
+
+def _ensure_str_instance(headers_title):
+    return [str(title)for title in headers_title]

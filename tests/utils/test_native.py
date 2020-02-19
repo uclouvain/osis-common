@@ -23,12 +23,12 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from django.db.utils import InternalError
-from django.core.exceptions import PermissionDenied
-from django.test import TestCase
+from unittest import mock
 
 import factory.fuzzy
-from unittest import mock
+from django.core.exceptions import PermissionDenied
+from django.db.utils import InternalError
+from django.test import TestCase
 
 from osis_common.utils import native
 

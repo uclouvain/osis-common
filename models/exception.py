@@ -23,7 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 
 class MigrationPersistanceError(Exception):
@@ -37,17 +37,4 @@ class OverrideSubClassError(Exception):
     def __init__(self, subclass_name, errors=None):
         message = _('%(subclass_name)s is not a sub-class').format(subclass_name=subclass_name)
         super(OverrideSubClassError, self).__init__(message)
-        self.errors = errors
-
-
-class OverrideMethodError(Exception):
-    def __init__(self, function_name, super_classes_names, subclass_name, errors=None):
-        message = _(
-            '%(function_name)s is not a function of a super-class of %(subclass_name)s [%(super_classes_names)s]'
-        ).format(
-            function_name=function_name,
-            subclass_name=subclass_name,
-            super_classes_names=super_classes_names
-        )
-        super(OverrideMethodError, self).__init__(message)
         self.errors = errors

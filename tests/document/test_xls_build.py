@@ -61,10 +61,9 @@ class TestXlsBuild(TestCase):
         self.assertFalse(xls_build._is_checked_worsheets_data(data))
 
     def test_with_wrong_worksheet_data(self):
-        data = {xls_build.WORKSHEETS_DATA:
-            [{xls_build.CONTENT_KEY: [
-                ['LBIR1225', 'Cours de Bir', '123456789', 2017, TODAY.strftime('%d-%m-%Y')]]}
-            ]}
+        data = {xls_build.WORKSHEETS_DATA: [
+            {xls_build.CONTENT_KEY: [['LBIR1225', 'Cours de Bir', '123456789', 2017, TODAY.strftime('%d-%m-%Y')]]}]
+        }
         self.assertFalse(xls_build._is_checked_worsheets_data(data))
 
     def test_with_correct_worksheet_data(self):
@@ -109,6 +108,14 @@ class TestXlsBuild(TestCase):
         self.assertEqual(workbook.worksheets[0].row_dimensions[2].height, 30)
         self.assertEqual(workbook.worksheets[0].row_dimensions[3].height, 30)
         self.assertNotEqual(workbook.worksheets[0].row_dimensions[4].height, 30)
+
+    def test_ensure_str_instance(self):
+        variable_1 = "Hello"
+        headers = xls_build._ensure_str_instance([1, 'test', True, str('Already str'), variable_1])
+
+        self.assertCountEqual(headers, ['1', 'test', 'True', 'Already str', variable_1])
+        for header in headers:
+            self.assertTrue(isinstance(header, str))
 
 
 def get_valid_xls_data():

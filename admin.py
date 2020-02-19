@@ -1,5 +1,6 @@
 from django.contrib import admin
-from osis_common.models import message_template, message_history, document_file, queue_exception, application_notice,\
+
+from osis_common.models import message_template, message_history, document_file, queue_exception, application_notice, \
     message_queue_cache
 
 admin.site.register(message_template.MessageTemplate,

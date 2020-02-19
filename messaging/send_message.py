@@ -36,7 +36,7 @@ from django.template.loader import render_to_string
 from django.utils import translation
 from django.utils.html import strip_tags
 from django.utils.module_loading import import_string
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 
 from osis_common.models import message_template as message_template_mdl
 
@@ -107,16 +107,6 @@ def __map_receivers_by_languages(receivers):
         else:
             lang_dict[settings.LANGUAGE_CODE].append(receiver)
     return lang_dict
-
-
-def __get_attachments(attributes_message):
-    attachment = attributes_message.get("attachment")
-    if attachment:
-        if isinstance(attachment, list):
-            return attachment
-        else:
-            return [attachment]
-    return None
 
 
 def __make_tables_template_data(tables, lang_code):

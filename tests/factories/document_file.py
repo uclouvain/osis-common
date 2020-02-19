@@ -25,9 +25,8 @@
 ##############################################################################
 import factory.fuzzy
 
-from osis_common.models.enum import storage_duration
 from osis_common.models.document_file import CONTENT_TYPE_CHOICES
-
+from osis_common.models.enum import storage_duration
 
 CONTENT_TYPE_LIST = [x for (x, y) in CONTENT_TYPE_CHOICES]
 

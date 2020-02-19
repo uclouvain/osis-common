@@ -32,6 +32,7 @@
 # LANG is the language of the .po files. By default, fr_BE is used.
 
 import os
+
 from django.conf import settings
 
 key_keyword = "msgid"
