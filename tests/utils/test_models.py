@@ -25,21 +25,19 @@
 ##############################################################################
 from django.test import TestCase
 
-from base.models.person import Person
-from base.tests.factories.person import PersonFactory
+from osis_common.tests.models_for_tests.serializable_tests_models import ModelWithoutUser
 from osis_common.utils.models import get_object_or_none
 
 
-# TODO : mock a django model to dissociate osis_common from base.person
 class UtilsTest(TestCase):
 
     def test_get_object_or_none_exists(self):
-        person = PersonFactory()
-        object = get_object_or_none(Person, pk=person.pk)
-        self.assertEqual(object, person)
+        model = ModelWithoutUser.objects.create(name='Dummy')
+        object = get_object_or_none(ModelWithoutUser, pk=model.pk)
+        self.assertEqual(object, model)
 
     def test_get_object_or_none_does_not_exist(self):
-        object = get_object_or_none(Person, pk=None)
+        object = get_object_or_none(ModelWithoutUser, pk=None)
         self.assertIsNone(object)
 
     def test_get_object_or_none_error(self):
