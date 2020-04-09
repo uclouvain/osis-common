@@ -36,6 +36,8 @@ from openpyxl.styles import Font
 from openpyxl.styles.borders import Border, Side, BORDER_THIN
 from openpyxl.writer.excel import save_virtual_workbook
 
+from osis_common.decorators.download import set_download_cookie
+
 CONTENT_TYPE_XLS = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=binary'
 
 FIRST_DATA_ROW_NUMBER = 2
@@ -94,6 +96,7 @@ def generate_xls(list_parameters, filters=None):
         return HttpResponse('')
 
 
+@set_download_cookie
 def _create_xls(parameters_dict, filters=None):
     filename = _build_filename(parameters_dict.get(FILENAME_KEY))
 

@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2019 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2020 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -23,27 +23,13 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-import tempfile
-
-from django.http import HttpResponse
-from django.template.loader import render_to_string
-from weasyprint import HTML
-
-from osis_common.decorators.download import set_download_cookie
 
 
-@set_download_cookie
-def render_pdf(request, context, filename, template):
-    html_string = render_to_string(template, context)
-    html = HTML(string=html_string, base_url=request.build_absolute_uri())
-    result = html.write_pdf(presentational_hints=True)
-    # Creating http response
-    response = HttpResponse(content_type='application/pdf;')
-    response['Content-Disposition'] = 'attachment; filename={}.pdf'.format(filename)
-    response['Content-Transfer-Encoding'] = 'binary'
-    with tempfile.NamedTemporaryFile(delete=True) as output:
-        output.write(result)
-        output.flush()
-        output = open(output.name, 'rb')
-        response.write(output.read())
-    return response
+def set_download_cookie(func):
+    """This is a decorator that sets a cookie useful for triggering download spinner."""
+
+    def wrapper(*args, **kwargs):
+        response = func(*args, **kwargs)
+        response.set_cookie('download', 1)
+        return response
+    return wrapper
