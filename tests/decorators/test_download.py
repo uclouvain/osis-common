@@ -27,15 +27,15 @@
 from django.http import HttpResponse
 from django.test.testcases import TestCase
 
-from osis_common.decorators.download import trigger_download_spinner
+from osis_common.decorators.download import set_download_cookie
 
 
-@trigger_download_spinner
+@set_download_cookie
 def test_view():
     return HttpResponse()
 
 
-class TestDownloadSpinnerDecorator(TestCase):
-    def test_download_spinner_decorator(self):
+class TestDownloadCookieDecorator(TestCase):
+    def test_set_download_cookie_decorator(self):
         response = test_view()
         self.assertEqual(response.cookies, "Set-Cookie: download=1; Path=/")

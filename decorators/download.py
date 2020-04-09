@@ -25,7 +25,7 @@
 ##############################################################################
 
 
-def trigger_download_spinner(func):
+def set_download_cookie(func):
     """This is a decorator that sets a cookie useful for triggering download spinner."""
 
     def wrapper(*args, **kwargs):

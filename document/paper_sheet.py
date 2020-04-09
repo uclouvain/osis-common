@@ -37,6 +37,8 @@ from reportlab.lib.units import mm
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Image, PageBreak, Table, TableStyle
 from voluptuous import Schema, Any, Required, All, Url, Length, error as voluptuous_error
 
+from osis_common.decorators.download import set_download_cookie
+
 PAGE_SIZE = A4
 MARGIN_SIZE = 15 * mm
 COLS_WIDTH = [20*mm, 40*mm, 35*mm, 15*mm, 35*mm, 30*mm]
@@ -109,6 +111,7 @@ def build_error_response():
     return HttpResponse(status=500)
 
 
+@set_download_cookie
 def build_response(data):
     luy = data.get('learning_unit_years')
     if luy and len(luy) == 1:
