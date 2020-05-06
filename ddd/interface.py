@@ -1,6 +1,10 @@
 import abc
 
 
+class CommandRequest(abc.ABC):
+    pass
+
+
 class ValueObject(abc.ABC):
     def __eq__(self, other):
         raise NotImplementedError
