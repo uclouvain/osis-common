@@ -1,4 +1,5 @@
 import abc
+from typing import List, Optional
 
 
 class CommandRequest(abc.ABC):
@@ -37,7 +38,12 @@ class RootEntity(Entity):
 class AbstractRepository(abc.ABC):
     @classmethod
     @abc.abstractmethod
-    def add(self, entity: Entity):
+    def create(self, entity: Entity) -> EntityIdentity:
+        raise NotImplementedError
+
+    @classmethod
+    @abc.abstractmethod
+    def update(self, entity: Entity) -> EntityIdentity:
         raise NotImplementedError
 
     @classmethod
@@ -45,4 +51,7 @@ class AbstractRepository(abc.ABC):
     def get(self, entity_id: EntityIdentity) -> Entity:
         raise NotImplementedError
 
-    #  TODO Add method which are common accros repository
+    @classmethod
+    @abc.abstractmethod
+    def search(self, entity_ids: Optional[List[EntityIdentity]] = None, **kwargs) -> Entity:
+        raise NotImplementedError
