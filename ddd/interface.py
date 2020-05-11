@@ -28,7 +28,7 @@ class Entity(abc.ABC):
         return self.entity_id == other.entity_id
 
     def __hash__(self):
-        raise hash(self.entity_id)
+        return hash(self.entity_id)
 
 
 class RootEntity(Entity):
@@ -54,4 +54,9 @@ class AbstractRepository(abc.ABC):
     @classmethod
     @abc.abstractmethod
     def search(self, entity_ids: Optional[List[EntityIdentity]] = None, **kwargs) -> Entity:
+        raise NotImplementedError
+
+    @classmethod
+    @abc.abstractmethod
+    def delete(self, entity_id: EntityIdentity) -> None:
         raise NotImplementedError
