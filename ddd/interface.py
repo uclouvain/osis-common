@@ -6,6 +6,12 @@ class CommandRequest(abc.ABC):
     pass
 
 
+class BusinessException(Exception):
+    def __init__(self, message: str, **kwargs):
+        self.message = message
+        super().__init__(**kwargs)
+
+
 class ValueObject(abc.ABC):
     def __eq__(self, other):
         raise NotImplementedError
