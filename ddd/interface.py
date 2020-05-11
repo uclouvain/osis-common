@@ -58,7 +58,7 @@ class AbstractRepository(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def search(cls, entity_ids: Optional[List[EntityIdentity]] = None, **kwargs) -> Entity:
+    def search(cls, entity_ids: Optional[List[EntityIdentity]] = None, **kwargs) -> List[Entity]:
         raise NotImplementedError
 
     @classmethod
