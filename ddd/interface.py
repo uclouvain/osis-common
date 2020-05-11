@@ -26,8 +26,7 @@ class EntityIdentity(ValueObject):
 
 class Entity(abc.ABC):
     def __init__(self, *args, entity_id: EntityIdentity = None, **kwargs):
-        if entity_id is not None:
-            self.entity_id = entity_id
+        self.entity_id = entity_id
         super().__init__(*args, **kwargs)
 
     def __eq__(self, other):
@@ -44,25 +43,25 @@ class RootEntity(Entity):
 class AbstractRepository(abc.ABC):
     @classmethod
     @abc.abstractmethod
-    def create(self, entity: Entity) -> EntityIdentity:
+    def create(cls, entity: Entity) -> EntityIdentity:
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def update(self, entity: Entity) -> EntityIdentity:
+    def update(cls, entity: Entity) -> EntityIdentity:
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def get(self, entity_id: EntityIdentity) -> Entity:
+    def get(cls, entity_id: EntityIdentity) -> Entity:
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def search(self, entity_ids: Optional[List[EntityIdentity]] = None, **kwargs) -> Entity:
+    def search(cls, entity_ids: Optional[List[EntityIdentity]] = None, **kwargs) -> Entity:
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def delete(self, entity_id: EntityIdentity) -> None:
+    def delete(cls, entity_id: EntityIdentity) -> None:
         raise NotImplementedError
