@@ -31,6 +31,9 @@ jobs:
         - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
         - chmod +x ./cc-test-reporter
         - ./cc-test-reporter before-build
+      script:
+        - python3 manage.py compilemessages && coverage run manage.py test osis_common --exclude-tag=selenium --no-logs
+
     - stage: "OSIS-Portal"
       install:
         - export PROJECT_DIR=`pwd`
@@ -54,9 +57,8 @@ jobs:
         - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
         - chmod +x ./cc-test-reporter
         - ./cc-test-reporter before-build
-
-script:
-  - python3 manage.py compilemessages && coverage run manage.py test osis_common --exclude-tag=selenium --no-logs
+      script:
+        - python3 manage.py compilemessages && coverage run manage.py test osis_common --exclude-tag=selenium --no-logs
 
 after_script:
   - coverage xml
