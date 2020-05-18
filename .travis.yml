@@ -14,7 +14,7 @@ install:
   - git submodule init
   - git submodule update
   - pip install -r requirements.txt
-  - rm -Rf continuing_education
+  - rm -Rf osis_common
   - ln -s $PROJECT_DIR osis_common
 
 before_script:
