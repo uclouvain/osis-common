@@ -9,6 +9,11 @@ cache: pip
 jobs:
   include:
     - stage: "OSIS"
+      addons:
+        postgresql: "9.6"
+        apt:
+          packages:
+            - postgresql-9.6-postgis-2.4
       install:
         - export PROJECT_DIR=`pwd`
         - cd /tmp
@@ -31,10 +36,9 @@ jobs:
         - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
         - chmod +x ./cc-test-reporter
         - ./cc-test-reporter before-build
-      script:
-        - python3 manage.py compilemessages && coverage run manage.py test osis_common --exclude-tag=selenium --no-logs
-
     - stage: "OSIS-Portal"
+      addons:
+        postgresql: "9.6"
       install:
         - export PROJECT_DIR=`pwd`
         - cd /tmp
@@ -57,15 +61,6 @@ jobs:
         - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
         - chmod +x ./cc-test-reporter
         - ./cc-test-reporter before-build
-      script:
-        - python3 manage.py compilemessages && coverage run manage.py test osis_common --exclude-tag=selenium --no-logs
 
-after_script:
-  - coverage xml
-  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
-
-addons:
-  postgresql: "9.6"
-  apt:
-    packages:
-      - postgresql-9.6-postgis-2.4
+script:
+  - python3 manage.py compilemessages && coverage run manage.py test osis_common --exclude-tag=selenium --no-logs
