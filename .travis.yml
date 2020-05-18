@@ -6,28 +6,54 @@ language: python
 python: "3.5.5"
 cache: pip
 
-install:
-  - export PROJECT_DIR=`pwd`
-  - cd /tmp
-  - git clone https://github.com/uclouvain/osis.git
-  - cd osis
-  - git submodule init
-  - git submodule update
-  - pip install -r requirements.txt
-  - rm -Rf osis_common
-  - ln -s $PROJECT_DIR osis_common
+jobs:
+  include:
+    - stage: "OSIS"
+      install:
+        - export PROJECT_DIR=`pwd`
+        - cd /tmp
+        - git clone https://github.com/uclouvain/osis.git
+        - cd osis
+        - git submodule init
+        - git submodule update
+        - pip install -r requirements.txt
+        - rm -Rf osis_common
+        - ln -s $PROJECT_DIR osis_common
 
-before_script:
-  - cp .env.example .env
-  - echo 'APPS_TO_TEST += ("osis_common",)' >> backoffice/settings/local.py
-  - echo >> .env
-  - echo "POSTGRES_USER = 'postgres'" >> .env
-  - echo "POSTGRES_PASSWORD = ''" >> .env
-  - psql -d template1 -c 'create extension unaccent;' -U postgres
-  - psql -c 'create database osis_local;' -U postgres
-  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-  - chmod +x ./cc-test-reporter
-  - ./cc-test-reporter before-build
+      before_script:
+        - cp .env.example .env
+        - echo 'APPS_TO_TEST += ("osis_common",)' >> backoffice/settings/local.py
+        - echo >> .env
+        - echo "POSTGRES_USER = 'postgres'" >> .env
+        - echo "POSTGRES_PASSWORD = ''" >> .env
+        - psql -d template1 -c 'create extension unaccent;' -U postgres
+        - psql -c 'create database osis_local;' -U postgres
+        - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+        - chmod +x ./cc-test-reporter
+        - ./cc-test-reporter before-build
+    - stage: "OSIS-Portal"
+      install:
+        - export PROJECT_DIR=`pwd`
+        - cd /tmp
+        - git clone https://github.com/uclouvain/osis-portal.git
+        - cd osis-portal
+        - git submodule init
+        - git submodule update
+        - pip install -r requirements.txt
+        - rm -Rf osis_common
+        - ln -s $PROJECT_DIR osis_common
+
+      before_script:
+        - cp .env.example .env
+        - echo 'APPS_TO_TEST += ("osis_common",)' >> frontoffice/settings/local.py
+        - echo >> .env
+        - echo "POSTGRES_USER = 'postgres'" >> .env
+        - echo "POSTGRES_PASSWORD = ''" >> .env
+        - psql -d template1 -c 'create extension unaccent;' -U postgres
+        - psql -c 'create database osis_portal_local;' -U postgres
+        - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+        - chmod +x ./cc-test-reporter
+        - ./cc-test-reporter before-build
 
 script:
   - python3 manage.py compilemessages && coverage run manage.py test osis_common --exclude-tag=selenium --no-logs
