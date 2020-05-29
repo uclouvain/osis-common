@@ -65,3 +65,14 @@ class AbstractRepository(abc.ABC):
     @abc.abstractmethod
     def delete(cls, entity_id: EntityIdentity) -> None:
         raise NotImplementedError
+
+
+class DomainService(abc.ABC):
+    """
+    A service used by the domain to return informations from database.
+    These informations can not be Domain object.
+    Exemples of DomainServices :
+    - CheckIfSomethingExist()
+    - EntityIdentityGenerator()
+    """
+    pass
