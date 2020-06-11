@@ -12,6 +12,11 @@ class BusinessException(Exception):
         super().__init__(**kwargs)
 
 
+class BusinessExceptions(BusinessException):
+    def __init__(self, messages: List[str]):
+        self.messages = messages
+
+
 class ValueObject(abc.ABC):
     def __eq__(self, other):
         raise NotImplementedError
