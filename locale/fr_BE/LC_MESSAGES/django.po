@@ -47,7 +47,7 @@ msgid "Done at"
 msgstr "Fait à"
 
 msgid "Email"
-msgstr "Email"
+msgstr "Courriel"
 
 msgid "Enrolled lately"
 msgstr "Inscrit tardivement"
