@@ -1,5 +1,5 @@
 import abc
-from typing import List, Optional
+from typing import List, Optional, Callable, Union
 
 
 class CommandRequest(abc.ABC):
@@ -43,6 +43,9 @@ class Entity(abc.ABC):
 
 class RootEntity(Entity):
     pass
+
+
+ApplicationService = Callable[[CommandRequest], Union[EntityIdentity, List[EntityIdentity]]]
 
 
 class AbstractRepository(abc.ABC):
