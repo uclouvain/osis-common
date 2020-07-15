@@ -51,12 +51,24 @@ ApplicationService = Callable[[CommandRequest], Union[EntityIdentity, List[Entit
 class AbstractRepository(abc.ABC):
     @classmethod
     @abc.abstractmethod
-    def create(cls, entity: Entity) -> EntityIdentity:
+    def create(cls, entity: Entity, **kwargs: ApplicationService) -> EntityIdentity:
+        """
+        Function used to persist (create) new domain Entity into the database.
+        :param entity: Any domain Entity.
+        :param services: List of application services used to persist data into another domain.
+        :return: The identity of the created entity.
+        """
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def update(cls, entity: Entity) -> EntityIdentity:
+    def update(cls, entity: Entity, **kwargs: ApplicationService) -> EntityIdentity:
+        """
+        Function used to persist (update) existing domain Entity into the database.
+        :param entity: Any domain Entity.
+        :param services: List of application services used to persist data into another domain.
+        :return: The identity of the updated entity.
+        """
         raise NotImplementedError
 
     @classmethod
@@ -71,7 +83,7 @@ class AbstractRepository(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def delete(cls, entity_id: EntityIdentity) -> None:
+    def delete(cls, entity_id: EntityIdentity, **kwargs: ApplicationService) -> None:
         raise NotImplementedError
 
 
