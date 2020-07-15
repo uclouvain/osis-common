@@ -68,10 +68,10 @@ class TestXlsBuild(TestCase):
 
     def test_with_correct_worksheet_data(self):
         data = {xls_build.WORKSHEETS_DATA:
-            [{xls_build.CONTENT_KEY: [['LAGRE2020', 'C. biologie', 'Marcel Lenoir', 2018]],
-              xls_build.HEADER_TITLES_KEY: ['Code', 'Short title', 'Name', 'Year'],
-              xls_build.WORKSHEET_TITLE_KEY: 'Feuille 2', }
-            ]}
+                    [{xls_build.CONTENT_KEY: [['LAGRE2020', 'C. biologie', 'Marcel Lenoir', 2018]],
+                      xls_build.HEADER_TITLES_KEY: ['Code', 'Short title', 'Name', 'Year'],
+                      xls_build.WORKSHEET_TITLE_KEY: 'Feuille 2', }
+                     ]}
         self.assertTrue(xls_build._is_checked_worsheets_data(data))
 
     def test_check_xls_generation(self):
@@ -129,15 +129,15 @@ def get_valid_xls_data():
                                           ['Col1 Row3', 'Cours biologie', 'o', 2017, None]],
                   xls_build.HEADER_TITLES_KEY: ['Acronym', 'Title', 'Global id', 'Year', 'Changed'],
                   xls_build.WORKSHEET_TITLE_KEY: 'Feuille 1',
-                  xls_build.COLORED_ROWS: {xls_build.STYLE_NO_GRAY: [3],
-                                           xls_build.STYLE_RED: [2]},
-                  xls_build.COLORED_COLS: {xls_build.STYLE_NO_GRAY: [1],
-                                           xls_build.STYLE_RED: [2]},
-                  xls_build.STYLED_CELLS: {xls_build.STYLE_MODIFIED: ['A1', 'B2']},
+                  xls_build.FILL_ROWS: {xls_build.FILL_NO_GRAY: [3],
+                                        xls_build.FILL_RED: [2]},
+                  xls_build.COLORED_COLS: {xls_build.FILL_NO_GRAY: [1],
+                                           xls_build.FILL_RED: [2]},
+                  xls_build.FONT_CELLS: {xls_build.STYLE_MODIFIED: ['A1', 'B2']},
                   },
                  {xls_build.CONTENT_KEY: [['Col1 Row1', 'C. biologie', 'Marcel Lenoir', 2018]],
                   xls_build.HEADER_TITLES_KEY: ['Code', 'Short title', 'Name', 'Year'],
                   xls_build.WORKSHEET_TITLE_KEY: 'Feuille 2',
-                  xls_build.COLORED_ROWS: {xls_build.STYLE_NO_GRAY: [2]}
+                  xls_build.FILL_ROWS: {xls_build.FILL_NO_GRAY: [2]}
                   }
                  ]}

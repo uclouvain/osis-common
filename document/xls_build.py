@@ -31,7 +31,7 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.utils.translation import gettext_lazy as _
 from openpyxl import Workbook
-from openpyxl.styles import Color, Style, PatternFill, Alignment
+from openpyxl.styles import Color, PatternFill, Alignment
 from openpyxl.styles import Font
 from openpyxl.styles.borders import Border, Side, BORDER_THIN
 from openpyxl.writer.excel import save_virtual_workbook
@@ -57,24 +57,27 @@ WORKSHEET_TITLE_KEY = 'worksheet_title'
 COLORED_ROWS = 'colored_rows'
 COLORED_COLS = 'colored_cols'
 STYLED_CELLS = 'styled_cells'
-STYLE_NO_GRAY = Style(fill=PatternFill(patternType='solid', fgColor=Color('C1C1C1')))
-STYLE_RED = Style(fill=PatternFill(patternType='solid', fgColor=Color(rgb='00FF0000')))
-STYLE_BORDER_TOP = Style(
-    border=Border(
-        top=Side(border_style=BORDER_THIN,
-                 color=Color('FF000000')
-                 ),
-    )
-)
-STYLE_BORDER_BOTTOM = Style(
-    border=Border(
-        bottom=Side(border_style=BORDER_THIN,
-                    color=Color('FF000000')
-                    ),
-    )
+FILL_ROWS = 'fill_rows'
+FILL_CELLS = 'fill_cels'
+FONT_CELLS = 'font_cells'
+ALIGN_CELLS = 'align_cells'
+BORDER_CELLS = 'border_cells'
+FONT_ROWS = 'font_rows'
+FILL_NO_GRAY = PatternFill(patternType='solid', fgColor=Color('C1C1C1'))
+FILL_RED = PatternFill(patternType='solid', fgColor=Color(rgb='00FF0000'))
+BORDER_TOP = Border(
+    top=Side(border_style=BORDER_THIN,
+             color=Color('FF000000')
+             ),
 )
 
-STYLE_MODIFIED = Style(font=Font(color=Color('5CB85C')),)
+BORDER_BOTTOM = Border(
+    bottom=Side(border_style=BORDER_THIN,
+                color=Color('FF000000')
+                ),
+)
+
+STYLE_MODIFIED = Font(color=Color('5CB85C'))
 
 DESCRIPTION = 'param_description'
 FILENAME = 'param_filename'
@@ -102,8 +105,7 @@ def _create_xls(parameters_dict, filters=None):
 
     workbook = Workbook(encoding='utf-8')
     for sheet_number, worksheet_data in enumerate(parameters_dict.get(WORKSHEETS_DATA)):
-        _build_worksheet(worksheet_data,  workbook, sheet_number)
-
+        _build_worksheet(worksheet_data, workbook, sheet_number)
     _build_worksheet_parameters(
         workbook,
         parameters_dict.get(USER_KEY),
@@ -125,13 +127,16 @@ def _build_worksheet(worksheet_data, workbook, sheet_number):
     _add_column_headers(worksheet_data.get(HEADER_TITLES_KEY), a_worksheet)
     _add_content(content, a_worksheet)
     _adjust_column_width(a_worksheet)
-    _coloring_rows(a_worksheet, worksheet_data.get(COLORED_ROWS, None))
-    _coloring_cols(a_worksheet, worksheet_data.get(COLORED_COLS, None))
-    _styling_cells(a_worksheet, worksheet_data.get(STYLED_CELLS, None))
+    _font_rows(a_worksheet, worksheet_data.get(FONT_ROWS))
+    _fill_rows(a_worksheet, worksheet_data.get(FILL_ROWS))
+    _align_cells(a_worksheet, worksheet_data.get(ALIGN_CELLS))
+    _coloring_cols(a_worksheet, worksheet_data.get(COLORED_COLS))
+    _fillings_cells(a_worksheet, worksheet_data.get(STYLED_CELLS))
+    _add_font_to_cells(a_worksheet, worksheet_data.get(FONT_CELLS))
     _format_all_cells_except_header_line(a_worksheet, content)
-    if worksheet_data.get(ROW_HEIGHT, None):
+    if worksheet_data.get(ROW_HEIGHT):
         _adjust_row_height(a_worksheet,
-                           worksheet_data.get(ROW_HEIGHT).get('height', None),
+                           worksheet_data.get(ROW_HEIGHT).get('height'),
                            worksheet_data.get(ROW_HEIGHT).get('start', 1),
                            worksheet_data.get(ROW_HEIGHT).get('stop', 1))
 
@@ -272,20 +277,51 @@ def _check_correct_number_of_fields(header_titles, content):
     return True
 
 
-def _coloring_rows(ws, data):
+def _font_rows(ws, data):
     if data:
         for a_style in data.keys():
-            row_numbers = data.get(a_style, None)
+            row_numbers = data.get(a_style)
             if row_numbers:
-                _set_row_style(a_style, row_numbers, ws)
+                _set_row_font(a_style, row_numbers, ws)
 
 
-def _set_row_style(key, row_numbers, ws):
+def _set_row_font(key, row_numbers, ws):
     for index, row in enumerate(ws.iter_rows()):
         for r in row_numbers:
             if index == r:
                 for cell in row:
-                    cell.style = key
+                    cell.font = key
+
+
+def _fill_rows(ws, data):
+    if data:
+        for a_fill in data.keys():
+            row_numbers = data.get(a_fill)
+            if row_numbers:
+                _set_row_fill(a_fill, row_numbers, ws)
+
+
+def _set_row_fill(key, row_numbers, ws):
+    for index, row in enumerate(ws.iter_rows()):
+        for r in row_numbers:
+            if index == r:
+                for cell in row:
+                    cell.fill = key
+
+
+def _align_cells(ws, data):
+    if data:
+        for an_align in data.keys():
+            cell_reference = data.get(an_align)
+            if cell_reference:
+                for cell in cell_reference:
+                    _set_cell_align(an_align, cell, ws)
+
+
+def _set_cell_align(an_align, cell_number, ws):
+    cell = ws[str(cell_number)]
+    align = an_align
+    cell.alignment = align
 
 
 def _coloring_cols(ws, data):
@@ -318,33 +354,47 @@ def translate(string_value):
 
 
 def prepare_xls_parameters_list(working_sheets_data, parameters):
-    return {LIST_DESCRIPTION_KEY: _(parameters.get(DESCRIPTION, None)),
-            FILENAME_KEY: _(parameters.get(FILENAME, None)),
-            USER_KEY: parameters.get(USER, None),
+    return {LIST_DESCRIPTION_KEY: _(parameters.get(DESCRIPTION)),
+            FILENAME_KEY: _(parameters.get(FILENAME)),
+            USER_KEY: parameters.get(USER),
             WORKSHEETS_DATA:
                 [{CONTENT_KEY: working_sheets_data,
-                  HEADER_TITLES_KEY: parameters.get(HEADER_TITLES, None),
-                  WORKSHEET_TITLE_KEY: _(parameters.get(WS_TITLE, None)),
-                  STYLED_CELLS: parameters.get(STYLED_CELLS, None),
-                  COLORED_ROWS: parameters.get(COLORED_ROWS, None),
-                  ROW_HEIGHT: parameters.get(ROW_HEIGHT, None)
+                  HEADER_TITLES_KEY: parameters.get(HEADER_TITLES),
+                  WORKSHEET_TITLE_KEY: _(parameters.get(WS_TITLE)),
+                  STYLED_CELLS: parameters.get(STYLED_CELLS),
+                  FONT_ROWS: parameters.get(FONT_ROWS),
+                  ROW_HEIGHT: parameters.get(ROW_HEIGHT),
                   }
                  ]}
 
 
-def _styling_cells(ws, data):
+def _fillings_cells(ws, data):
     if data:
-        for a_style in data.keys():
-            cell_reference = data.get(a_style)
+        for a_fill in data.keys():
+            cell_reference = data.get(a_fill)
             if cell_reference:
                 for cell in cell_reference:
-                    _set_cell_style(a_style, cell, ws)
+                    _set_cell_fill(a_fill, cell, ws)
 
 
-def _set_cell_style(a_style, cell_number, ws):
+def _set_cell_fill(a_fill, cell_number, ws):
     cell = ws[str(cell_number)]
-    ft = a_style
-    cell.style = ft
+    fill = a_fill
+    cell.fill = fill
+
+
+def _add_font_to_cells(ws, data):
+    if data:
+        for a_font, row_number in data.items():
+            if row_number:
+                for cell in row_number:
+                    _set_cell_font(a_font, cell, ws)
+
+
+def _set_cell_font(a_font, cell_number, ws):
+    cell = ws[str(cell_number)]
+    ft = a_font
+    cell.font = ft
 
 
 def _adjust_row_height(ws, height, start=1, stop=1):
@@ -356,4 +406,4 @@ def _adjust_row_height(ws, height, start=1, stop=1):
 
 
 def _ensure_str_instance(headers_title):
-    return [str(title)for title in headers_title]
+    return [str(title) for title in headers_title]

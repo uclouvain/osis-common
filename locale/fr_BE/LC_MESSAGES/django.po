@@ -166,8 +166,6 @@ msgstr "description"
 msgid "file"
 msgstr "fichier"
 
-#, fuzzy
-#| msgid "https://www.uclouvain.be/enseignement-reglements.html"
 msgid "https://uclouvain.be/fr/decouvrir/rgee.html"
 msgstr "https://uclouvain.be/fr/decouvrir/rgee.html"
 
