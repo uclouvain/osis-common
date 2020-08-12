@@ -35,7 +35,9 @@ class Entity(abc.ABC):
         super().__init__(*args, **kwargs)
 
     def __eq__(self, other):
-        return self.entity_id == other.entity_id
+        if type(other) == self.__class__:
+            return self.entity_id == other.entity_id
+        return False
 
     def __hash__(self):
         return hash(self.entity_id)
