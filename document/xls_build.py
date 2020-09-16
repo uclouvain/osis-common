@@ -132,6 +132,7 @@ def _build_worksheet(worksheet_data, workbook, sheet_number):
     _align_cells(a_worksheet, worksheet_data.get(ALIGN_CELLS))
     _coloring_cols(a_worksheet, worksheet_data.get(COLORED_COLS))
     _fillings_cells(a_worksheet, worksheet_data.get(STYLED_CELLS))
+    _border_cells(a_worksheet, worksheet_data.get(BORDER_CELLS))
     _add_font_to_cells(a_worksheet, worksheet_data.get(FONT_CELLS))
     _format_all_cells_except_header_line(a_worksheet, content)
     if worksheet_data.get(ROW_HEIGHT):
@@ -379,11 +380,25 @@ def _fillings_cells(ws, data):
                     _set_cell_fill(a_fill, cell, ws)
 
 
+def _border_cells(ws, data):
+    if data:
+        for a_border in data.keys():
+            cell_reference = data.get(a_border)
+            if cell_reference:
+                for cell in cell_reference:
+                    _set_cell_border(a_border, cell, ws)
+
+
 def _set_cell_fill(a_fill, cell_number, ws):
     cell = ws[str(cell_number)]
     fill = a_fill
     cell.fill = fill
 
+
+def _set_cell_border(a_border, cell_number, ws):
+    cell = ws[str(cell_number)]
+    border = a_border
+    cell.border = border
 
 def _add_font_to_cells(ws, data):
     if data:
