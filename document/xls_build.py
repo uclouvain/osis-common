@@ -364,6 +364,8 @@ def prepare_xls_parameters_list(working_sheets_data, parameters):
                   STYLED_CELLS: parameters.get(STYLED_CELLS),
                   FONT_ROWS: parameters.get(FONT_ROWS),
                   ROW_HEIGHT: parameters.get(ROW_HEIGHT),
+                  FONT_CELLS: parameters.get(FONT_CELLS),
+                  BORDER_CELLS: parameters.get(BORDER_CELLS)
                   }
                  ]}
 
