@@ -255,6 +255,7 @@ def _build_and_send_message(connected_user, message_content, receivers, html_mes
             message=unescape(strip_tags(txt_message)),
             html_message=html_message,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            attachment=message_content.get('attachment')
+            attachment=message_content.get('attachment'),
+            cc=message_content.get('cc'),
         )
         mail_sender.send_mail()
