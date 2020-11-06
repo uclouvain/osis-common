@@ -29,13 +29,16 @@ Utility class used to create a message content.
 The message content is used to send a message to one or more receiver.
 """
 
-def create_message_content(html_template_ref,
-                           txt_template_ref,
-                           tables,
-                           receivers,
-                           template_base_data,
-                           subject_data,
-                           attachment=None):
+def create_message_content(
+        html_template_ref,
+        txt_template_ref,
+        tables,
+        receivers,
+        template_base_data,
+        subject_data,
+        attachment=None,
+        cc=None
+):
     """
     Create a message_content dict , used by the send_message function.
     The message_content dict contains all the data needed to create and send the message to a list of receiver.
@@ -58,6 +61,7 @@ def create_message_content(html_template_ref,
     )
     :param attachment: An attachment to the message. Represented by the 3-tuple
     (name, content, mimetype)
+    :param cc: Persons (list) need to be in copy (cc) of the emails sent
     :return: The message_content dict used by the send_message function
     """
     return {
@@ -68,6 +72,7 @@ def create_message_content(html_template_ref,
         'template_base_data':   template_base_data,
         'subject_data':         subject_data,
         'attachment':           attachment,
+        'cc':                   cc,
     }
 
 

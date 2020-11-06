@@ -65,7 +65,8 @@ class MasterMailSender(MailSenderInterface):
             body=self.kwargs.get('message'),
             from_email=self.kwargs.get('from_email'),
             to=self.real_receivers_list,
-            attachments=_get_attachments(self.kwargs)
+            attachments=_get_attachments(self.kwargs),
+            cc=self.kwargs.get('cc')
         )
         msg.attach_alternative(self.kwargs.get('html_message'), "text/html")
         logger.info(
