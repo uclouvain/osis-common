@@ -23,9 +23,9 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+import time
 import unittest
 
-import time
 from django import get_version as get_django_version
 from django.conf import settings
 from django.test.runner import DiscoverRunner
@@ -96,13 +96,17 @@ class InstalledAppsTestRunner(DiscoverRunner):
         print('### Django Version : {}'.format(django_version))
         print('### Tests type: {}'.format(tests_type))
         if hasattr(settings, 'FUNCT_TESTS_CONFIG') and settings.FUNCT_TESTS_CONFIG:
-            print('### Virtual Dispaly: {}'.format(settings.FUNCT_TESTS_CONFIG.get('VIRTUAL_DISPLAY')))
+            print('### Virtual Display: {}'.format(settings.FUNCT_TESTS_CONFIG.get('VIRTUAL_DISPLAY')))
         print('########################################################')
         print('')
         if hasattr(settings, 'MOCK_USER_ROLES_API_CALL') and settings.MOCK_USER_ROLES_API_CALL:
             self.user_roles_api_call = patch(settings.USER_ROLES_API_MOCKED_FUNCT)
             self.mock_user_roles_api_call = self.user_roles_api_call.start()
             self.mock_user_roles_api_call.return_value = self.mock_user_roles_api_return()
+
+        # disable permission cache setting for all tests
+        setattr(settings, 'PERMISSION_CACHE_ENABLED', False)
+
         return super(InstalledAppsTestRunner, self).build_suite(test_labels or settings.APPS_TO_TEST, *args, **kwargs)
 
     def teardown_test_environment(self, **kwargs):
