@@ -29,6 +29,7 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django.utils.translation import pgettext_lazy
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER, TA_LEFT
 from reportlab.lib.pagesizes import A4
@@ -349,7 +350,7 @@ def _build_program_block_content(learning_unit_year, nb_students, program, style
 
 
 def _get_program_text(nb_students, program):
-    return '''<b>{} : {} </b>({} {})'''.format(_('Program'),
+    return '''<b>{} : {} </b>({} {})'''.format(pgettext_lazy('encoding', 'Program'),
                                                program['acronym'],
                                                nb_students,
                                                _('students') if nb_students > 1 else _('student'))
