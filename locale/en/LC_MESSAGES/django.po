@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-08-21 15:44+0200\n"
+"POT-Creation-Date: 2020-11-10 14:52+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,12 +15,6 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-
-#, python-format
-msgid ""
-"%(function_name)s is not a function of a super-class of %(subclass_name)s "
-"[%(super_classes_names)s]"
-msgstr ""
 
 #, python-format
 msgid "%(subclass_name)s is not a sub-class"
@@ -100,6 +94,7 @@ msgstr ""
 msgid "Phone"
 msgstr ""
 
+msgctxt "encoding"
 msgid "Program"
 msgstr ""
 
