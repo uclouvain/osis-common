@@ -103,12 +103,14 @@ class MessageHistorySender(MasterMailSender):
 
     def send_mail(self):
         receiver_emails = ', '.join(r['receiver_email'] for r in self.receivers if r.get('receiver_email'))
+        first_receiver = self.receivers[0]  # FIXME :: for backward compatibility with dissertation. Should be removed
         message_history_mdl.MessageHistory.objects.create(
             reference=self.reference,
             subject=self.kwargs.get('subject'),
             content_txt=self._prefix_mail_content_with_original_receivers_and_cc(self.kwargs.get('message')),
             content_html=self._prefix_mail_content_with_original_receivers_and_cc(self.kwargs.get('html_message')),
             receiver_email=receiver_emails,
+            receiver_person_id=first_receiver.get('receiver_person_id'),
             sent=timezone.now()
         )
 
