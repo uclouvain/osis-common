@@ -60,7 +60,8 @@ class MasterMailSender(MailSenderInterface):
         return []
 
     def get_original_cc_list(self):
-        return [person.email for person in self.kwargs.get('cc', [])]
+        cc = self.kwargs.get('cc') or []
+        return [person.email for person in cc]
 
     def get_real_cc_list(self):
         return []
