@@ -59,6 +59,13 @@ class MasterMailSender(MailSenderInterface):
     def get_real_receivers_list(self):
         return []
 
+    def get_original_cc_list(self):
+        cc = self.kwargs.get('cc') or []
+        return [person.email for person in cc]
+
+    def get_real_cc_list(self):
+        return []
+
     def send_mail(self):
         msg = EmailMultiAlternatives(
             subject=self.kwargs.get('subject'),
@@ -66,12 +73,13 @@ class MasterMailSender(MailSenderInterface):
             from_email=self.kwargs.get('from_email'),
             to=self.real_receivers_list,
             attachments=_get_attachments(self.kwargs),
-            cc=self.kwargs.get('cc')
+            cc=self.get_real_cc_list()
         )
         msg.attach_alternative(self.kwargs.get('html_message'), "text/html")
         logger.info(
-            'Sending mail to {} (MailSenderClass : {})'.format(
+            'Sending mail to {} with cc = {} (MailSenderClass : {})'.format(
                 ', '.join(self.real_receivers_list),
+                ', '.join(self.get_real_cc_list()),
                 self.__class__.__name__
             )
         )
@@ -82,17 +90,27 @@ class MessageHistorySender(MasterMailSender):
     """
     Log into message_history table
     """
+
+    def _prefix_mail_content_with_original_receivers_and_cc(self, content):
+        # Useful for tests
+        original_receivers = "<p> INFO (not sent in production): Original receivers : {original_receivers}</p> ".format(
+            original_receivers=self.get_original_receivers_list()
+        )
+        original_cc = "<p> INFO (not sent in production): Original cc : {original_cc} </p> ".format(
+            original_cc=self.get_original_cc_list()
+        )
+        return original_receivers + original_cc + content
+
     def send_mail(self):
-        for receiver in self.receivers:
-            message_history_mdl.MessageHistory.objects.create(
-                reference=self.reference,
-                subject=self.kwargs.get('subject'),
-                content_txt=self.kwargs.get('message'),
-                content_html=self.kwargs.get('html_message'),
-                receiver_person_id=receiver.get('receiver_person_id'),
-                receiver_email=receiver.get('receiver_email'),
-                sent=timezone.now() if receiver.get('receiver_email') else None
-            )
+        receiver_emails = ', '.join(r['receiver_email'] for r in self.receivers if r.get('receiver_email'))
+        message_history_mdl.MessageHistory.objects.create(
+            reference=self.reference,
+            subject=self.kwargs.get('subject'),
+            content_txt=self._prefix_mail_content_with_original_receivers_and_cc(self.kwargs.get('message')),
+            content_html=self._prefix_mail_content_with_original_receivers_and_cc(self.kwargs.get('html_message')),
+            receiver_email=receiver_emails,
+            sent=timezone.now()
+        )
 
 
 class GenericMailSender(MasterMailSender):
@@ -101,6 +119,9 @@ class GenericMailSender(MasterMailSender):
     Send email to a generic email address (settings.COMMON_EMAIL_RECEIVER)
     """
     def get_real_receivers_list(self):
+        return [settings.COMMON_EMAIL_RECEIVER]
+
+    def get_real_cc_list(self):
         return [settings.COMMON_EMAIL_RECEIVER]
 
     def send_mail(self):
@@ -122,6 +143,11 @@ class ConnectedUserMailSender(MasterMailSender):
                          'Email will be sent to the COMMON_EMAIL_RECEIVER (from settings) instead.')
             return [settings.COMMON_EMAIL_RECEIVER]
 
+    def get_real_cc_list(self):
+        if self.get_original_cc_list():
+            return self.get_real_receivers_list()
+        return []
+
     def send_mail(self):
         add_testing_information_to_contents(self)
         super().send_mail()
@@ -134,6 +160,9 @@ class RealReceiverMailSender(MasterMailSender):
     """
     def get_real_receivers_list(self):
         return self.get_original_receivers_list()
+
+    def get_real_cc_list(self):
+        return self.get_original_cc_list()
 
 
 def _get_attachments(attributes_message):

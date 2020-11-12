@@ -94,9 +94,18 @@ class MessagesTestCase(TestCase):
             connected_user=self.connected_user
         )
         self.assertIsNone(message_error, 'No message error should be sent')
-        count_messages_after_send_again = len(message_history.MessageHistory.objects.all())
-        self.assertTrue(count_messages_after_send_again == count_messages_before_send + 5,
-                        '5 messages should have been sent')
+        qs = message_history.MessageHistory.objects.all()
+        self.assertTrue(
+            qs.count() == count_messages_before_send + 2,
+            "There are 5 receivers but only 2 mail should be sent "
+            "(1 in 'fr-BE' and 1 in 'en' ('pt-BR' not in settings so 'fr-BE' by default))"
+        )
+        history = qs.get(receiver_email__icontains="receiver1@email.org")
+        self.assertEqual(
+            history.receiver_email,
+            "receiver1@email.org, receiver2@email.org, receiver1@email.org",
+            "Should contain all receivers for language 'fr-BE' and 'pt-BR' "
+        )
 
         content_no_html_ref = create_message_content(None,
                                                      'assessments_scores_submission_txt',
@@ -177,6 +186,7 @@ class MailClassesTestCase(TestCase):
                 None
             )
         ]
+        self.cc = [PersonFactory()]
 
     @patch('django.core.mail.message.EmailMessage.send')
     def test_message_history_mail_sender(self, mock_mail_send):
@@ -188,18 +198,24 @@ class MailClassesTestCase(TestCase):
             message="test message",
             html_message="<p>test html message</p>",
             from_email=settings.DEFAULT_FROM_EMAIL,
-            attachment=None
+            attachment=None,
+            cc=self.cc
         )
         mail_sender.send_mail()
-        self.assertTrue(
-            MessageHistory.objects.get(
-                reference="reference",
-                subject="test subject",
-                content_txt="test message",
-                content_html="<p>test html message</p>",
-                receiver_person_id=self.receiver.pk,
-                receiver_email=self.receiver.email,
-            )
+        qs = MessageHistory.objects.filter(
+            reference="reference",
+            subject="test subject",
+            receiver_email=self.receiver.email,
+        )
+        self.assertTrue(qs.exists())
+        history = qs.get()
+        self.assertIn(
+            "INFO (not sent in production): Original receivers : ['{cc_email}']".format(cc_email=self.receiver.email),
+            history.content_html,
+        )
+        self.assertIn(
+            "INFO (not sent in production): Original cc : ['{cc_email}']".format(cc_email=self.cc[0].email),
+            history.content_html,
         )
         mock_mail_send.assert_not_called()
 
@@ -214,14 +230,18 @@ class MailClassesTestCase(TestCase):
             message="test message",
             html_message="<p>test html message</p>",
             from_email=settings.DEFAULT_FROM_EMAIL,
-            attachment=None
+            attachment=None,
+            cc=self.cc
         )
         mail_sender.send_mail()
         self.assertEqual(mock_mail_send.call_count, 1)
         log = mock_logger.call_args[0][0]
         self.assertEqual(
             log,
-            'Sending mail to {} (MailSenderClass : GenericMailSender)'.format(settings.COMMON_EMAIL_RECEIVER)
+            'Sending mail to {receiver} with cc = {cc} (MailSenderClass : GenericMailSender)'.format(
+                receiver=settings.COMMON_EMAIL_RECEIVER,
+                cc=settings.COMMON_EMAIL_RECEIVER
+            )
         )
 
     @patch('logging.Logger.info')
@@ -235,14 +255,18 @@ class MailClassesTestCase(TestCase):
             message="test message",
             html_message="<p>test html message</p>",
             from_email=settings.DEFAULT_FROM_EMAIL,
-            attachment=None
+            attachment=None,
+            cc=self.cc
         )
         mail_sender.send_mail()
         self.assertEqual(mock_mail_send.call_count, 1)
         log = mock_logger.call_args[0][0]
         self.assertEqual(
             log,
-            'Sending mail to {} (MailSenderClass : ConnectedUserMailSender)'.format(self.connected_person.email)
+            'Sending mail to {receiver} with cc = {cc} (MailSenderClass : ConnectedUserMailSender)'.format(
+                receiver=self.connected_person.email,
+                cc=self.connected_person.email,
+            )
         )
 
     @patch('logging.Logger.error')
@@ -257,7 +281,8 @@ class MailClassesTestCase(TestCase):
             message="test message",
             html_message="<p>test html message</p>",
             from_email=settings.DEFAULT_FROM_EMAIL,
-            attachment=None
+            attachment=None,
+            cc=self.cc
         )
         mail_sender.send_mail()
         self.assertEqual(mock_mail_send.call_count, 1)
@@ -265,7 +290,10 @@ class MailClassesTestCase(TestCase):
         log = mock_logger.call_args[0][0]
         self.assertEqual(
             log,
-            'Sending mail to {} (MailSenderClass : ConnectedUserMailSender)'.format(settings.COMMON_EMAIL_RECEIVER)
+            'Sending mail to {receiver} with cc = {cc} (MailSenderClass : ConnectedUserMailSender)'.format(
+                receiver=settings.COMMON_EMAIL_RECEIVER,
+                cc=settings.COMMON_EMAIL_RECEIVER,
+            )
         )
 
         error_log = mock_logger_error.call_args[0][0]
@@ -277,7 +305,7 @@ class MailClassesTestCase(TestCase):
 
     @patch('logging.Logger.info')
     @patch('django.core.mail.message.EmailMessage.send')
-    def test_mail_sender(self, mock_mail_send, mock_logger):
+    def test_real_mail_sender_in_production(self, mock_mail_send, mock_logger):
         mail_sender = mail_sender_classes.RealReceiverMailSender(
             receivers=self.receivers,
             reference="reference",
@@ -286,15 +314,17 @@ class MailClassesTestCase(TestCase):
             message="test message",
             html_message="<p>test html message</p>",
             from_email=settings.DEFAULT_FROM_EMAIL,
-            attachment=None
+            attachment=None,
+            cc=self.cc
         )
         mail_sender.send_mail()
         self.assertEqual(mock_mail_send.call_count, 1)
         log = mock_logger.call_args[0][0]
         self.assertEqual(
             log,
-            'Sending mail to {} (MailSenderClass : RealReceiverMailSender)'.format(
-                self.receivers[0].get('receiver_email')
+            'Sending mail to {receiver} with cc = {cc} (MailSenderClass : RealReceiverMailSender)'.format(
+                receiver=self.receivers[0].get('receiver_email'),
+                cc=self.cc[0].email,
             )
         )
 
