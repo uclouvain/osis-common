@@ -55,8 +55,8 @@ class MessageHistory(models.Model):
     subject = models.CharField(max_length=255)
     content_txt = models.TextField()
     content_html = models.TextField()
-    receiver_person_id = models.IntegerField(db_index=True, blank=True, null=True)
-    receiver_email = models.EmailField(blank=True, null=True)
+    receiver_person_id = models.IntegerField(db_index=True, blank=True, null=True)  # FIXME :: should be removed
+    receiver_email = models.TextField(blank=True, null=True)
     created = models.DateTimeField(editable=False)
     sent = models.DateTimeField(null=True)
     reference = models.CharField(max_length=100, null=True, db_index=True)

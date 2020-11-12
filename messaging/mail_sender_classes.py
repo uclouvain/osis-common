@@ -92,6 +92,7 @@ class MessageHistorySender(MasterMailSender):
     """
 
     def _prefix_mail_content_with_original_receivers_and_cc(self, content):
+        # Useful for tests
         original_receivers = "<p> INFO (not sent in production): Original receivers : {original_receivers}</p> ".format(
             original_receivers=self.get_original_receivers_list()
         )
@@ -101,16 +102,15 @@ class MessageHistorySender(MasterMailSender):
         return original_receivers + original_cc + content
 
     def send_mail(self):
-        for receiver in self.receivers:
-            message_history_mdl.MessageHistory.objects.create(
-                reference=self.reference,
-                subject=self.kwargs.get('subject'),
-                content_txt=self._prefix_mail_content_with_original_receivers_and_cc(self.kwargs.get('message')),
-                content_html=self._prefix_mail_content_with_original_receivers_and_cc(self.kwargs.get('html_message')),
-                receiver_person_id=receiver.get('receiver_person_id'),
-                receiver_email=receiver.get('receiver_email'),
-                sent=timezone.now() if receiver.get('receiver_email') else None
-            )
+        receiver_emails = ', '.join(r['receiver_email'] for r in self.receivers if r.get('receiver_email'))
+        message_history_mdl.MessageHistory.objects.create(
+            reference=self.reference,
+            subject=self.kwargs.get('subject'),
+            content_txt=self._prefix_mail_content_with_original_receivers_and_cc(self.kwargs.get('message')),
+            content_html=self._prefix_mail_content_with_original_receivers_and_cc(self.kwargs.get('html_message')),
+            receiver_email=receiver_emails,
+            sent=timezone.now()
+        )
 
 
 class GenericMailSender(MasterMailSender):

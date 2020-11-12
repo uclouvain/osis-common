@@ -94,9 +94,18 @@ class MessagesTestCase(TestCase):
             connected_user=self.connected_user
         )
         self.assertIsNone(message_error, 'No message error should be sent')
-        count_messages_after_send_again = len(message_history.MessageHistory.objects.all())
-        self.assertTrue(count_messages_after_send_again == count_messages_before_send + 5,
-                        '5 messages should have been sent')
+        qs = message_history.MessageHistory.objects.all()
+        self.assertTrue(
+            qs.count() == count_messages_before_send + 2,
+            "There are 5 receivers but only 2 mail should be sent "
+            "(1 in 'fr-BE' and 1 in 'en' ('pt-BR' not in settings so 'fr-BE' by default))"
+        )
+        history = qs.get(receiver_email__icontains="receiver1@email.org")
+        self.assertEqual(
+            history.receiver_email,
+            "receiver1@email.org, receiver2@email.org, receiver1@email.org",
+            "Should contain all receivers for language 'fr-BE' and 'pt-BR' "
+        )
 
         content_no_html_ref = create_message_content(None,
                                                      'assessments_scores_submission_txt',
@@ -196,7 +205,6 @@ class MailClassesTestCase(TestCase):
         qs = MessageHistory.objects.filter(
             reference="reference",
             subject="test subject",
-            receiver_person_id=self.receiver.pk,
             receiver_email=self.receiver.email,
         )
         self.assertTrue(qs.exists())
