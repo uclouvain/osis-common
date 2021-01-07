@@ -146,7 +146,7 @@ class TestPaperSheet(TestCase):
             paragraph.text,
             (
                 """<para> Légende pour le champ 'Justification': A=Absent, T=Tricherie<br/>Légende pour le champ """
-                """'Note chiffrée': 0 - 20 (0=Cote de présence)<br/><font color=red>Les notes décimales sont """
+                """'Note chiffrée': 0 - 20 (0=Note de présence)<br/><font color=red>Les notes décimales sont """
                 """autorisées pour ce cours</font><br/><span backColor=#dff0d8>&nbsp; Inscrit tardivement &nbsp;"""
                 """""""</span> - <span backColor=#f2dede>&nbsp; Désinscrit tardivement &nbsp;</span><br/> """
                 """Conformément aux articles 104, 109 et 111 RGEE (Règlement général des études et des examens) """
@@ -164,7 +164,7 @@ class TestPaperSheet(TestCase):
             paragraph.text,
             (
                 """<para> Légende pour le champ 'Justification': A=Absent, T=Tricherie<br/>Légende pour le champ """
-                """'Note chiffrée': 0 - 20 (0=Cote de présence)<br/><font color=red>Attention : décimales non """
+                """'Note chiffrée': 0 - 20 (0=Note de présence)<br/><font color=red>Attention : décimales non """
                 """autorisées pour ce cours</font><br/><span backColor=#dff0d8>&nbsp; Inscrit tardivement &nbsp;"""
                 """""""</span> - <span backColor=#f2dede>&nbsp; Désinscrit tardivement &nbsp;</span><br/> """
                 """Conformément aux articles 104, 109 et 111 RGEE (Règlement général des études et des examens) """

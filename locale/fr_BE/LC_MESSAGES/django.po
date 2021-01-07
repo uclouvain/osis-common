@@ -110,7 +110,7 @@ msgstr "Note"
 
 #, python-brace-format
 msgid "Score legend: {score} (0=Score of presence)"
-msgstr "Légende pour le champ 'Note chiffrée': {score} (0=Cote de présence)"
+msgstr "Légende pour le champ 'Note chiffrée': {score} (0=Note de présence)"
 
 msgid "Score sheet"
 msgstr "Feuille de notes"
