@@ -33,12 +33,35 @@ BELGIUM_NAT_NUMBER_CHECKSUM_KEY = 97
 def belgium_national_register_number_validator(value):
     nat_nbr = ''.join(filter(str.isdigit, str(value)))
 
-    if len(nat_nbr) != BELGIUM_NAT_NUMBER_LENGTH:
+    if not all([
+        _length_is_valid(nat_nbr),
+        _included_date_is_valid(nat_nbr),
+        _checksum_is_valid(nat_nbr)
+    ]):
         raise ValidationError(
-            _('%(value)s is not a valid identification number of the National Register of Belgium '
-              '(length must be %(length)s digits)'),
-            params={'value': value, 'length': BELGIUM_NAT_NUMBER_LENGTH},
+            _('%(value)s is not a valid identification number of the National Register of Belgium'),
+            params={'value': value},
         )
 
-    birth_month = int(nat_nbr[2:4])
-    birth_day = int(nat_nbr[4:6])
+
+def _length_is_valid(value):
+    return len(value) == BELGIUM_NAT_NUMBER_LENGTH
+
+
+def _included_date_is_valid(value):
+    birth_month = int(value[2:4])
+    birth_day = int(value[4:6])
+    return 0 <= birth_month <= 12 and 0 <= birth_day <= 31
+
+
+def _checksum_is_valid(value):
+    part_to_check = int(value[0:9])
+    part_to_check_birth_after_year_2000 = int('2' + value[0:9])
+    checksum = int(value[9:11])
+
+    return checksum == __compute_checksum(part_to_check) or \
+        checksum == __compute_checksum(part_to_check_birth_after_year_2000)
+
+
+def __compute_checksum(value):
+    return BELGIUM_NAT_NUMBER_CHECKSUM_KEY - value % BELGIUM_NAT_NUMBER_CHECKSUM_KEY
