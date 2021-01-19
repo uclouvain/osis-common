@@ -23,16 +23,29 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+import re
+
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
 BELGIUM_NAT_NUMBER_LENGTH = 11
 BELGIUM_NAT_NUMBER_CHECKSUM_KEY = 97
+BELGIUM_NAT_NUMBER_REGEX = r"[0-9 ./-]+"
 
 
 def belgium_national_register_number_validator(value):
-    nat_nbr = ''.join(filter(str.isdigit, str(value)))
     common_exception_message = _('%(value)s is not a valid identification number of the National Register of Belgium')
+
+    if not _all_characters_are_valid(value):
+        raise ValidationError(
+            "{} ({})".format(
+                common_exception_message,
+                _('the only characters allowed are : digits and . and - and /')
+            ),
+            params={'value': value}
+        )
+
+    nat_nbr = ''.join(filter(str.isdigit, str(value)))
 
     if not _length_is_valid(nat_nbr):
         raise ValidationError(
@@ -64,6 +77,11 @@ def belgium_national_register_number_validator(value):
 
 def _length_is_valid(value):
     return len(value) == BELGIUM_NAT_NUMBER_LENGTH
+
+
+def _all_characters_are_valid(value):
+    match = re.fullmatch(BELGIUM_NAT_NUMBER_REGEX, value)
+    return match
 
 
 def _included_date_is_valid(value):

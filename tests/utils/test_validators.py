@@ -44,8 +44,19 @@ class TestBelgiumNationalRegisterNumberValidator(TestCase):
             with self.subTest(case=case):
                 belgium_national_register_number_validator(case)
 
+    def test_invalid_characters(self):
+        invalid_characters_cases = ['', '170730_03384', '170730:033 84', '170730033A84']
+        for case in invalid_characters_cases:
+            with self.subTest(case=case):
+                excepted_message = "{} ({})".format(
+                    self.common_exception_message % {"value": case},
+                    _('the only characters allowed are : digits and . and - and /')
+                )
+                with self.assertRaisesMessage(ValidationError, excepted_message):
+                    belgium_national_register_number_validator(case)
+
     def test_invalid_length(self):
-        invalid_length_cases = ['', '123', '1234567890', '91 07 09.456.7', '20.07.15.999.111', '1234567891011']
+        invalid_length_cases = ['123', '1234567890', '91 07 09.456.7', '20.07.15.999.111', '1234567891011']
         for case in invalid_length_cases:
             with self.subTest(case=case):
                 excepted_message = "{} ({})".format(
