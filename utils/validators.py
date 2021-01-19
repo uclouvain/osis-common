@@ -32,15 +32,33 @@ BELGIUM_NAT_NUMBER_CHECKSUM_KEY = 97
 
 def belgium_national_register_number_validator(value):
     nat_nbr = ''.join(filter(str.isdigit, str(value)))
+    common_exception_message = _('%(value)s is not a valid identification number of the National Register of Belgium')
 
-    if not all([
-        _length_is_valid(nat_nbr),
-        _included_date_is_valid(nat_nbr),
-        _checksum_is_valid(nat_nbr)
-    ]):
+    if not _length_is_valid(nat_nbr):
         raise ValidationError(
-            _('%(value)s is not a valid identification number of the National Register of Belgium'),
-            params={'value': value},
+            "{} ({})".format(
+                common_exception_message,
+                _('it must be %(length)s digits long')
+            ),
+            params={'value': value, 'length': BELGIUM_NAT_NUMBER_LENGTH}
+        )
+
+    elif not _included_date_is_valid(nat_nbr):
+        raise ValidationError(
+            "{} ({})".format(
+                common_exception_message,
+                _('it does not match a valid birth date')
+            ),
+            params={'value': value}
+        )
+
+    elif not _checksum_is_valid(nat_nbr):
+        raise ValidationError(
+            "{} ({})".format(
+                common_exception_message,
+                _('the checksum is invalid')
+            ),
+            params={'value': value}
         )
 
 
