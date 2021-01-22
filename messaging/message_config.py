@@ -30,6 +30,8 @@ The message content is used to send a message to one or more receiver.
 """
 from django.conf import settings
 
+DEFAULT_LANG = settings.LANGUAGE_CODE
+
 
 def create_message_content(
         html_template_ref,
@@ -106,5 +108,5 @@ def create_receiver(receiver_person_id, receiver_email, receiver_lang):
     return {
         'receiver_person_id': receiver_person_id,
         'receiver_email': receiver_email,
-        'receiver_lang': receiver_lang or settings.LANGUAGE_CODE_FR
+        'receiver_lang': receiver_lang or DEFAULT_LANG
     }
