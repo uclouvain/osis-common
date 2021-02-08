@@ -29,6 +29,7 @@ import re
 
 from django.conf import settings
 from django.http import HttpResponse
+from django.template.defaultfilters import yesno
 from django.utils.translation import gettext_lazy as _
 from openpyxl import Workbook
 from openpyxl.styles import Color, PatternFill, Alignment
@@ -196,7 +197,10 @@ def _build_worksheet_parameters(workbook, a_user, list_description=None, filters
         worksheet_parameters.append([str(_('description')), str(list_description)])
     if filters:
         for key, value in filters.items():
-            worksheet_parameters.append([str(key), str(value)])
+            if isinstance(value, bool):
+                worksheet_parameters.append([str(key), str(yesno(value).title())])
+            else:
+                worksheet_parameters.append([str(key), str(value)])
     _adjust_column_width(worksheet_parameters)
     return worksheet_parameters
 
