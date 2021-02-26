@@ -123,7 +123,7 @@ class TestPersist(TestCase):
             ModelWithUser
         )
 
-    def test_persist_case_with_model_not_serializable(self):
+    def test_persist_case_with_model_not_existing(self):
         structure_serialized = serialize(self.model_with_user, to_delete=False)
         structure_serialized["model"] = "reference.Test"
         result = persist(structure_serialized)
