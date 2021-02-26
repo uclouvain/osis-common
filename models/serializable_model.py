@@ -215,7 +215,10 @@ def unwrap_serialization(wrapped_serialization):
 
 
 def persist(structure):
-    model_class = apps.get_model(structure.get('model'))
+    try:
+        model_class = apps.get_model(structure.get('model'))
+    except LookupError:
+        return
     if structure:
         fields = structure.get('fields')
         for field_name, value in fields.items():
