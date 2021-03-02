@@ -123,6 +123,12 @@ class TestPersist(TestCase):
             ModelWithUser
         )
 
+    def test_persist_case_with_model_not_existing(self):
+        structure_serialized = serialize(self.model_with_user, to_delete=False)
+        structure_serialized["model"] = "reference.Test"
+        result = persist(structure_serialized)
+        self.assertEqual(result, None)
+
     @patch("osis_common.models.serializable_model._make_upsert", side_effect=None)
     def test_persist_case_update_existing(self, mock_make_upsert):
         # Save instance in order to have UUID on database
