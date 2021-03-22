@@ -7,7 +7,7 @@ import attr
 
 @attr.s(frozen=True, slots=True)
 class CommandRequest(abc.ABC):
-    transaction_id = attr.ib(init=False, type=uuid.UUID, default=attr.Factory(uuid.uuid4))
+    transaction_id = attr.ib(init=False, type=uuid.UUID, default=attr.Factory(uuid.uuid4), eq=False)
 
 
 class BusinessException(Exception):
