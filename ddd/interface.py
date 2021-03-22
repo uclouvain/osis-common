@@ -1,9 +1,13 @@
 import abc
+import uuid
 from typing import List, Optional, Callable, Union
 
+import attr
 
+
+@attr.s(frozen=True, slots=True)
 class CommandRequest(abc.ABC):
-    pass
+    transaction_id = attr.ib(init=False, type=uuid.UUID, default=attr.Factory(uuid.uuid4))
 
 
 class BusinessException(Exception):
