@@ -98,3 +98,33 @@ class DomainService(abc.ABC):
     - EntityIdentityGenerator()
     """
     pass
+
+
+class DTO:
+    """
+    Data Transfer Object : only contains declaration of primitive fields.
+    Used as 'contract" between 2 layers in the code (example : repository <-> factory)
+    """
+    pass
+
+
+class RootEntityBuilder(abc.ABC):
+
+    @classmethod
+    def build_from_command(cls, cmd: 'CommandRequest') -> 'RootEntity':
+        raise NotImplementedError()
+
+    @classmethod
+    def build_from_repository_dto(cls, dto_object: 'DTO') -> 'RootEntity':
+        raise NotImplementedError()
+
+
+class EntityIdentityBuilder(abc.ABC):
+
+    @classmethod
+    def build_from_command(cls, cmd: 'CommandRequest') -> 'EntityIdentity':
+        raise NotImplementedError()
+
+    @classmethod
+    def build_from_repository_dto(cls, dto_object: 'DTO') -> 'EntityIdentity':
+        raise NotImplementedError()
