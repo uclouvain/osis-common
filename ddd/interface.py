@@ -1,6 +1,9 @@
 import abc
 import warnings
-from typing import List, Optional, Callable, Union
+from decimal import Decimal
+from typing import List, Optional, Callable, Union, Dict
+
+import attr
 
 
 class CommandRequest(abc.ABC):
@@ -46,9 +49,6 @@ class Entity(abc.ABC):
 
 class RootEntity(Entity):
     pass
-
-
-ApplicationService = Callable[[CommandRequest], Union[EntityIdentity, List[EntityIdentity]]]
 
 
 class AbstractRepository(abc.ABC):
@@ -143,3 +143,17 @@ class EntityIdentityBuilder(abc.ABC):
     @abc.abstractmethod
     def build_from_repository_dto(cls, dto_object: 'DTO') -> 'EntityIdentity':
         raise NotImplementedError()
+
+
+PrimitiveType = Union[int, str, float, Decimal]
+
+
+ApplicationServiceResult = Union[EntityIdentity, List[EntityIdentity], DTO, List[DTO]]
+ApplicationService = Callable[[CommandRequest], ApplicationServiceResult]
+
+
+@attr.s(frozen=True, slots=True)
+class AbstractBus(abc.ABC):
+    command_handlers = attr.ib(
+        type=Dict[CommandRequest, Callable[[CommandRequest], ApplicationServiceResult]]
+    )
