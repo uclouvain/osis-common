@@ -51,10 +51,22 @@ class RootEntity(Entity):
     pass
 
 
+class DTO:
+    """
+    Data Transfer Object : only contains declaration of primitive fields.
+    Used as 'contract" between 2 layers in the code (example : repository <-> factory)
+    """
+    pass
+
+
+ApplicationServiceResult = Union[EntityIdentity, List[EntityIdentity], DTO, List[DTO]]
+ApplicationService = Callable[[CommandRequest], ApplicationServiceResult]
+
+
 class AbstractRepository(abc.ABC):
 
     @classmethod
-    def create(cls, entity: Entity, **kwargs: ApplicationService) -> RootEntity:
+    def create(cls, entity: 'Entity', **kwargs: ApplicationService) -> 'RootEntity':
         """
         Function used to persist (create) new domain Entity into the database.
         :param entity: Any domain Entity.
@@ -62,9 +74,10 @@ class AbstractRepository(abc.ABC):
         :return: The identity of the created entity.
         """
         warnings.warn("DEPRECATED : use .save() function instead", DeprecationWarning)
+        raise NotImplementedError
 
     @classmethod
-    def update(cls, entity: Entity, **kwargs: ApplicationService) -> RootEntity:
+    def update(cls, entity: 'Entity', **kwargs: ApplicationService) -> 'RootEntity':
         """
         Function used to persist (update) existing domain Entity into the database.
         :param entity: Any domain Entity.
@@ -72,6 +85,7 @@ class AbstractRepository(abc.ABC):
         :return: The identity of the updated entity.
         """
         warnings.warn("DEPRECATED : use .save() function instead", DeprecationWarning)
+        raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
@@ -111,14 +125,6 @@ class DomainService(abc.ABC):
     pass
 
 
-class DTO:
-    """
-    Data Transfer Object : only contains declaration of primitive fields.
-    Used as 'contract" between 2 layers in the code (example : repository <-> factory)
-    """
-    pass
-
-
 class RootEntityBuilder(abc.ABC):
 
     @classmethod
@@ -147,13 +153,3 @@ class EntityIdentityBuilder(abc.ABC):
 
 PrimitiveType = Union[int, str, float, Decimal]
 
-
-ApplicationServiceResult = Union[EntityIdentity, List[EntityIdentity], DTO, List[DTO]]
-ApplicationService = Callable[[CommandRequest], ApplicationServiceResult]
-
-
-@attr.s(frozen=True, slots=True)
-class AbstractBus(abc.ABC):
-    command_handlers = attr.ib(
-        type=Dict[CommandRequest, Callable[[CommandRequest], ApplicationServiceResult]]
-    )
