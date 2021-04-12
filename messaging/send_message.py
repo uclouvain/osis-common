@@ -1,12 +1,12 @@
 ##############################################################################
 #
-# OSIS stands for Open Student Information System. It's an application
+#    OSIS stands for Open Student Information System. It's an application
 #    designed to manage the core business of higher education institutions,
 #    such as universities, faculties, institutes and professional schools.
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2019 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2021 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -39,6 +39,7 @@ from django.utils.module_loading import import_string
 from django.utils.translation import gettext as _
 
 from osis_common.models import message_template as message_template_mdl
+from typing import List, Dict
 
 logger = logging.getLogger(settings.SEND_MAIL_LOGGER)
 
@@ -74,14 +75,22 @@ def _get_template_by_language_or_default(lang_code, html_message_templates, txt_
     return html_message_template, txt_message_template
 
 
-def __render_table_template_as_string(table_headers, table_rows, html_format):
+def __render_table_template_as_string(
+        table_headers: List[str],
+        table_rows: List,
+        html_format: bool,
+        rows_style: List[str] = None,
+        txt_complementary_first_col: Dict[str, List] = {}
+):
     """
      Render the table template as a string.
      If htmlformat is True , render the html table template , else the txt table template
      Used to create dynamically a table of data to insert into email template.
-     :param table_headers: The header of the table as a list of Strings
+     :param table_headers: The header of the table
      :param table_rows: The content of each row as a list of item list
      :param html_format True if you want the html template , False if you want the txt template
+     :param rows_style : only if html_format is True. List of css style to apply on rows
+     :param txt_complementary_first_col : only if html_format is False. dict with first col header/rows content
     """
     if html_format:
         template = 'messaging/html_email_table_template.html'
@@ -89,14 +98,17 @@ def __render_table_template_as_string(table_headers, table_rows, html_format):
         template = 'messaging/txt_email_table_template.html'
     data = {
         'table_headers': table_headers,
-        'table_rows': table_rows
+        'table_rows': table_rows,
+        'rows_style': rows_style,
+        'text_header': txt_complementary_first_col.get('txt_header'),
+        'text_rows_content': txt_complementary_first_col.get('txt_content')
     }
     return render_to_string(template, data)
 
 
 def __map_receivers_by_languages(receivers):
     """
-    Convert a list of persons into a dictionnary langage_code: list_of_persons ,
+    Convert a list of persons into a dictionary language_code: list_of_persons ,
     according to the language of the person.
     :param receivers the list of receivers we want to map
     """
@@ -122,7 +134,19 @@ def __make_tables_template_data(tables, lang_code):
         for table in tables:
             table_template_name = table.get('table_template_name')
             table_header_txt = table.get('header_txt')
-            table_data = table.get('data')
+
+            rows_style = None
+            txt_complementary_first_col = {}
+            if isinstance(table.get('data'), dict):
+                table_data = table.get('data').get('data')
+                rows_style = table.get('data').get('style')
+                txt_complementary_first_col = {
+                    'txt_header': table.get('data').get('txt_complementary_first_col').get('header'),
+                    'txt_content': table.get('data').get('txt_complementary_first_col').get('rows_content')
+                }
+            else:
+                table_data = table.get('data')
+
             table_data_translatable = table.get('data_translatable')
 
             with translation.override(lang_code):
@@ -132,12 +156,14 @@ def __make_tables_template_data(tables, lang_code):
             table_html = __render_table_template_as_string(
                 table_headers,
                 table_data,
-                True
+                html_format=True,
+                rows_style=rows_style
             )
             table_txt = __render_table_template_as_string(
                 table_headers,
                 table_data,
-                False
+                html_format=False,
+                txt_complementary_first_col=txt_complementary_first_col
             )
             html_templates_data[table_template_name] = table_html
             txt_templates_data[table_template_name] = table_txt
