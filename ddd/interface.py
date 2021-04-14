@@ -1,4 +1,5 @@
 import abc
+import uuid
 import warnings
 from decimal import Decimal
 from typing import List, Optional, Callable, Union, Dict
@@ -6,8 +7,9 @@ from typing import List, Optional, Callable, Union, Dict
 import attr
 
 
+@attr.s(frozen=True, slots=True)
 class CommandRequest(abc.ABC):
-    pass
+    transaction_id = attr.ib(init=False, type=uuid.UUID, default=attr.Factory(uuid.uuid4), eq=False)
 
 
 class BusinessException(Exception):
@@ -152,4 +154,3 @@ class EntityIdentityBuilder(abc.ABC):
 
 
 PrimitiveType = Union[int, str, float, Decimal]
-
