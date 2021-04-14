@@ -1,6 +1,8 @@
 import abc
 import uuid
-from typing import List, Optional, Callable, Union
+import warnings
+from decimal import Decimal
+from typing import List, Optional, Callable, Union, Dict
 
 import attr
 
@@ -51,45 +53,66 @@ class RootEntity(Entity):
     pass
 
 
-ApplicationService = Callable[[CommandRequest], Union[EntityIdentity, List[EntityIdentity]]]
+class DTO:
+    """
+    Data Transfer Object : only contains declaration of primitive fields.
+    Used as 'contract" between 2 layers in the code (example : repository <-> factory)
+    """
+    pass
+
+
+ApplicationServiceResult = Union[EntityIdentity, List[EntityIdentity], DTO, List[DTO]]
+ApplicationService = Callable[[CommandRequest], ApplicationServiceResult]
 
 
 class AbstractRepository(abc.ABC):
+
     @classmethod
-    @abc.abstractmethod
-    def create(cls, entity: Entity, **kwargs: ApplicationService) -> EntityIdentity:
+    def create(cls, entity: 'Entity', **kwargs: ApplicationService) -> 'RootEntity':
         """
         Function used to persist (create) new domain Entity into the database.
         :param entity: Any domain Entity.
         :param services: List of application services used to persist data into another domain.
         :return: The identity of the created entity.
         """
+        warnings.warn("DEPRECATED : use .save() function instead", DeprecationWarning)
         raise NotImplementedError
 
     @classmethod
-    @abc.abstractmethod
-    def update(cls, entity: Entity, **kwargs: ApplicationService) -> EntityIdentity:
+    def update(cls, entity: 'Entity', **kwargs: ApplicationService) -> 'RootEntity':
         """
         Function used to persist (update) existing domain Entity into the database.
         :param entity: Any domain Entity.
         :param services: List of application services used to persist data into another domain.
         :return: The identity of the updated entity.
         """
+        warnings.warn("DEPRECATED : use .save() function instead", DeprecationWarning)
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def get(cls, entity_id: EntityIdentity) -> Entity:
+    def get(cls, entity_id: EntityIdentity) -> RootEntity:
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
-    def search(cls, entity_ids: Optional[List[EntityIdentity]] = None, **kwargs) -> List[Entity]:
+    def search(cls, entity_ids: Optional[List[EntityIdentity]] = None, **kwargs) -> List[RootEntity]:
         raise NotImplementedError
 
     @classmethod
     @abc.abstractmethod
     def delete(cls, entity_id: EntityIdentity, **kwargs: ApplicationService) -> None:
+        raise NotImplementedError
+
+    @classmethod
+    @abc.abstractmethod
+    def save(cls, entity: RootEntity) -> None:
+        """
+        Function used to persist existing domain RootEntity (aggregate) into the database.
+        :param entity: Any domain Entity.
+        :return: The identity of the updated entity.
+
+        """
         raise NotImplementedError
 
 
@@ -102,3 +125,32 @@ class DomainService(abc.ABC):
     - EntityIdentityGenerator()
     """
     pass
+
+
+class RootEntityBuilder(abc.ABC):
+
+    @classmethod
+    @abc.abstractmethod
+    def build_from_command(cls, cmd: 'CommandRequest') -> 'RootEntity':
+        raise NotImplementedError()
+
+    @classmethod
+    @abc.abstractmethod
+    def build_from_repository_dto(cls, dto_object: 'DTO') -> 'RootEntity':
+        raise NotImplementedError()
+
+
+class EntityIdentityBuilder(abc.ABC):
+
+    @classmethod
+    @abc.abstractmethod
+    def build_from_command(cls, cmd: 'CommandRequest') -> 'EntityIdentity':
+        raise NotImplementedError()
+
+    @classmethod
+    @abc.abstractmethod
+    def build_from_repository_dto(cls, dto_object: 'DTO') -> 'EntityIdentity':
+        raise NotImplementedError()
+
+
+PrimitiveType = Union[int, str, float, Decimal]
