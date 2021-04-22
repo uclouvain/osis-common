@@ -3,3 +3,6 @@ XlsxWriter==0.9.3
 voluptuous==0.9.3
 weasyprint==0.42.3
 attrs==19.3.0
+pycodestyle==2.4.0
+pylint==2.4.4
+diff-cover==3.0.1
