@@ -234,7 +234,7 @@ def _format_all_cells_except_header_line(worksheet1, worksheet_content):
 
 
 def _apply_font_strikethrough(worksheet1, cell, row_number, col_number):
-    if '\u0336' in cell and cell.count('\u0336') == len(cell)/2:
+    if isinstance(cell, str) and '\u0336' in cell and cell.count('\u0336') == len(cell)/2:
         worksheet_cell = worksheet1.cell(column=col_number, row=row_number)
         worksheet_cell.value = cell.replace('\u0336', '')
         worksheet_cell.font = Font(strikethrough=True)
