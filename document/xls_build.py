@@ -230,6 +230,14 @@ def _format_all_cells_except_header_line(worksheet1, worksheet_content):
         for col_number, cell in enumerate(row, FIRST_DATA_COL_NUMBER):
             _adapt_format_for_string_with_numbers(worksheet1, cell, row_number, col_number)
             _align_cells_content(worksheet1, row_number, col_number, horizontal='left', vertical='top')
+            _apply_font_strikethrough(worksheet1, cell, row_number, col_number)
+
+
+def _apply_font_strikethrough(worksheet1, cell, row_number, col_number):
+    if isinstance(cell, str) and '\u0336' in cell and cell.count('\u0336') == len(cell)/2:
+        worksheet_cell = worksheet1.cell(column=col_number, row=row_number)
+        worksheet_cell.value = cell.replace('\u0336', '')
+        worksheet_cell.font = Font(strikethrough=True)
 
 
 def _align_cells_content(worksheet1, row_number, col_number, horizontal, vertical):
@@ -403,6 +411,7 @@ def _set_cell_border(a_border, cell_number, ws):
     cell = ws[str(cell_number)]
     border = a_border
     cell.border = border
+
 
 def _add_font_to_cells(ws, data):
     if data:

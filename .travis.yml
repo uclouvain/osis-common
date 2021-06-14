@@ -18,6 +18,7 @@ install:
   - git submodule init
   - git submodule update
   - pip install -r requirements.txt
+  - pip install -r internship/requirements.txt
   - rm -Rf osis_common
   - ln -s $PROJECT_DIR osis_common
 
