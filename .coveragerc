@@ -1,0 +1,17 @@
+[run]
+branch = True
+source = .
+concurrency = multiprocessing
+parallel = True
+omit =
+    */migrations/*
+    venv/*
+    */tests/*
+
+[report]
+fail_under = 90
+precision = 2
+sort = Cover
+show_missing = False
+skip_covered = True
+skip_empty = True
