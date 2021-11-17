@@ -47,7 +47,8 @@ class SynchronousConsumerThread(threading.Thread):
         self.daemon = True
 
     def run(self):
-        listen_queue_synchronously(self._queue_name, self.callback)
+        if type(self._queue_name) is str:
+            listen_queue_synchronously(self._queue_name, self.callback)
 
 
 def listen_queue_synchronously(queue_name, callback, counter=3):
