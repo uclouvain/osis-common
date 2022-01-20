@@ -153,4 +153,17 @@ class EntityIdentityBuilder(abc.ABC):
         raise NotImplementedError()
 
 
+class EntityBuilder(abc.ABC):
+
+    @classmethod
+    @abc.abstractmethod
+    def build_from_command(cls, cmd: 'CommandRequest') -> 'Entity':
+        raise NotImplementedError()
+
+    @classmethod
+    @abc.abstractmethod
+    def build_from_repository_dto(cls, dto_object: 'DTO') -> 'Entity':
+        raise NotImplementedError()
+
+
 PrimitiveType = Union[int, str, float, Decimal]
