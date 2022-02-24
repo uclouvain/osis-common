@@ -17,7 +17,7 @@ class QueryRequest(abc.ABC):
     transaction_id = attr.ib(init=False, type=uuid.UUID, default=attr.Factory(uuid.uuid4), eq=False)
 
 
-@attr.s(frozen=True, slots=True)
+@attr.s(frozen=True, slots=True, auto_attribs=True)
 class PaginatedQueryRequest(QueryRequest):
     ordre_tri: Optional[str] = None
     nombre_elements_par_page: int = 25
