@@ -21,5 +21,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(populate_document_file_uuid),
+        migrations.RunPython(populate_document_file_uuid, migrations.RunPython.noop),
     ]

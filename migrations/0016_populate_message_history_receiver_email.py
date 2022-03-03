@@ -38,5 +38,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(populate_message_history_receiver_email),
+        migrations.RunPython(populate_message_history_receiver_email, migrations.RunPython.noop),
     ]
