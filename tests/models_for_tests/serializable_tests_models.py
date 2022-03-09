@@ -38,7 +38,7 @@ class ModelWithUser(SerializableModel):
         return '{} - {} - {}'.format(self.name, self.user, self.uuid)
 
     @classmethod
-    def find_by_name(cls,name):
+    def find_by_name(cls, name):
         try:
             return ModelWithUser.objects.get(name=name)
         except ObjectDoesNotExist:
@@ -59,7 +59,7 @@ class ModelWithoutUser(SerializableModel):
         return '{} - {}'.format(self.name, self.uuid)
 
     @classmethod
-    def find_by_name(self,name):
+    def find_by_name(cls, name):
         try:
             return ModelWithoutUser.objects.get(name=name)
         except ObjectDoesNotExist:
