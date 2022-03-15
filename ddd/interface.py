@@ -2,7 +2,7 @@ import abc
 import uuid
 import warnings
 from decimal import Decimal
-from typing import List, Optional, Callable, Union, Dict
+from typing import List, Optional, Callable, Union
 
 import attr
 
@@ -10,6 +10,18 @@ import attr
 @attr.s(frozen=True, slots=True)
 class CommandRequest(abc.ABC):
     transaction_id = attr.ib(init=False, type=uuid.UUID, default=attr.Factory(uuid.uuid4), eq=False)
+
+
+@attr.s(frozen=True, slots=True)
+class QueryRequest(abc.ABC):
+    transaction_id = attr.ib(init=False, type=uuid.UUID, default=attr.Factory(uuid.uuid4), eq=False)
+
+
+@attr.s(frozen=True, slots=True, auto_attribs=True)
+class PaginatedQueryRequest(QueryRequest):
+    ordre_tri: Optional[str] = None
+    nombre_elements_par_page: int = 25
+    page: int = 0
 
 
 class BusinessException(Exception):

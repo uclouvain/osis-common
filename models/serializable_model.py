@@ -180,7 +180,7 @@ def serialize(obj, to_delete, last_syncs=None):
                     json.dumps(attribute)
                     fields[f.name] = attribute
                 except TypeError:
-                    if isinstance(f, DateTimeField) or isinstance(f, DateField):
+                    if isinstance(f, (DateTimeField, DateField)):
                         dt = attribute
                         fields[f.name] = _convert_datetime_to_long(dt)
                     else:
@@ -245,7 +245,7 @@ def _convert_datetime_to_long(dtime):
 
 def _get_value(fields, field):
     attribute = fields.get(field.name)
-    if isinstance(field, DateTimeField) or isinstance(field, DateField):
+    if isinstance(field, (DateTimeField, DateField)):
         return _convert_long_to_datetime(attribute)
     return attribute
 
