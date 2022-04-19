@@ -44,6 +44,8 @@ logger = logging.getLogger(settings.DEFAULT_LOGGER)
 ModelInstance = models.Model
 ModelFieldName = str
 
+SCOPES_COLUMN_NAME = 'scopes'
+
 
 class Command(BaseCommand):
     help = """
@@ -91,7 +93,7 @@ class Command(BaseCommand):
             column_name: row[idx].value for idx, column_name in headers if column_name
         }
         object_dict_with_relations = {
-            fk_field_name: self._convert_boolean_cell_value(value_as_obj)
+            fk_field_name: self._convert_scopes_to_array(fk_field_name, self._convert_boolean_cell_value(value_as_obj))
             for fk_field_name, value_as_obj in [
                 self._find_object_through_foreign_keys(model_class, col_name, value)
                 for col_name, value in object_as_dict.items()
@@ -123,6 +125,12 @@ class Command(BaseCommand):
             return True
         elif value == 'False':
             return False
+        return value
+
+    @staticmethod
+    def _convert_scopes_to_array(column_name, value):
+        if column_name == SCOPES_COLUMN_NAME:
+            return [value]
         return value
 
     def _find_object_through_foreign_keys(
