@@ -166,7 +166,7 @@ class ConsumerThread(threading.Thread):
         example.run()
 
 
-class ExampleConsumer(object):
+class ExampleConsumer:
     """
     This is an example consumer that will handle unexpected interactions
     with RabbitMQ such as channel and connection closures.
