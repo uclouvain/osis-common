@@ -22,20 +22,22 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-import functools
-from enum import Enum, auto
 import logging
-from typing import Union, Callable
+from enum import Enum, auto
+from functools import wraps
+from typing import Callable, Union, Dict
 
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.http import HttpRequest
 from django.views import View
 
-logger = logging.getLogger(settings.EVENT_LOGGER)
-
-
+HIJACK_HISTORY_SESSION_KEY = "hijack_history"
 REQUEST_REMOTE_ADDR = "REMOTE_ADDR"
 UNDEFINED = "Undefined"
+EVENT_LOGGER = getattr(settings, 'EVENT_LOGGER', 'event')
+
+logger = logging.getLogger(EVENT_LOGGER)
 
 
 class EventType(Enum):
@@ -45,22 +47,41 @@ class EventType(Enum):
     VIEW = auto()
 
 
-def log_event_dec(event_type: 'EventType', domain: str, msg: str, level=logging.INFO) -> Callable:
-    def log_decorator(view_function: Callable) -> Callable:
-        """
-        :param view_function: can either be a django function view or a method from class based view
-        """
-        @functools.wraps(view_function)
-        def decorated_view_function(self_or_request: Union['View', 'HttpRequest'], *args, **kwargs) -> Callable:
-            response = view_function(self_or_request, *args, **kwargs)
+def log_event_decorator(event_type: 'EventType', domain: str, msg: str, level=logging.INFO) -> Callable:
+    def log_decorator(cls_or_fn: Union[View, Callable]):
+        if not isinstance(cls_or_fn, type):
+            view = cls_or_fn
 
-            if isinstance(self_or_request, HttpRequest):
-                log_event(self_or_request, event_type, domain, msg, level=level)
-            else:
-                log_event(self_or_request.request, event_type, domain, msg, level=level, view=self_or_request)
+            @wraps(view)
+            def wrapped_view(request, *args, **kwargs):
+                response = view(request, *args, **kwargs)
+                log_event(request, event_type, domain, msg, level=level, kwargs=kwargs)
+                return response
+            return wrapped_view
+
+        cls = cls_or_fn
+        original_get = getattr(cls, 'get', None)
+        original_post = getattr(cls, 'post', None)
+
+        def logged_get_func(self, *args, **kwargs):
+            response = original_get(self, *args, **kwargs)
+
+            log_event(self.request, event_type, domain, msg, level=level, view=self)
 
             return response
-        return decorated_view_function
+
+        def logged_post_func(self, *args, **kwargs):
+            response = original_post(self, *args, **kwargs)
+
+            log_event(self.request, event_type, domain, msg, level=level, view=self)
+
+            return response
+
+        if original_get:
+            cls.get = logged_get_func
+        if original_post:
+            cls.post = logged_post_func
+        return cls
     return log_decorator
 
 
@@ -68,10 +89,31 @@ def log_event(
         request: 'HttpRequest',
         event_type: 'EventType',
         domain: str,
-        msg: str,
+        description: str,
         level=logging.INFO,
-        view: View = None
+        view: View = None,
+        kwargs: Dict = None
 ) -> None:
     ip_addr = request.META.get(REQUEST_REMOTE_ADDR, UNDEFINED)
-    formatted_msg = msg.format(self=view)
-    logger.log(msg=f"{ip_addr} - {request.user.username} - {event_type.name} - {domain} - {formatted_msg}", level=level)
+    formatted_description = description.format(self=view, **(kwargs or {}))
+
+    user = request.user.username
+    if _is_hijacked(request):
+        user = _get_hijacked_user(request)
+
+    msg = f"{ip_addr} | {request.method} | {request.path} | {user} | {event_type.name} | {domain} |" \
+          f" {formatted_description}"
+    logger.log(
+        msg=msg,
+        level=level
+    )
+
+
+def _is_hijacked(request: 'HttpRequest'):
+    return bool(request.session.get(HIJACK_HISTORY_SESSION_KEY, []))
+
+
+def _get_hijacked_user(request: 'HttpRequest') -> str:
+    hijacker_pk = request.session[HIJACK_HISTORY_SESSION_KEY][-1]
+    hijacker = User.objects.get(pk=hijacker_pk)
+    return f"{request.user.username} (hijacked by {hijacker})"
