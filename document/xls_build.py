@@ -394,7 +394,7 @@ def prepare_xls_parameters_list(working_sheets_data, parameters):
                   ROW_HEIGHT: parameters.get(ROW_HEIGHT),
                   FONT_CELLS: parameters.get(FONT_CELLS),
                   BORDER_CELLS: parameters.get(BORDER_CELLS),
-                  SPECIAL_NUMBER_FORMAT_BY_CELLS: parameters.get(SPECIAL_NUMBER_FORMAT_BY_CELLS),
+                  SPECIAL_NUMBER_FORMAT_BY_CELLS: parameters.get(SPECIAL_NUMBER_FORMAT_BY_CELLS, []),
                   }
                  ]}
 
