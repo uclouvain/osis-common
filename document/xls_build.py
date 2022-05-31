@@ -156,6 +156,7 @@ def _add_column_headers(headers_title, worksheet1):
 
 
 def _add_content(content, a_worksheet_param, has_titles: bool, special_format_by_cells: List[dict]):
+    print(special_format_by_cells)
     a_worksheet = a_worksheet_param
     first_data_row = 2 if has_titles else 1
 
@@ -394,7 +395,7 @@ def prepare_xls_parameters_list(working_sheets_data, parameters):
                   ROW_HEIGHT: parameters.get(ROW_HEIGHT),
                   FONT_CELLS: parameters.get(FONT_CELLS),
                   BORDER_CELLS: parameters.get(BORDER_CELLS),
-                  SPECIAL_NUMBER_FORMAT_BY_CELLS: parameters.get(SPECIAL_NUMBER_FORMAT_BY_CELLS),
+                  SPECIAL_NUMBER_FORMAT_BY_CELLS: parameters.get(SPECIAL_NUMBER_FORMAT_BY_CELLS, []),
                   }
                  ]}
 
