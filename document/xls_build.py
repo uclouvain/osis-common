@@ -156,7 +156,6 @@ def _add_column_headers(headers_title, worksheet1):
 
 
 def _add_content(content, a_worksheet_param, has_titles: bool, special_format_by_cells: List[dict]):
-    print(special_format_by_cells)
     a_worksheet = a_worksheet_param
     first_data_row = 2 if has_titles else 1
 
