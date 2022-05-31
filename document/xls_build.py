@@ -26,6 +26,7 @@
 import datetime
 import logging
 import re
+from typing import Optional, List
 
 from django.conf import settings
 from django.http import HttpResponse
@@ -132,7 +133,7 @@ def _build_worksheet(worksheet_data, workbook, sheet_number):
         content,
         a_worksheet,
         titles and len(titles) > 0,
-        worksheet_data.get(SPECIAL_NUMBER_FORMAT_BY_CELLS)
+        worksheet_data.get(SPECIAL_NUMBER_FORMAT_BY_CELLS, [])
     )
     _adjust_column_width(a_worksheet)
     _font_rows(a_worksheet, worksheet_data.get(FONT_ROWS))
@@ -154,7 +155,7 @@ def _add_column_headers(headers_title, worksheet1):
     worksheet1.append(_ensure_str_instance(headers_title))
 
 
-def _add_content(content, a_worksheet_param, has_titles: bool, special_format_by_cells: dict):
+def _add_content(content, a_worksheet_param, has_titles: bool, special_format_by_cells: List[dict]):
     a_worksheet = a_worksheet_param
     first_data_row = 2 if has_titles else 1
 
@@ -463,10 +464,7 @@ def _set_cell_value(col_content, number_format_to_apply, cell):
 
 
 def _check_if_number_format_to_apply(cell_ref, special_number_format_by_cells):
-    number_format_to_apply = None
-    if special_number_format_by_cells:
-        for special_format in special_number_format_by_cells:
-            if cell_ref in special_format['cells']:
-                number_format_to_apply = special_format['format']
-                break
-    return number_format_to_apply
+    for special_format in special_number_format_by_cells:
+        if cell_ref in special_format['cells']:
+            return special_format['format']
+    return None
