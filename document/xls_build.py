@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2019 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2022 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@
 import datetime
 import logging
 import re
+from typing import Optional, List
 
 from django.conf import settings
 from django.http import HttpResponse
@@ -36,7 +37,7 @@ from openpyxl.styles import Color, PatternFill, Alignment
 from openpyxl.styles import Font
 from openpyxl.styles.borders import Border, Side, BORDER_THIN
 from openpyxl.writer.excel import save_virtual_workbook
-
+from openpyxl.utils import get_column_letter
 from osis_common.decorators.download import set_download_cookie
 
 CONTENT_TYPE_XLS = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=binary'
@@ -88,6 +89,7 @@ WS_TITLE = 'param_worksheet_title'
 
 FONT_GREEN = Font(color=Color('5CB85C'))
 ROW_HEIGHT = 'row_height'
+SPECIAL_NUMBER_FORMAT_BY_CELLS = 'special_number_format_by_cells'
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
@@ -125,8 +127,14 @@ def _build_worksheet(worksheet_data, workbook, sheet_number):
     a_worksheet = _create_worksheet(workbook,
                                     _create_worsheet_title(sheet_number, worksheet_data.get(WORKSHEET_TITLE_KEY)),
                                     sheet_number)
-    _add_column_headers(worksheet_data.get(HEADER_TITLES_KEY), a_worksheet)
-    _add_content(content, a_worksheet)
+    titles = worksheet_data.get(HEADER_TITLES_KEY)
+    _add_column_headers(titles, a_worksheet)
+    _add_content(
+        content,
+        a_worksheet,
+        titles and len(titles) > 0,
+        worksheet_data.get(SPECIAL_NUMBER_FORMAT_BY_CELLS, [])
+    )
     _adjust_column_width(a_worksheet)
     _font_rows(a_worksheet, worksheet_data.get(FONT_ROWS))
     _fill_rows(a_worksheet, worksheet_data.get(FILL_ROWS))
@@ -147,10 +155,12 @@ def _add_column_headers(headers_title, worksheet1):
     worksheet1.append(_ensure_str_instance(headers_title))
 
 
-def _add_content(content, a_worksheet_param):
+def _add_content(content, a_worksheet_param, has_titles: bool, special_format_by_cells: List[dict]):
     a_worksheet = a_worksheet_param
-    for line in content:
-        a_worksheet.append(_validate_fields(line))
+    first_data_row = 2 if has_titles else 1
+
+    for row_number, line in enumerate(content, start=first_data_row):
+        _validate_fields(line, row_number, a_worksheet, special_format_by_cells)
     return a_worksheet
 
 
@@ -352,8 +362,13 @@ def _set_col_style(a_style, col_numbers, ws):
                 cell.style = a_style
 
 
-def _validate_fields(line):
-    return [as_text(col_content) for col_content in line]
+def _validate_fields(line, row_number: int, worksheet, special_number_format_by_cells):
+    ws = worksheet
+    for col, col_content in enumerate(line, start=1):
+        cell_ref = "{}{}".format(get_column_letter(col), row_number)
+        number_format_to_apply = _check_if_number_format_to_apply(cell_ref, special_number_format_by_cells)
+        _set_cell_value(col_content, number_format_to_apply, ws.cell(row=row_number, column=col))
+    return ws
 
 
 def translate(string_value):
@@ -378,7 +393,8 @@ def prepare_xls_parameters_list(working_sheets_data, parameters):
                   FONT_ROWS: parameters.get(FONT_ROWS),
                   ROW_HEIGHT: parameters.get(ROW_HEIGHT),
                   FONT_CELLS: parameters.get(FONT_CELLS),
-                  BORDER_CELLS: parameters.get(BORDER_CELLS)
+                  BORDER_CELLS: parameters.get(BORDER_CELLS),
+                  SPECIAL_NUMBER_FORMAT_BY_CELLS: parameters.get(SPECIAL_NUMBER_FORMAT_BY_CELLS),
                   }
                  ]}
 
@@ -437,3 +453,18 @@ def _adjust_row_height(ws, height, start=1, stop=1):
 
 def _ensure_str_instance(headers_title):
     return [str(title) for title in headers_title]
+
+
+def _set_cell_value(col_content, number_format_to_apply, cell):
+    if number_format_to_apply:
+        cell.number_format = number_format_to_apply
+        cell.value = col_content
+    else:
+        cell.value = as_text(col_content)
+
+
+def _check_if_number_format_to_apply(cell_ref, special_number_format_by_cells):
+    for special_format in special_number_format_by_cells:
+        if cell_ref in special_format['cells']:
+            return special_format['format']
+    return None
