@@ -1,5 +1,5 @@
 django-ckeditor==5.7.1 # Version 5.2.2 to support PasteFromWord into CKEditor
 XlsxWriter==0.9.3
 voluptuous==0.9.3
-weasyprint==0.42.3
+weasyprint==52.5
 attrs==19.3.0
