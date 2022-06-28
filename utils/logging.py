@@ -101,7 +101,7 @@ def log_event(
     if _is_hijacked(request):
         user = _get_hijacked_user(request)
 
-    msg = f"{ip_addr} | {request.method} | {request.path} | {user} | {event_type.name} | {domain} |" \
+    msg = f"[{settings.ENVIRONMENT}] {ip_addr} | {request.method} | {request.path} | {user} | {event_type.name} | {domain} |" \
           f" {formatted_description}"
     logger.log(
         msg=msg,
