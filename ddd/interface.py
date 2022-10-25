@@ -17,9 +17,10 @@ class QueryRequest(abc.ABC):
     transaction_id = attr.ib(init=False, type=uuid.UUID, default=attr.Factory(uuid.uuid4), eq=False)
 
 
-@attr.s(frozen=True, slots=True)
+@attr.dataclass(frozen=True, slots=True)
 class Event(abc.ABC):
-    pass
+    entity_id: 'EntityIdentity'
+    transaction_id: uuid.UUID = attr.Factory(uuid.uuid4)
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
