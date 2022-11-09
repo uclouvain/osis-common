@@ -9,12 +9,12 @@ import attr
 
 @attr.s(frozen=True, slots=True)
 class CommandRequest(abc.ABC):
-    transaction_id = attr.ib(init=False, type=uuid.UUID, default=attr.Factory(uuid.uuid4), eq=False)
+    transaction_id = attr.ib(type=uuid.UUID, kw_only=True, default=None, eq=False)
 
 
 @attr.s(frozen=True, slots=True)
 class QueryRequest(abc.ABC):
-    transaction_id = attr.ib(init=False, type=uuid.UUID, default=attr.Factory(uuid.uuid4), eq=False)
+    transaction_id = attr.ib(type=uuid.UUID, kw_only=True, default=None, eq=False)
 
 
 @attr.s(frozen=True, slots=True, auto_attribs=True)
