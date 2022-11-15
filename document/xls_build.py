@@ -106,7 +106,7 @@ def generate_xls(list_parameters, filters=None):
 def _create_xls(parameters_dict, filters=None):
     filename = _build_filename(parameters_dict.get(FILENAME_KEY))
 
-    workbook = Workbook()
+    workbook = Workbook(encoding='utf-8')
     for sheet_number, worksheet_data in enumerate(parameters_dict.get(WORKSHEETS_DATA)):
         _build_worksheet(worksheet_data, workbook, sheet_number)
     _build_worksheet_parameters(
@@ -167,7 +167,7 @@ def _add_content(content, a_worksheet_param, has_titles: bool, special_format_by
 def _adjust_column_width(worksheet):
     for col in worksheet.columns:
         max_length = 0
-        column = col[0].column_letter  # Get the column name
+        column = col[0].column  # Get the column name
         for cell in col:
             if cell.coordinate in worksheet.merged_cells:  # not check merge_cells
                 continue
