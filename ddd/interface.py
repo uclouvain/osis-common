@@ -17,6 +17,12 @@ class QueryRequest(abc.ABC):
     transaction_id = attr.ib(init=False, type=uuid.UUID, default=attr.Factory(uuid.uuid4), eq=False)
 
 
+@attr.dataclass(frozen=True, slots=True)
+class Event(abc.ABC):
+    entity_id: 'EntityIdentity'
+    transaction_id: uuid.UUID = attr.Factory(uuid.uuid4)
+
+
 @attr.s(frozen=True, slots=True, auto_attribs=True)
 class PaginatedQueryRequest(QueryRequest):
     ordre_tri: Optional[str] = None
@@ -122,8 +128,6 @@ class AbstractRepository(abc.ABC):
         """
         Function used to persist existing domain RootEntity (aggregate) into the database.
         :param entity: Any domain Entity.
-        :return: The identity of the updated entity.
-
         """
         raise NotImplementedError
 
