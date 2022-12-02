@@ -35,8 +35,6 @@ from django.views import View
 
 logger = logging.getLogger(__name__)
 
-app_name = 'admission'
-
 
 class FileRouter:
     def __call__(self, filepath: str):
