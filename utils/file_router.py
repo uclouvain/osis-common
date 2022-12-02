@@ -25,7 +25,6 @@
 # ##############################################################################
 import importlib
 import inspect
-import logging
 from pathlib import Path
 from typing import List
 
@@ -33,10 +32,20 @@ from django.conf import settings
 from django.urls import include, path
 from django.views import View
 
-logger = logging.getLogger(__name__)
-
 
 class FileRouter:
+    """
+    Example usage in a urls.py file:
+
+        file_router = FileRouter()
+        urlpatterns = file_router('yourmodule/views')
+        app_name = 'yourmodule'
+
+        if settings.DEBUG:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug("\n" + file_router.debug(urlpatterns))
+    """
     def __call__(self, filepath: str):
         patterns = self.patterns_from_tree(Path(settings.BASE_DIR) / filepath)
         self._dedupe_namespaces(patterns)
@@ -157,13 +166,7 @@ class FileRouter:
             patterns.remove(item)
 
     def debug(self, patterns, depth=0):  # pragma: no cover
-        """
-        To debug the current urls configuration, add to your settings:
-        LOGGING['loggers']['admission.urls'] = {
-            'handlers': ['console'],
-            'level': 'DEBUG',
-        }
-        """
+        """Output a debug message from the provided patterns"""
         msg: str = ''
         line_prefix = '    '
         for p in patterns:
