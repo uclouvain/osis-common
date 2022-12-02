@@ -109,7 +109,7 @@ class FileRouter:
             if entry.is_file() and entry.stem != '__init__':
                 # File is a module
                 module = importlib.import_module(
-                    str(entry.relative_to(settings.BASE_DIR)).replace(".py", "").replace("/", ".")
+                    '.'.join(entry.relative_to(settings.BASE_DIR).parts).replace(".py", "")
                 )
                 views = getattr(module, '__all__', [])
                 if len(views) > 1 and getattr(module, '__namespace__', True):
@@ -129,7 +129,7 @@ class FileRouter:
 
             elif entry.is_dir() and entry.name != "__pycache__":
                 # Directory is a package
-                package = importlib.import_module(str(entry.relative_to(settings.BASE_DIR)).replace("/", "."))
+                package = importlib.import_module('.'.join(entry.relative_to(settings.BASE_DIR).parts))
 
                 subpatterns = self.patterns_from_tree(entry)
                 if subpatterns:
