@@ -133,16 +133,19 @@ class FileRouter:
 
                 subpatterns = self.patterns_from_tree(entry)
                 if subpatterns:
-                    namespaces = getattr(package, '__namespace__', entry_name) or ''
-                    if isinstance(namespaces, str):
+                    namespaces = getattr(package, '__namespace__', entry_name)
+                    if namespaces is False:
+                        # __namespace__ = False -> flatten the pattern tree
+                        patterns += subpatterns
+                        continue
+                    elif isinstance(namespaces, str):
+                        # __namespace__ is a string -> string is prefix and url namespace
                         namespaces = {namespaces: namespaces}
                     for namespace, url in namespaces.items():
-                        if namespace:
-                            patterns.append(
-                                path(url + "/", include((subpatterns.copy(), namespace))),
-                            )
-                        else:
-                            patterns += subpatterns
+                        url = url + "/" if url else ''
+                        patterns.append(
+                            path(url, include((subpatterns.copy(), namespace))),
+                        )
         return patterns
 
     def _dedupe_namespaces(self, patterns, parents=(), namespaces=None):
