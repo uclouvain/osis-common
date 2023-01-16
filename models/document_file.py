@@ -53,7 +53,7 @@ class DocumentFile(serializable_model.SerializableModel):
     content_type = models.CharField(max_length=50, choices=CONTENT_TYPE_CHOICES, default='application/csv')
     creation_date = models.DateTimeField(auto_now_add=True, editable=False)
     storage_duration = models.IntegerField()
-    file = models.FileField(upload_to='files/')
+    file = models.FileField(upload_to='')
     description = models.CharField(max_length=50)
     update_by = models.CharField(max_length=254, default='system', db_index=True)
     application_name = models.CharField(max_length=100, null=True, blank=True)
