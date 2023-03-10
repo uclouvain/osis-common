@@ -23,8 +23,8 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from django.contrib.postgres.fields import JSONField
 from django.db import models
+from django.db.models import JSONField
 
 from osis_common.models import osis_model_admin
 from osis_common.queue import queue_sender
