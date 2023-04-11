@@ -80,10 +80,13 @@ class FileRouter:
             if isinstance(view_urlpatterns, str):
                 view_urlpatterns = {view_urlpatterns: view_urlpatterns}
 
-            for name, url in view_urlpatterns.items():
-                subpatterns.append(
-                    path(url, view_class.as_view(), name=name),
-                )
+            for name, urls in view_urlpatterns.items():
+                if not isinstance(urls, list):
+                    urls = [urls]
+                for url in urls:
+                    subpatterns.append(
+                        path(url, view_class.as_view(), name=name),
+                    )
         return subpatterns
 
     def patterns_from_tree(self, start_dir: Path) -> List:
@@ -180,9 +183,11 @@ class FileRouter:
                 msg += line_prefix * depth
                 msg += f"], '{p.namespace}')),\n"
             else:
+                # View can be a viewset or normal view
+                view_cls = p.callback.cls if hasattr(p.callback, 'cls') else p.callback.view_class
                 msg += "path('{url}', {view_name}.as_view(), name='{name}'),\n".format(
                     url=p.pattern.regex.pattern,
-                    view_name=p.callback.view_class.__name__,
+                    view_name=view_cls.__name__,
                     name=p.name,
                 )
         return msg
