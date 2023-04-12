@@ -51,6 +51,9 @@ msgstr "Courriel"
 msgid "Enrolled lately"
 msgstr "Inscrit tardivement"
 
+msgid "Error occured. Please retry."
+msgstr "Une erreur inattendue est survenue. Veuillez réessayer."
+
 msgid "False"
 msgstr "Faux"
 

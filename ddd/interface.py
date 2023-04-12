@@ -5,6 +5,7 @@ from decimal import Decimal
 from typing import List, Optional, Callable, Union
 
 import attr
+from django.utils.translation import gettext_lazy as _
 
 
 @attr.s(frozen=True, slots=True)
@@ -41,6 +42,12 @@ class BusinessExceptions(BusinessException):
         self.messages = messages
 
 
+class VersionMismatchException(Exception):
+    def __init__(self, **kwargs):
+        self.message = _('Error occured. Please retry.')
+        super().__init__(**kwargs)
+
+
 class ValueObject(abc.ABC):
     def __eq__(self, other):
         raise NotImplementedError
@@ -68,7 +75,9 @@ class Entity(abc.ABC):
 
 
 class RootEntity(Entity):
-    pass
+    def __init__(self, *args, version_id: int, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.version_id = version_id
 
 
 class DTO:

@@ -50,6 +50,9 @@ msgstr ""
 msgid "Enrolled lately"
 msgstr ""
 
+msgid "Error occured. Please retry."
+msgstr ""
+
 msgid "False"
 msgstr ""
 
