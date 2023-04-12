@@ -74,10 +74,9 @@ class Entity(abc.ABC):
         return hash(self.entity_id)
 
 
+@attr.s(eq=False, hash=False)
 class RootEntity(Entity):
-    def __init__(self, *args, version_id: int, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.version_id = version_id
+    version_id = attr.ib(type=int, default=0, eq=False, repr=False, kw_only=True)
 
 
 class DTO:
