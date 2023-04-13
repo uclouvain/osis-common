@@ -42,10 +42,16 @@ class BusinessExceptions(BusinessException):
         self.messages = messages
 
 
-class VersionMismatchException(Exception):
-    def __init__(self, **kwargs):
-        self.message = _('Error occured. Please retry.')
+class InfrastructureException(Exception):
+    def __init__(self, message: str, **kwargs):
+        self.message = message
         super().__init__(**kwargs)
+
+
+class EntityConcurrencyViolationException(InfrastructureException):
+    def __init__(self, **kwargs):
+        message = _('Concurrency Violation: Stale data detected. Entity was already modified.')
+        super().__init__(message, **kwargs)
 
 
 class ValueObject(abc.ABC):
