@@ -26,7 +26,8 @@ msgid ""
 "Belgium"
 msgstr ""
 
-msgid "Academic year"
+msgid ""
+"Concurrency Violation: Stale data detected. Entity was already modified."
 msgstr ""
 
 msgid "Created by"
@@ -35,48 +36,10 @@ msgstr ""
 msgid "Creation date"
 msgstr ""
 
-msgid "Decimals authorized for this learning unit"
-msgstr ""
-
-msgid "Deliberation date"
-msgstr ""
-
-msgid "Done at"
-msgstr ""
-
-msgid "Email"
-msgstr ""
-
-msgid "Enrolled lately"
-msgstr ""
-
-msgid "Error occured. Please retry."
-msgstr ""
-
 msgid "False"
 msgstr ""
 
-msgid "Fax"
-msgstr ""
-
 msgid "File name"
-msgstr ""
-
-msgid "Firstname"
-msgstr ""
-
-msgid ""
-"In accordance to regulation's rules 104, 109 and 111. Complete rules "
-"avalaible here"
-msgstr ""
-
-msgid "Justification (A,T)"
-msgstr ""
-
-msgid "Justification legend: A=Absent, T=Cheating"
-msgstr ""
-
-msgid "Lastname"
 msgstr ""
 
 msgid "Message error : size and content"
@@ -94,45 +57,7 @@ msgid ""
 "exist."
 msgstr ""
 
-msgid "None"
-msgstr ""
-
 msgid "Parameters"
-msgstr ""
-
-msgid "Phone"
-msgstr ""
-
-msgctxt "encoding"
-msgid "Program"
-msgstr ""
-
-msgid "Reg. No."
-msgstr ""
-
-msgid "Score"
-msgstr ""
-
-#, python-brace-format
-msgid "Score legend: {score} (0=Score of presence)"
-msgstr ""
-
-msgid "Score sheet"
-msgstr ""
-
-msgid "Scores responsible"
-msgstr ""
-
-msgid "Signature"
-msgstr ""
-
-msgid "Submit data"
-msgstr ""
-
-#, python-format
-msgid ""
-"The data presented on this document correspond to the state of the system "
-"dated %(creation_date)s and are likely to evolve"
 msgstr ""
 
 #, python-brace-format
@@ -144,22 +69,10 @@ msgstr ""
 msgid "True"
 msgstr ""
 
-msgid "Unauthorized decimal for this learning unit"
-msgstr ""
-
-msgid "Université catholique de Louvain"
-msgstr ""
-
-msgid "Unsubscribed lately"
-msgstr ""
-
 msgid "description"
 msgstr ""
 
 msgid "file"
-msgstr ""
-
-msgid "https://uclouvain.be/fr/decouvrir/rgee.html"
 msgstr ""
 
 msgid "it does not match a valid birth date"
@@ -170,15 +83,6 @@ msgid "it must be %(length)s digits long"
 msgstr ""
 
 msgid "sheet"
-msgstr ""
-
-msgid "student"
-msgstr ""
-
-msgid "students"
-msgstr ""
-
-msgid "the"
 msgstr ""
 
 msgid "the checksum is invalid"

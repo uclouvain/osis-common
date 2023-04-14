@@ -25,10 +25,12 @@ msgid ""
 "%(value)s is not a valid identification number of the National Register of "
 "Belgium"
 msgstr ""
-"%(value)s n'est pas un numéro d'identification valide de Registre National de Belgique"
+"%(value)s n'est pas un numéro d'identification valide de Registre National "
+"de Belgique"
 
-msgid "Academic year"
-msgstr "Année académique"
+msgid ""
+"Concurrency Violation: Stale data detected. Entity was already modified."
+msgstr "Concurrency Violation: Des données périmées ont été détectées. L'entité a déjà été modifiée."
 
 msgid "Created by"
 msgstr "Créé par"
@@ -36,51 +38,11 @@ msgstr "Créé par"
 msgid "Creation date"
 msgstr "Date de création"
 
-msgid "Decimals authorized for this learning unit"
-msgstr "Les notes décimales sont autorisées pour ce cours"
-
-msgid "Deliberation date"
-msgstr "Date de délibération"
-
-msgid "Done at"
-msgstr "Fait à"
-
-msgid "Email"
-msgstr "Courriel"
-
-msgid "Enrolled lately"
-msgstr "Inscrit tardivement"
-
-msgid "Error occured. Please retry."
-msgstr "Une erreur inattendue est survenue. Veuillez réessayer."
-
 msgid "False"
 msgstr "Faux"
 
-msgid "Fax"
-msgstr "Fax"
-
 msgid "File name"
 msgstr "Nom de fichier"
-
-msgid "Firstname"
-msgstr "Prénom"
-
-msgid ""
-"In accordance to regulation's rules 104, 109 and 111. Complete rules "
-"avalaible here"
-msgstr ""
-"Conformément aux articles 104, 109 et 111 RGEE (Règlement général des études "
-"et des examens) disponible au lien suivant"
-
-msgid "Justification (A,T)"
-msgstr "Justification (A,T)"
-
-msgid "Justification legend: A=Absent, T=Cheating"
-msgstr "Légende pour le champ 'Justification': A=Absent, T=Tricherie"
-
-msgid "Lastname"
-msgstr "Nom"
 
 msgid "Message error : size and content"
 msgstr "Message d'erreur : taille et contenu"
@@ -99,48 +61,8 @@ msgstr ""
 "Aucun message n'a été envoyé : le modèle de message %(html_template_ref)s "
 "n'existe pas."
 
-msgid "None"
-msgstr "Aucun"
-
 msgid "Parameters"
 msgstr "Paramètres"
-
-msgid "Phone"
-msgstr "Téléphone"
-
-msgctxt "encoding"
-msgid "Program"
-msgstr "Formation"
-
-msgid "Reg. No."
-msgstr "Noma"
-
-msgid "Score"
-msgstr "Note"
-
-#, python-brace-format
-msgid "Score legend: {score} (0=Score of presence)"
-msgstr "Légende pour le champ 'Note chiffrée': {score} (0=Note de présence)"
-
-msgid "Score sheet"
-msgstr "Feuille de notes"
-
-msgid "Scores responsible"
-msgstr "Responsable de notes"
-
-msgid "Signature"
-msgstr "Signature"
-
-msgid "Submit data"
-msgstr "Date de remise"
-
-#, python-format
-msgid ""
-"The data presented on this document correspond to the state of the system "
-"dated %(creation_date)s and are likely to evolve"
-msgstr ""
-"Les données présentes sur ce document correspondent à l'état du système en "
-"date du %(creation_date)s et sont susceptibles d'évoluer"
 
 #, python-brace-format
 msgid ""
@@ -154,23 +76,11 @@ msgstr ""
 msgid "True"
 msgstr "Vrai"
 
-msgid "Unauthorized decimal for this learning unit"
-msgstr "Attention : décimales non autorisées pour ce cours"
-
-msgid "Université catholique de Louvain"
-msgstr "Université catholique de Louvain"
-
-msgid "Unsubscribed lately"
-msgstr "Désinscrit tardivement"
-
 msgid "description"
 msgstr "description"
 
 msgid "file"
 msgstr "fichier"
-
-msgid "https://uclouvain.be/fr/decouvrir/rgee.html"
-msgstr "https://uclouvain.be/fr/decouvrir/rgee.html"
 
 msgid "it does not match a valid birth date"
 msgstr "ce n'est pas une date de naissance valide"
@@ -181,15 +91,6 @@ msgstr "il doit contenir %(length)s chiffres"
 
 msgid "sheet"
 msgstr "feuille"
-
-msgid "student"
-msgstr "étudiant"
-
-msgid "students"
-msgstr "étudiants"
-
-msgid "the"
-msgstr "le"
 
 msgid "the checksum is invalid"
 msgstr "la somme de contrôle est invalide"
