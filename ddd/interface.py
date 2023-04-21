@@ -5,6 +5,7 @@ from decimal import Decimal
 from typing import List, Optional, Callable, Union
 
 import attr
+from django.utils.translation import gettext_lazy as _
 
 
 @attr.s(frozen=True, slots=True)
@@ -41,6 +42,18 @@ class BusinessExceptions(BusinessException):
         self.messages = messages
 
 
+class InfrastructureException(Exception):
+    def __init__(self, message: str, **kwargs):
+        self.message = message
+        super().__init__(**kwargs)
+
+
+class EntityConcurrencyViolationException(InfrastructureException):
+    def __init__(self, **kwargs):
+        message = _('Concurrency Violation: Stale data detected. Entity was already modified.')
+        super().__init__(message, **kwargs)
+
+
 class ValueObject(abc.ABC):
     def __eq__(self, other):
         raise NotImplementedError
@@ -67,8 +80,9 @@ class Entity(abc.ABC):
         return hash(self.entity_id)
 
 
+@attr.s(eq=False, hash=False)
 class RootEntity(Entity):
-    pass
+    version_id = attr.ib(type=int, default=0, eq=False, repr=False, kw_only=True)
 
 
 class DTO:
