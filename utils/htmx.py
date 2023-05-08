@@ -40,6 +40,12 @@ class HtmxMixin:
     htmx_template_name: str = None
     htmx_push_url: bool = False
 
+    def get_context_data(self, **kwargs):
+        return {
+            **super().get_context_data(**kwargs),
+            'cleaned_urlencode': self.get_cleaned_urlencode()
+        }
+
     def get_htmx_custom_triggers(self) -> List[str]:
         return []
 
@@ -69,13 +75,11 @@ class HtmxMixin:
                 response['HX-Push'] = self.get_cleaned_query_string_path()
         return response
 
+
+    def get_cleaned_urlencode(self):
+        query_params = [f"{key}={value}" for key, value in self.request.GET.items()]
+        return f"{'&'.join([*set(query_params)])}"
+
     def get_cleaned_query_string_path(self):
-        split_path = self.request.get_full_path().split('?')
-        if len(split_path) <= 1:
-            return split_path[0]
-
-        query_string = split_path[1]
-        query_params = query_string.split('&')
-
-        # remove duplicated query params using set
-        return f"{self.request.path}?{'&'.join([*set(query_params)])}"
+        query_string = self.get_cleaned_urlencode()
+        return f"{self.request.path}?{query_string}" if query_string else self.request.path
