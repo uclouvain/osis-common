@@ -26,6 +26,7 @@ import functools
 import logging
 
 from django.conf import settings
+from line_profiler import LineProfiler
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
@@ -46,3 +47,18 @@ def profile_db(func):
         logger.debug(f"- Time of execution: {time.time() - initial_time} sec")
         return result
     return _func
+
+
+profiler = LineProfiler()
+
+
+def profile(func):
+    def inner(*args, **kwargs):
+        profiler.add_function(func)
+        profiler.enable_by_count()
+        return func(*args, **kwargs)
+    return inner
+
+
+def print_stats():
+    profiler.print_stats(output_unit=1)
