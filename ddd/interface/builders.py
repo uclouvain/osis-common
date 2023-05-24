@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2019 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2023 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 #
 #    This program is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 #    GNU General Public License for more details.
 #
 #    A copy of this license - GNU General Public License - is available
@@ -23,32 +23,39 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from django.db import models
-from django.db.models import JSONField
+import abc
 
-from osis_common.models import osis_model_admin
-from osis_common.queue import queue_sender
-
-
-class MessageQueueCacheAdmin(osis_model_admin.OsisModelAdmin):
-    list_display = ('queue', 'data', 'changed')
+from .domain_models import CommandRequest, RootEntity, EntityIdentity
+from .queries import DTO
 
 
-class MessageQueueCache(models.Model):
-    queue = models.CharField(max_length=255)
-    data = JSONField()
-    changed = models.DateTimeField(auto_now_add=True)  # Insert date
-
-    def __str__(self):
-        return "{} - {}".format(self.queue, self.changed)
+__all__ = [
+    "RootEntityBuilder",
+    "EntityIdentityBuilder",
+]
 
 
-def get_messages_to_retry():
-    return MessageQueueCache.objects.order_by('changed')
+class RootEntityBuilder(abc.ABC):
+
+    @classmethod
+    @abc.abstractmethod
+    def build_from_command(cls, cmd: 'CommandRequest') -> 'RootEntity':
+        raise NotImplementedError()
+
+    @classmethod
+    @abc.abstractmethod
+    def build_from_repository_dto(cls, dto_object: 'DTO') -> 'RootEntity':
+        raise NotImplementedError()
 
 
-def retry_all_cached_messages():
-    messages_to_retry = get_messages_to_retry()
-    for message in messages_to_retry:
-        queue_sender.send_message(message.queue, message.data)
-        message.delete()
+class EntityIdentityBuilder(abc.ABC):
+
+    @classmethod
+    @abc.abstractmethod
+    def build_from_command(cls, cmd: 'CommandRequest') -> 'EntityIdentity':
+        raise NotImplementedError()
+
+    @classmethod
+    @abc.abstractmethod
+    def build_from_repository_dto(cls, dto_object: 'DTO') -> 'EntityIdentity':
+        raise NotImplementedError()
