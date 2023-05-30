@@ -68,11 +68,12 @@ class HtmxMixin:
 
         if default_event_name and response.status_code in SUCCESS_HTTP_STATUS_CODES:
 
-            msgs = list(messages.get_messages(self.request))
             trigger_events = {
                 f"{default_event_name}-{self.request.method}": "",
                 **{f"{custom_event}-{self.request.method}": "" for custom_event in self.get_htmx_custom_triggers()},
             }
+
+            msgs = list(messages.get_messages(self.request))
             if msgs:
                 trigger_events['messages'] = [{'message': msg.message, 'tags': msg.tags} for msg in msgs]
 
