@@ -23,14 +23,15 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-import datetime
+import contextlib
+import glob
 import logging
-import json
-import pika
+import os
+from importlib import util
+from typing import List
 
 from django.conf import settings
 from django.core.management import BaseCommand
-from django.db import transaction
 from django.utils.module_loading import import_string
 
 from osis_common.queue import queue_sender
@@ -40,25 +41,13 @@ logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
 class Command(BaseCommand):
     help = """
-    Command to send events (aka. message_bus_instance.apublish) produce by the application to the message broker
+    Command to store events (aka. message_bus_instance.apublish) comming from to the message broker to the context
     Script must be run in the root of the project
     """
 
     def handle(self, *args, **options):
-        self._load_outbox_model()
-        self._initialize_broker_channel()
-
-        with transaction.atomic():
-            for row in self.outbox_model.objects.select_for_update().filter(sent=False):
-                self.channel.basic_publish(
-                    exchange=settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME'],
-                    routing_key='.'.join([settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME'], row.event_name]),
-                    body=json.dumps(row.payload),
-                    properties=pika.BasicProperties(content_type='application/json', delivery_mode=2)
-                )
-                row.sent = True
-                row.sent_date = datetime.datetime.now()
-                row.save()
+        consummers = self._retrieve_consummers_list()
+        print(consummers)
 
     def _initialize_broker_channel(self):
         connection = queue_sender.get_connection()
@@ -74,6 +63,20 @@ class Command(BaseCommand):
         channel.confirm_delivery()
         self.channel = channel
 
-    def _load_outbox_model(self):
-        outbox_model_path = settings.MESSAGE_BUS['OUTBOX_MODEL']
-        self.outbox_model = import_string(outbox_model_path)
+    def _retrieve_consummers_list(self) -> List[str]:
+        consummers_list = []
+        handlers_path = glob.glob("infrastructure/*/handlers.py", recursive=True)
+        for handler_path in handlers_path:
+            with contextlib.suppress(AttributeError):
+                handler_module = self.__import_file('handler_module', handler_path)
+                if handler_module.EVENT_HANDLERS:
+                    bounded_context = os.path.dirname(handler_path).split(os.sep)[-1]
+                    consummers_list.append(bounded_context)
+        return consummers_list
+
+    def __import_file(self, full_name, path):
+        spec = util.spec_from_file_location(full_name, path)
+        mod = util.module_from_spec(spec)
+
+        spec.loader.exec_module(mod)
+        return mod
