@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from osis_common.models import message_template, message_history, document_file, queue_exception, application_notice, \
-    message_queue_cache, outbox
+    message_queue_cache, outbox, inbox
 
 admin.site.register(message_template.MessageTemplate,
                     message_template.MessageTemplateAdmin)
@@ -17,3 +17,5 @@ admin.site.register(application_notice.ApplicationNotice,
                     application_notice.ApplicationNoticeAdmin)
 admin.site.register(outbox.Outbox,
                     outbox.OutboxAdmin)
+admin.site.register(inbox.Inbox,
+                    inbox.InboxAdmin)

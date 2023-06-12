@@ -26,6 +26,9 @@
 import datetime
 import logging
 import json
+import os
+from time import sleep
+
 import pika
 
 from django.conf import settings
@@ -48,21 +51,38 @@ class Command(BaseCommand):
         self._load_outbox_model()
         self._initialize_broker_channel()
 
+        while True:
+            self._send_unprocessed_events()
+            self.connection.sleep(1)
+
+    def _send_unprocessed_events(self):
         with transaction.atomic():
-            for row in self.outbox_model.objects.select_for_update().filter(sent=False):
+            unprocessed_events = self.outbox_model.objects.select_for_update().filter(sent=False)
+            if unprocessed_events:
+                logger.info(f"{self._logger_prefix_message()}: Sending {len(unprocessed_events)} unprocessed events...")
+            else:
+                logger.info(f"{self._logger_prefix_message()}: No unprocessed events...")
+
+            for unprocessed_event in unprocessed_events:
                 self.channel.basic_publish(
                     exchange=settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME'],
-                    routing_key='.'.join([settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME'], row.event_name]),
-                    body=json.dumps(row.payload),
-                    properties=pika.BasicProperties(content_type='application/json', delivery_mode=2)
+                    routing_key='.'.join(
+                        [settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME'], unprocessed_event.event_name]
+                    ),
+                    body=json.dumps(unprocessed_event.payload),
+                    properties=pika.BasicProperties(
+                        message_id=str(unprocessed_event.transaction_id),
+                        content_type='application/json',
+                        delivery_mode=2,
+                    )
                 )
-                row.sent = True
-                row.sent_date = datetime.datetime.now()
-                row.save()
+                unprocessed_event.sent = True
+                unprocessed_event.sent_date = datetime.datetime.now()
+                unprocessed_event.save()
 
     def _initialize_broker_channel(self):
-        connection = queue_sender.get_connection()
-        channel = connection.channel()
+        self.connection = queue_sender.get_connection(client_properties={'connection_name': 'outbox_worker'})
+        channel = self.connection.channel()
 
         channel.exchange_declare(
             exchange=settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME'],
@@ -77,3 +97,6 @@ class Command(BaseCommand):
     def _load_outbox_model(self):
         outbox_model_path = settings.MESSAGE_BUS['OUTBOX_MODEL']
         self.outbox_model = import_string(outbox_model_path)
+
+    def _logger_prefix_message(self) -> str:
+        return f"[Outbox Worker thread - PID: {os.getpid()} / PPID: {os.getppid()}]"
