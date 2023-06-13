@@ -50,7 +50,7 @@ class OutboxAdmin(osis_model_admin.OsisModelAdmin):
 
 class Outbox(models.Model):
     event_name = models.CharField(max_length=255)
-    transaction_id = models.UUIDField()
+    transaction_id = models.UUIDField(unique=True)
     payload = models.JSONField(default=dict, blank=True)
     creation_date = models.DateTimeField(auto_now_add=True)
     sent = models.BooleanField(default=False)

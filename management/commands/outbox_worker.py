@@ -27,7 +27,6 @@ import datetime
 import logging
 import json
 import os
-from time import sleep
 
 import pika
 
@@ -72,6 +71,7 @@ class Command(BaseCommand):
                     body=json.dumps(unprocessed_event.payload),
                     properties=pika.BasicProperties(
                         message_id=str(unprocessed_event.transaction_id),
+                        content_encoding='utf-8',
                         content_type='application/json',
                         delivery_mode=2,
                     )

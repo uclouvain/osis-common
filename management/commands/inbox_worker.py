@@ -25,120 +25,79 @@
 ##############################################################################
 import contextlib
 import glob
-import json
 import logging
 import os
 import threading
-import uuid
 from importlib import util
+from time import sleep
 from typing import List, Dict
 
 from django.conf import settings
 from django.core.management import BaseCommand
+from django.db import transaction
 from django.db.models import Model
 from django.utils.module_loading import import_string
 
 from infrastructure.utils import EventHandlers
-from osis_common.queue import queue_sender
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
 
-class ConsummerThreadWorker(threading.Thread):
+class InboxThreadWorker(threading.Thread):
     def __init__(self, consummer_name: str, event_handlers: EventHandlers, inbox_model: Model):
         super().__init__()
         self.consummer_name = consummer_name
         self.event_handlers = event_handlers
         self.inbox_model = inbox_model
 
-        consummer_queue_name = f"{self.consummer_name}_consummer"
-        self.connection = queue_sender.get_connection(client_properties={'connection_name': consummer_queue_name})
-        self.channel = self.connection.channel()
-        self.channel.queue_declare(
-            consummer_queue_name,
-            auto_delete=False,
-            durable=True
-        )
-
-        for interested_event in self.get_interested_events():
-            self.channel.queue_bind(
-                consummer_queue_name,
-                settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME'],
-                routing_key=f"{settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME']}.{interested_event}"
-            )
-        self.channel.basic_consume(
-            self._process_message,
-            queue=consummer_queue_name,
-            no_ack=False  # Manual acknowledgement
-        )
-
     def run(self):
-        logger.info(f"{self._logger_prefix_message()}: Start consuming...")
-        self.channel.start_consuming()
+        while True:
+            self._execute_unprocessed_events()
+            sleep(1)
 
-    def _process_message(self, ch, method_frame, header_frame, body):
-        logger.info(f"{self._logger_prefix_message()}: Process message started...")
-        if not header_frame.message_id:
-            logger.warning(f"{self._logger_prefix_message()}: Missing message_id in header_frame.")
-            ch.basic_reject(delivery_tag=method_frame.delivery_tag, requeue=False)
-            return
+    def _execute_unprocessed_events(self):
+        with transaction.atomic():
+            unprocessed_events = self.inbox_model.objects.select_for_update().filter(
+                consumer=self.consummer_name,
+                completed=False
+            ).order_by('creation_date')
 
-        self.inbox_model.objects.get_or_create(
-            consumer=self.consummer_name,
-            transaction_id=uuid.UUID(header_frame.message_id),
-            defaults={
-                "event_name": method_frame.routing_key.split('.')[-1],
-                "payload": json.loads(body),
-            }
-        )
-        ch.basic_ack(delivery_tag=method_frame.delivery_tag)
-        logger.info(f"{self._logger_prefix_message()}: Process message finished...")
+            if unprocessed_events:
+                logger.info(f"{self._logger_prefix_message()}: Process {len(unprocessed_events)} events...")
+            else:
+                logger.info(f"{self._logger_prefix_message()}: No unprocessed events...")
 
-    def get_interested_events(self) -> List[str]:
-        return [event.__name__ for event in self.event_handlers.keys()]
+            for unprocessed_event in unprocessed_events:
+                event_name = unprocessed_event.event_name
+                # Start method
 
     def _logger_prefix_message(self) -> str:
-        return f"[Consummer Worker - Thread {self.consummer_name} - Thread: {self.ident} / PID: {os.getpid()} / PPID: {os.getppid()}]"
+        return f"[Inbox Worker - Thread {self.consummer_name} - Thread: {self.ident} / PID: {os.getpid()} / PPID: {os.getppid()}]"
 
 
 class Command(BaseCommand):
     help = """
-    Command to start 1 thread/bounded context in order to read events from the queue and store it to the inbox table
-    for further processing (via inbox_worker)
+    Command to start 1 thread/bounded context in order to processing reaction according to event
     Script must be run in the root of the project
     """
 
     def __init__(self, *args, **kwargs):
         super(Command, self).__init__(*args, **kwargs)
-        self.threads = []  # type: List[ConsummerThreadWorker]
+        self.threads = []  # type: List[InboxThreadWorker]
         self._load_inbox_model()
 
     def handle(self, *args, **options):
         self._retrieve_consummers_and_its_event_handlers()
-        self._initialize_broker_channel()
 
         for consummer_name, event_handlers in self.consummers_list.items():
-            consummer_thread = ConsummerThreadWorker(consummer_name, event_handlers, self.inbox_model)
-            consummer_thread.setDaemon(False)
-            consummer_thread.start()
-            self.threads.append(consummer_thread)
+            inbox_thread_worker = InboxThreadWorker(consummer_name, event_handlers, self.inbox_model)
+            inbox_thread_worker.setDaemon(False)
+            inbox_thread_worker.start()
+            self.threads.append(inbox_thread_worker)
 
     def _load_inbox_model(self):
         inbox_model_path = settings.MESSAGE_BUS['INBOX_MODEL']
         self.inbox_model = import_string(inbox_model_path)
-
-    def _initialize_broker_channel(self) -> None:
-        connection = queue_sender.get_connection()
-        channel = connection.channel()
-        channel.exchange_declare(
-            exchange=settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME'],
-            exchange_type='topic',
-            passive=False,
-            durable=True,
-            auto_delete=False
-        )
-        channel.close()
-        connection.close()
 
     def _retrieve_consummers_and_its_event_handlers(self) -> Dict[str, EventHandlers]:
         self.consummers_list = {}
