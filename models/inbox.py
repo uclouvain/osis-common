@@ -23,6 +23,8 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+import datetime
+
 from django.db import models
 
 from osis_common.models import osis_model_admin
@@ -31,10 +33,10 @@ from osis_common.models import osis_model_admin
 class InboxAdmin(osis_model_admin.OsisModelAdmin):
     date_hierarchy = 'creation_date'
     list_display = (
-        'transaction_id', 'consumer', 'event_name',  'payload', 'creation_date', 'completed', 'completed_date',
+        'transaction_id', 'consumer', 'event_name',  'payload', 'creation_date', 'status', 'last_execution_date',
     )
     readonly_fields = (
-        'transaction_id', 'consumer', 'event_name', 'payload', 'creation_date', 'completed', 'completed_date',
+        'transaction_id', 'consumer', 'event_name', 'payload', 'creation_date', 'status', 'last_execution_date',
     )
     ordering = ['-creation_date']
     search_fields = ['event_name', 'consumer']
@@ -50,16 +52,41 @@ class InboxAdmin(osis_model_admin.OsisModelAdmin):
 
 
 class Inbox(models.Model):
+    PENDING = "PENDING"
+    PROCESSED = "PROCESSED"
+    ERROR = "ERROR"
+
+    STATUS_CHOICES = [
+        (PENDING, 'Pending'),
+        (PROCESSED, 'Done'),
+        (ERROR, 'Error')
+    ]
     consumer = models.CharField(max_length=255)
     event_name = models.CharField(max_length=255)
     transaction_id = models.UUIDField()
     payload = models.JSONField(default=dict, blank=True)
     creation_date = models.DateTimeField(auto_now_add=True)
-    completed = models.BooleanField(default=False)
-    completed_date = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_CHOICES,
+        default=PENDING,
+    )
+    last_execution_date = models.DateTimeField(null=True, blank=True)
+    traceback = models.TextField(null=True, blank=True)
 
     class Meta:
         verbose_name_plural = "inbox"
         unique_together = (
             'consumer', 'transaction_id',
         )
+
+    def mark_as_processed(self):
+        self.status = self.PROCESSED
+        self.last_execution_date = datetime.datetime.now()
+        self.save()
+
+    def mark_as_error(self, error_description: str = None):
+        self.status = self.ERROR
+        self.last_execution_date = datetime.datetime.now()
+        self.traceback = error_description
+        self.save()

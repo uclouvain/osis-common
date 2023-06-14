@@ -31,6 +31,7 @@ import os
 import threading
 import uuid
 from importlib import util
+from time import sleep
 from typing import List, Dict
 
 from django.conf import settings
@@ -44,32 +45,33 @@ from osis_common.queue import queue_sender
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
 
-class ConsummerThreadWorker(threading.Thread):
-    def __init__(self, consummer_name: str, event_handlers: EventHandlers, inbox_model: Model):
+class ConsumerThreadWorker(threading.Thread):
+    def __init__(self, consumer_name: str, event_handlers: EventHandlers, inbox_model: Model):
         super().__init__()
-        self.consummer_name = consummer_name
+        self.consumer_name = consumer_name
         self.event_handlers = event_handlers
         self.inbox_model = inbox_model
 
-        consummer_queue_name = f"{self.consummer_name}_consummer"
-        self.connection = queue_sender.get_connection(client_properties={'connection_name': consummer_queue_name})
+        consumer_queue_name = f"{self.consumer_name}_consumer"
+        self.connection = queue_sender.get_connection(client_properties={'connection_name': consumer_queue_name})
         self.channel = self.connection.channel()
         self.channel.queue_declare(
-            consummer_queue_name,
+            consumer_queue_name,
             auto_delete=False,
             durable=True
         )
 
         for interested_event in self.get_interested_events():
             self.channel.queue_bind(
-                consummer_queue_name,
+                consumer_queue_name,
                 settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME'],
                 routing_key=f"{settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME']}.{interested_event}"
             )
         self.channel.basic_consume(
             self._process_message,
-            queue=consummer_queue_name,
-            no_ack=False  # Manual acknowledgement
+            queue=consumer_queue_name,
+            no_ack=False,  # Manual acknowledgement,
+            exclusive=True  # Force only one consumer by queue
         )
 
     def run(self):
@@ -84,7 +86,7 @@ class ConsummerThreadWorker(threading.Thread):
             return
 
         self.inbox_model.objects.get_or_create(
-            consumer=self.consummer_name,
+            consumer=self.consumer_name,
             transaction_id=uuid.UUID(header_frame.message_id),
             defaults={
                 "event_name": method_frame.routing_key.split('.')[-1],
@@ -98,7 +100,7 @@ class ConsummerThreadWorker(threading.Thread):
         return [event.__name__ for event in self.event_handlers.keys()]
 
     def _logger_prefix_message(self) -> str:
-        return f"[Consummer Worker - Thread {self.consummer_name} - Thread: {self.ident} / PID: {os.getpid()} / PPID: {os.getppid()}]"
+        return f"[Consumer Worker - {self.consumer_name} - Thread: {self.ident}]"
 
 
 class Command(BaseCommand):
@@ -110,18 +112,22 @@ class Command(BaseCommand):
 
     def __init__(self, *args, **kwargs):
         super(Command, self).__init__(*args, **kwargs)
-        self.threads = []  # type: List[ConsummerThreadWorker]
+        self.threads = {}  # type: Dict[str, ConsumerThreadWorker]
         self._load_inbox_model()
 
     def handle(self, *args, **options):
-        self._retrieve_consummers_and_its_event_handlers()
+        self._retrieve_consumers_and_its_event_handlers()
         self._initialize_broker_channel()
 
-        for consummer_name, event_handlers in self.consummers_list.items():
-            consummer_thread = ConsummerThreadWorker(consummer_name, event_handlers, self.inbox_model)
-            consummer_thread.setDaemon(False)
-            consummer_thread.start()
-            self.threads.append(consummer_thread)
+        for consumer_name, event_handlers in self.consumers_list.items():
+            consumer_thread = ConsumerThreadWorker(consumer_name, event_handlers, self.inbox_model)
+            consumer_thread.setDaemon(False)
+            consumer_thread.start()
+            self.threads[consumer_name] = consumer_thread
+
+        while True:
+            self.__display_thread_status()
+            sleep(30)
 
     def _load_inbox_model(self):
         inbox_model_path = settings.MESSAGE_BUS['INBOX_MODEL']
@@ -140,16 +146,16 @@ class Command(BaseCommand):
         channel.close()
         connection.close()
 
-    def _retrieve_consummers_and_its_event_handlers(self) -> Dict[str, EventHandlers]:
-        self.consummers_list = {}
+    def _retrieve_consumers_and_its_event_handlers(self) -> Dict[str, EventHandlers]:
+        self.consumers_list = {}
         handlers_path = glob.glob("infrastructure/*/handlers.py", recursive=True)
         for handler_path in handlers_path:
             with contextlib.suppress(AttributeError):
                 handler_module = self.__import_file('handler_module', handler_path)
                 if handler_module.EVENT_HANDLERS:
                     bounded_context = os.path.dirname(handler_path).split(os.sep)[-1]
-                    self.consummers_list[bounded_context] = handler_module.EVENT_HANDLERS
-        return self.consummers_list
+                    self.consumers_list[bounded_context] = handler_module.EVENT_HANDLERS
+        return self.consumers_list
 
     def __import_file(self, full_name, path):
         spec = util.spec_from_file_location(full_name, path)
@@ -157,3 +163,9 @@ class Command(BaseCommand):
 
         spec.loader.exec_module(mod)
         return mod
+
+    def __display_thread_status(self):
+        logger.info("********** [THREAD STATUS] ************")
+        for consumer_name, thread in self.threads.items():
+            logger.info(f"| Consumer {consumer_name} : {thread.is_alive()} |")
+        logger.info("***********************************")

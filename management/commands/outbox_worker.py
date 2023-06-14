@@ -50,6 +50,7 @@ class Command(BaseCommand):
         self._load_outbox_model()
         self._initialize_broker_channel()
 
+        logger.info(f"{self._logger_prefix_message()}: Start to listen unsent events...")
         while True:
             self._send_unprocessed_events()
             self.connection.sleep(1)
@@ -59,8 +60,6 @@ class Command(BaseCommand):
             unprocessed_events = self.outbox_model.objects.select_for_update().filter(sent=False)
             if unprocessed_events:
                 logger.info(f"{self._logger_prefix_message()}: Sending {len(unprocessed_events)} unprocessed events...")
-            else:
-                logger.info(f"{self._logger_prefix_message()}: No unprocessed events...")
 
             for unprocessed_event in unprocessed_events:
                 self.channel.basic_publish(
@@ -99,4 +98,4 @@ class Command(BaseCommand):
         self.outbox_model = import_string(outbox_model_path)
 
     def _logger_prefix_message(self) -> str:
-        return f"[Outbox Worker thread - PID: {os.getpid()} / PPID: {os.getppid()}]"
+        return f"[Outbox Worker - PID: {os.getpid()}]"

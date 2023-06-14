@@ -28,51 +28,89 @@ import glob
 import logging
 import os
 import threading
+import traceback
+import uuid
 from importlib import util
 from time import sleep
 from typing import List, Dict
 
+import cattr
 from django.conf import settings
 from django.core.management import BaseCommand
 from django.db import transaction
 from django.db.models import Model
 from django.utils.module_loading import import_string
 
+from infrastructure.messages_bus import message_bus_instance
 from infrastructure.utils import EventHandlers
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
 
+cattr.register_structure_hook(uuid.UUID, lambda d, t: d)
+
+
+class EventClassNotFound(Exception):
+    def __init__(self, event_name: str, **kwargs):
+        self.message = f"Cannot process {event_name} events because not found in handlers definition..."
+        super().__init__(self.message)
+
+
 class InboxThreadWorker(threading.Thread):
-    def __init__(self, consummer_name: str, event_handlers: EventHandlers, inbox_model: Model):
+    def __init__(self, consumer_name: str, event_handlers: EventHandlers, inbox_model: Model):
         super().__init__()
-        self.consummer_name = consummer_name
+        self.consumer_name = consumer_name
         self.event_handlers = event_handlers
         self.inbox_model = inbox_model
 
     def run(self):
         while True:
             self._execute_unprocessed_events()
-            sleep(1)
+            sleep(5)
 
     def _execute_unprocessed_events(self):
         with transaction.atomic():
             unprocessed_events = self.inbox_model.objects.select_for_update().filter(
-                consumer=self.consummer_name,
-                completed=False
+                consumer=self.consumer_name,
+                status=self.inbox_model.PENDING
             ).order_by('creation_date')
-
             if unprocessed_events:
                 logger.info(f"{self._logger_prefix_message()}: Process {len(unprocessed_events)} events...")
-            else:
-                logger.info(f"{self._logger_prefix_message()}: No unprocessed events...")
 
             for unprocessed_event in unprocessed_events:
                 event_name = unprocessed_event.event_name
-                # Start method
+                try:
+                    event_instance = self._build_event_instance(unprocessed_event)
+                    for function in self.event_handlers[event_instance.__class__]:
+                        function(message_bus_instance, event_instance)
+                    unprocessed_event.mark_as_processed()
+                except EventClassNotFound as e:
+                    logger.warning(e.message)
+                    unprocessed_event.mark_as_error(e.message)
+                    continue
+                except Exception as e:
+                    logger.error(
+                        f"{self._logger_prefix_message()}: Cannot process {event_name} event ({event_instance})",
+                        exc_info=True
+                    )
+                    unprocessed_event.mark_as_error(traceback.format_exc())
+                    continue
+
+    def _build_event_instance(self, unprocessed_event):
+        try:
+            event_cls = next(
+                event_cls for event_cls, fn_list in self.event_handlers.items()
+                if event_cls.__name__ == unprocessed_event.event_name
+            )
+            return cattr.structure({
+                **unprocessed_event.payload,
+                'transaction_id': unprocessed_event.transaction_id
+            }, event_cls)
+        except StopIteration:
+            raise EventClassNotFound(unprocessed_event.event_name)
 
     def _logger_prefix_message(self) -> str:
-        return f"[Inbox Worker - Thread {self.consummer_name} - Thread: {self.ident} / PID: {os.getpid()} / PPID: {os.getppid()}]"
+        return f"[Inbox Worker - {self.consumer_name} - Thread: {self.ident}]"
 
 
 class Command(BaseCommand):
@@ -83,32 +121,36 @@ class Command(BaseCommand):
 
     def __init__(self, *args, **kwargs):
         super(Command, self).__init__(*args, **kwargs)
-        self.threads = []  # type: List[InboxThreadWorker]
+        self.threads = {}  # type: Dict[str, InboxThreadWorker]
         self._load_inbox_model()
 
     def handle(self, *args, **options):
-        self._retrieve_consummers_and_its_event_handlers()
+        self._retrieve_consumers_and_its_event_handlers()
 
-        for consummer_name, event_handlers in self.consummers_list.items():
-            inbox_thread_worker = InboxThreadWorker(consummer_name, event_handlers, self.inbox_model)
+        for consumer_name, event_handlers in self.consumers_list.items():
+            inbox_thread_worker = InboxThreadWorker(consumer_name, event_handlers, self.inbox_model)
             inbox_thread_worker.setDaemon(False)
             inbox_thread_worker.start()
-            self.threads.append(inbox_thread_worker)
+            self.threads[consumer_name] = inbox_thread_worker
+
+        while True:
+            self.__display_thread_status()
+            sleep(30)
 
     def _load_inbox_model(self):
         inbox_model_path = settings.MESSAGE_BUS['INBOX_MODEL']
         self.inbox_model = import_string(inbox_model_path)
 
-    def _retrieve_consummers_and_its_event_handlers(self) -> Dict[str, EventHandlers]:
-        self.consummers_list = {}
+    def _retrieve_consumers_and_its_event_handlers(self) -> Dict[str, EventHandlers]:
+        self.consumers_list = {}
         handlers_path = glob.glob("infrastructure/*/handlers.py", recursive=True)
         for handler_path in handlers_path:
             with contextlib.suppress(AttributeError):
                 handler_module = self.__import_file('handler_module', handler_path)
                 if handler_module.EVENT_HANDLERS:
                     bounded_context = os.path.dirname(handler_path).split(os.sep)[-1]
-                    self.consummers_list[bounded_context] = handler_module.EVENT_HANDLERS
-        return self.consummers_list
+                    self.consumers_list[bounded_context] = handler_module.EVENT_HANDLERS
+        return self.consumers_list
 
     def __import_file(self, full_name, path):
         spec = util.spec_from_file_location(full_name, path)
@@ -116,3 +158,9 @@ class Command(BaseCommand):
 
         spec.loader.exec_module(mod)
         return mod
+
+    def __display_thread_status(self):
+        logger.info("********** [THREAD STATUS] ************")
+        for consumer_name, thread in self.threads.items():
+            logger.info(f"| Consumer {consumer_name} : {thread.is_alive()} |")
+        logger.info("***********************************")

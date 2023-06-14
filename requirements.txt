@@ -3,3 +3,4 @@ XlsxWriter==0.9.3
 voluptuous==0.9.3
 weasyprint==52.5
 attrs==22.1.0
+cattrs==23.1.2
