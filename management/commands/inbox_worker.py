@@ -32,7 +32,7 @@ import traceback
 import uuid
 from importlib import util
 from time import sleep
-from typing import List, Dict
+from typing import Dict
 
 import cattr
 from django.conf import settings
@@ -66,7 +66,7 @@ class InboxThreadWorker(threading.Thread):
     def run(self):
         while True:
             self._execute_unprocessed_events()
-            sleep(5)
+            sleep(2)
 
     def _execute_unprocessed_events(self):
         with transaction.atomic():
@@ -88,7 +88,7 @@ class InboxThreadWorker(threading.Thread):
                     logger.warning(e.message)
                     unprocessed_event.mark_as_error(e.message)
                     continue
-                except Exception as e:
+                except Exception:
                     logger.error(
                         f"{self._logger_prefix_message()}: Cannot process {event_name} event ({event_instance})",
                         exc_info=True
@@ -122,26 +122,22 @@ class Command(BaseCommand):
     def __init__(self, *args, **kwargs):
         super(Command, self).__init__(*args, **kwargs)
         self.threads = {}  # type: Dict[str, InboxThreadWorker]
-        self._load_inbox_model()
+        self.__load_inbox_model()
+        self.__retrieve_consumers_and_its_event_handlers()
 
     def handle(self, *args, **options):
-        self._retrieve_consumers_and_its_event_handlers()
-
-        for consumer_name, event_handlers in self.consumers_list.items():
-            inbox_thread_worker = InboxThreadWorker(consumer_name, event_handlers, self.inbox_model)
-            inbox_thread_worker.setDaemon(False)
-            inbox_thread_worker.start()
-            self.threads[consumer_name] = inbox_thread_worker
+        for consumer_name in self.consumers_list.keys():
+            self.__start_thread(consumer_name)
 
         while True:
-            self.__display_thread_status()
-            sleep(30)
+            self.__check_thread_status()
+            sleep(2)
 
-    def _load_inbox_model(self):
+    def __load_inbox_model(self):
         inbox_model_path = settings.MESSAGE_BUS['INBOX_MODEL']
         self.inbox_model = import_string(inbox_model_path)
 
-    def _retrieve_consumers_and_its_event_handlers(self) -> Dict[str, EventHandlers]:
+    def __retrieve_consumers_and_its_event_handlers(self):
         self.consumers_list = {}
         handlers_path = glob.glob("infrastructure/*/handlers.py", recursive=True)
         for handler_path in handlers_path:
@@ -150,7 +146,6 @@ class Command(BaseCommand):
                 if handler_module.EVENT_HANDLERS:
                     bounded_context = os.path.dirname(handler_path).split(os.sep)[-1]
                     self.consumers_list[bounded_context] = handler_module.EVENT_HANDLERS
-        return self.consumers_list
 
     def __import_file(self, full_name, path):
         spec = util.spec_from_file_location(full_name, path)
@@ -159,8 +154,19 @@ class Command(BaseCommand):
         spec.loader.exec_module(mod)
         return mod
 
-    def __display_thread_status(self):
+    def __check_thread_status(self):
         logger.info("********** [THREAD STATUS] ************")
         for consumer_name, thread in self.threads.items():
-            logger.info(f"| Consumer {consumer_name} : {thread.is_alive()} |")
+            if not thread.is_alive():
+                logger.warning(f"| Consumer {consumer_name} : DOWN |")
+                self.__start_thread(consumer_name)
+            else:
+                logger.info(f"| Consumer {consumer_name} : OK |")
         logger.info("***********************************")
+
+    def __start_thread(self, consumer_name):
+        logger.info(f"| Start Consumer {consumer_name} ...")
+        inbox_thread_worker = InboxThreadWorker(consumer_name, self.consumers_list[consumer_name], self.inbox_model)
+        inbox_thread_worker.setDaemon(True)
+        inbox_thread_worker.start()
+        self.threads[consumer_name] = inbox_thread_worker

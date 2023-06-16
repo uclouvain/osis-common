@@ -23,9 +23,6 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-import uuid
-from typing import Dict
-
 from django.db import models
 
 from osis_common.models import osis_model_admin
@@ -58,7 +55,3 @@ class Outbox(models.Model):
 
     class Meta:
         verbose_name_plural = "outbox"
-
-
-def create_outbox_entry(event_name: str, transaction_id: uuid.UUID, payload: Dict):
-    Outbox.objects.create(event_name=event_name, transaction_id=transaction_id, payload=payload)

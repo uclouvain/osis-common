@@ -57,7 +57,9 @@ class Command(BaseCommand):
 
     def _send_unprocessed_events(self):
         with transaction.atomic():
-            unprocessed_events = self.outbox_model.objects.select_for_update().filter(sent=False)
+            unprocessed_events = self.outbox_model.objects.select_for_update().filter(
+                sent=False
+            ).order_by('creation_date')
             if unprocessed_events:
                 logger.info(f"{self._logger_prefix_message()}: Sending {len(unprocessed_events)} unprocessed events...")
 

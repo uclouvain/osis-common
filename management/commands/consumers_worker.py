@@ -113,27 +113,24 @@ class Command(BaseCommand):
     def __init__(self, *args, **kwargs):
         super(Command, self).__init__(*args, **kwargs)
         self.threads = {}  # type: Dict[str, ConsumerThreadWorker]
-        self._load_inbox_model()
+        self.__load_inbox_model()
+        self.__retrieve_consumers_and_its_event_handlers()
 
     def handle(self, *args, **options):
-        self._retrieve_consumers_and_its_event_handlers()
-        self._initialize_broker_channel()
+        self.__initialize_broker_channel()
 
-        for consumer_name, event_handlers in self.consumers_list.items():
-            consumer_thread = ConsumerThreadWorker(consumer_name, event_handlers, self.inbox_model)
-            consumer_thread.setDaemon(False)
-            consumer_thread.start()
-            self.threads[consumer_name] = consumer_thread
+        for consumer_name in self.consumers_list.keys():
+            self.__start_thread(consumer_name)
 
         while True:
-            self.__display_thread_status()
-            sleep(30)
+            self.__check_thread_status()
+            sleep(5)
 
-    def _load_inbox_model(self):
+    def __load_inbox_model(self):
         inbox_model_path = settings.MESSAGE_BUS['INBOX_MODEL']
         self.inbox_model = import_string(inbox_model_path)
 
-    def _initialize_broker_channel(self) -> None:
+    def __initialize_broker_channel(self) -> None:
         connection = queue_sender.get_connection()
         channel = connection.channel()
         channel.exchange_declare(
@@ -146,7 +143,7 @@ class Command(BaseCommand):
         channel.close()
         connection.close()
 
-    def _retrieve_consumers_and_its_event_handlers(self) -> Dict[str, EventHandlers]:
+    def __retrieve_consumers_and_its_event_handlers(self):
         self.consumers_list = {}
         handlers_path = glob.glob("infrastructure/*/handlers.py", recursive=True)
         for handler_path in handlers_path:
@@ -155,7 +152,6 @@ class Command(BaseCommand):
                 if handler_module.EVENT_HANDLERS:
                     bounded_context = os.path.dirname(handler_path).split(os.sep)[-1]
                     self.consumers_list[bounded_context] = handler_module.EVENT_HANDLERS
-        return self.consumers_list
 
     def __import_file(self, full_name, path):
         spec = util.spec_from_file_location(full_name, path)
@@ -164,8 +160,23 @@ class Command(BaseCommand):
         spec.loader.exec_module(mod)
         return mod
 
-    def __display_thread_status(self):
+    def __check_thread_status(self):
         logger.info("********** [THREAD STATUS] ************")
         for consumer_name, thread in self.threads.items():
-            logger.info(f"| Consumer {consumer_name} : {thread.is_alive()} |")
+            if not thread.is_alive():
+                logger.warning(f"| Consumer {consumer_name} : DOWN |")
+                self.__start_thread(consumer_name)
+            else:
+                logger.info(f"| Consumer {consumer_name} : OK |")
         logger.info("***********************************")
+
+    def __start_thread(self, consumer_name):
+        logger.info(f"| Start Consumer {consumer_name} ...")
+        consumer_thread_worker = ConsumerThreadWorker(
+            consumer_name,
+            self.consumers_list[consumer_name],
+            self.inbox_model,
+        )
+        consumer_thread_worker.setDaemon(True)
+        consumer_thread_worker.start()
+        self.threads[consumer_name] = consumer_thread_worker
