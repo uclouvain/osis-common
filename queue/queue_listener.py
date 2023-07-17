@@ -76,10 +76,15 @@ def listen_queue_synchronously(queue_name, callback, counter=3):
         return # Stop the function
     logger.debug("Connecting to {0} (queue name = {1})...".format(settings.QUEUES.get('QUEUE_URL'), queue_name))
     credentials = pika.PlainCredentials(settings.QUEUES.get('QUEUE_USER'), settings.QUEUES.get('QUEUE_PASSWORD'))
+    use_ssl_conexion = False
+    if hasattr(settings, 'QUEUE_SSL_CONEXION'):
+        use_ssl_conexion = settings.QUEUE_SSL_CONEXION
+
     connection = pika.BlockingConnection(pika.ConnectionParameters(settings.QUEUES.get('QUEUE_URL'),
                                                                    settings.QUEUES.get('QUEUE_PORT'),
                                                                    settings.QUEUES.get('QUEUE_CONTEXT_ROOT'),
-                                                                   credentials))
+                                                                   credentials,
+                                                                   ssl=use_ssl_conexion))
     logger.debug("Connection opened.")
     logger.debug("Creating a new channel...")
     channel = connection.channel()
