@@ -38,7 +38,6 @@ from openpyxl.styles import Color, PatternFill, Alignment
 from openpyxl.styles import Font
 from openpyxl.styles.borders import Border, Side, BORDER_THIN
 from openpyxl.utils import get_column_letter
-from openpyxl.writer.excel import save_virtual_workbook
 
 from osis_common.decorators.download import set_download_cookie
 
