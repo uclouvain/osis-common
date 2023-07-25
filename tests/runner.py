@@ -30,7 +30,6 @@ from django import get_version as get_django_version
 from django.conf import settings
 from django.test.runner import DiscoverRunner
 from mock import patch
-
 from osis_common.tests.functional.models.report import make_html_report
 
 
@@ -83,14 +82,7 @@ class InstalledAppsTestRunner(DiscoverRunner):
 
     def build_suite(self, test_labels=None, *args, **kwargs):
         django_version = get_django_version()
-        if hasattr(settings, 'TESTS_TYPES') and settings.TESTS_TYPES == 'ALL':
-            tests_type = 'Unit Tests + Selenium Tests'
-        elif hasattr(settings, 'TESTS_TYPES') and settings.TESTS_TYPES == 'SELENIUM':
-            tests_type = 'Selenium Tests Only'
-            self.tags = ['selenium']
-        else:
-            tests_type = 'Unit Tests Only'
-            self.exclude_tags.add('selenium')
+        tests_type = 'Unit Tests Only'
         print('###### Tests Infos #####################################')
         print('### Test Runner : {}'.format(settings.TEST_RUNNER))
         print('### Django Version : {}'.format(django_version))
