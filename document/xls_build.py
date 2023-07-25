@@ -26,7 +26,8 @@
 import datetime
 import logging
 import re
-from typing import Optional, List
+from io import BytesIO
+from typing import List
 
 from django.conf import settings
 from django.http import HttpResponse
@@ -36,8 +37,9 @@ from openpyxl import Workbook
 from openpyxl.styles import Color, PatternFill, Alignment
 from openpyxl.styles import Font
 from openpyxl.styles.borders import Border, Side, BORDER_THIN
-from openpyxl.writer.excel import save_virtual_workbook
 from openpyxl.utils import get_column_letter
+from openpyxl.writer.excel import save_virtual_workbook
+
 from osis_common.decorators.download import set_download_cookie
 
 CONTENT_TYPE_XLS = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=binary'
@@ -468,3 +470,9 @@ def _check_if_number_format_to_apply(cell_ref, special_number_format_by_cells):
         if cell_ref in special_format['cells']:
             return special_format['format']
     return None
+
+
+def save_virtual_workbook(workbook: Workbook):
+    virtual_workbook = BytesIO()
+    workbook.save(virtual_workbook)
+    return virtual_workbook.getvalue()
