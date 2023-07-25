@@ -31,7 +31,7 @@ from osis_common.models.enum import storage_duration
 CONTENT_TYPE_LIST = [x for (x, y) in CONTENT_TYPE_CHOICES]
 
 
-class DocumentFileFactory(factory.DjangoModelFactory):
+class DocumentFileFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'osis_common.DocumentFile'
 
