@@ -30,7 +30,6 @@ from django import get_version as get_django_version
 from django.conf import settings
 from django.test.runner import DiscoverRunner
 from mock import patch
-from osis_common.tests.functional.models.report import make_html_report
 
 
 class DebugTimeTextTestResult(unittest.TextTestResult):
@@ -102,9 +101,6 @@ class InstalledAppsTestRunner(DiscoverRunner):
         return super(InstalledAppsTestRunner, self).build_suite(test_labels or settings.APPS_TO_TEST, *args, **kwargs)
 
     def teardown_test_environment(self, **kwargs):
-        if hasattr(settings, 'FUNCT_TESTS_CONFIG') and settings.FUNCT_TESTS_CONFIG \
-                and settings.FUNCT_TESTS_CONFIG.get('HTML_REPORTS') and settings.FUNCT_TESTS_CONFIG.get('HTML_REPORTS_DIR'):
-            make_html_report()
         if hasattr(settings, 'MOCK_USER_ROLES_API_CALL') and settings.MOCK_USER_ROLES_API_CALL:
             self.user_roles_api_call.stop()
         super(InstalledAppsTestRunner, self).teardown_test_environment(**kwargs)
