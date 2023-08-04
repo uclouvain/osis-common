@@ -29,7 +29,7 @@ import factory.fuzzy
 from django.utils import timezone
 
 
-class ApplicationNoticeFactory(factory.DjangoModelFactory):
+class ApplicationNoticeFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = 'osis_common.ApplicationNotice'
 
