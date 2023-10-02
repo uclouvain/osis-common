@@ -224,7 +224,14 @@ def persist(structure):
         for field_name, value in fields.items():
             if isinstance(value, dict):
                 fields[field_name] = persist(value)
-        query_set = model_class.objects.filter(uuid=fields.get('uuid'))
+
+        lookup_kwargs = {}
+        if structure.get('model') == "base.Person":
+            lookup_kwargs['global_id'] = fields.get('global_id')
+        else:
+            lookup_kwargs['uuid'] = fields.get('uuid')
+
+        query_set = model_class.objects.filter(**lookup_kwargs)
         persisted_obj = query_set.first()
         super_class = model_class.__bases__[0]
         if not persisted_obj:
