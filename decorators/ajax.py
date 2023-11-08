@@ -31,7 +31,7 @@ from django.core.exceptions import PermissionDenied
 def ajax_required(view):
     @wraps(view)
     def wrapper(request, *args, **kwargs):
-        if request.is_ajax():
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return view(request, *args, **kwargs)
         raise PermissionDenied()
 

@@ -26,5 +26,5 @@
 
 from django.dispatch import Signal
 
-user_created_signal = Signal(providing_args=['user', 'user_infos'])
-user_updated_signal = Signal(providing_args=['user', 'user_infos'])
+user_created_signal = Signal()
+user_updated_signal = Signal()
