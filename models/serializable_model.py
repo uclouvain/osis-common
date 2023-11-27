@@ -35,7 +35,7 @@ from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 from django.db.models import DateTimeField, DateField
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from pika.exceptions import ChannelClosed, ConnectionClosed
 
 from osis_common.models import message_queue_cache, osis_model_admin
@@ -184,7 +184,7 @@ def serialize(obj, to_delete, last_syncs=None):
                         dt = attribute
                         fields[f.name] = _convert_datetime_to_long(dt)
                     else:
-                        fields[f.name] = force_text(attribute)
+                        fields[f.name] = force_str(attribute)
         class_label = obj.__class__._meta.label
         last_sync = None
         if last_syncs:
