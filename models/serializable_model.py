@@ -35,7 +35,7 @@ from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
 from django.db.models import DateTimeField, DateField
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from pika.exceptions import ChannelClosed, ConnectionClosed
 
 from osis_common.models import message_queue_cache, osis_model_admin
@@ -184,7 +184,7 @@ def serialize(obj, to_delete, last_syncs=None):
                         dt = attribute
                         fields[f.name] = _convert_datetime_to_long(dt)
                     else:
-                        fields[f.name] = force_text(attribute)
+                        fields[f.name] = force_str(attribute)
         class_label = obj.__class__._meta.label
         last_sync = None
         if last_syncs:
@@ -224,7 +224,14 @@ def persist(structure):
         for field_name, value in fields.items():
             if isinstance(value, dict):
                 fields[field_name] = persist(value)
-        query_set = model_class.objects.filter(uuid=fields.get('uuid'))
+
+        lookup_kwargs = {}
+        if structure.get('model') == "base.Person":
+            lookup_kwargs['global_id'] = fields.get('global_id')
+        else:
+            lookup_kwargs['uuid'] = fields.get('uuid')
+
+        query_set = model_class.objects.filter(**lookup_kwargs)
         persisted_obj = query_set.first()
         super_class = model_class.__bases__[0]
         if not persisted_obj:
