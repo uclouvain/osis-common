@@ -83,7 +83,12 @@ class HtmxMixin:
         return response
 
     def get_cleaned_urlencode(self):
-        query_params = [f"{key}={value}" for key, value in self.request.GET.items()]
+        getlist = self.request.GET.getlist
+        params = self.request.GET.keys()
+
+        query_params = [(key, getlist(key)) for key in params]
+        query_params = [f"{key}={value}" for key, values in query_params for value in values]
+
         return f"{'&'.join([*set(query_params)])}"
 
     def get_cleaned_query_string_path(self):
