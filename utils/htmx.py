@@ -34,7 +34,6 @@ SUCCESS_HTTP_STATUS_CODES = {
     HTTPStatus.CREATED,
     HTTPStatus.ACCEPTED,
     HTTPStatus.NO_CONTENT,
-    HTTPStatus.FOUND,
 }
 
 
@@ -83,7 +82,7 @@ class HtmxMixin:
         return response
 
     def get_cleaned_urlencode(self):
-        return  self.request.GET.urlencode()
+        return self.request.GET.urlencode()
 
     def get_cleaned_query_string_path(self):
         query_string = self.get_cleaned_urlencode()
