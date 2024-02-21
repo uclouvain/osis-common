@@ -184,10 +184,13 @@ class FileRouter:
                 msg += f"], '{p.namespace}')),\n"
             else:
                 # View can be a viewset or normal view
-                view_cls = p.callback.cls if hasattr(p.callback, 'cls') else p.callback.view_class
-                msg += "path('{url}', {view_name}.as_view(), name='{name}'),\n".format(
-                    url=p.pattern.regex.pattern,
-                    view_name=view_cls.__name__,
-                    name=p.name,
-                )
+                try:
+                    view_cls = p.callback.cls if hasattr(p.callback, 'cls') else p.callback.view_class
+                    msg += "path('{url}', {view_name}.as_view(), name='{name}'),\n".format(
+                        url=p.pattern.regex.pattern,
+                        view_name=view_cls.__name__,
+                        name=p.name,
+                    )
+                except AttributeError:
+                    pass
         return msg
