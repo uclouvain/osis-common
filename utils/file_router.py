@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2022 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2024 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -46,6 +46,7 @@ class FileRouter:
             logger = logging.getLogger(__name__)
             logger.debug("\n" + file_router.debug(urlpatterns))
     """
+
     def __call__(self, filepath: str):
         patterns = self.patterns_from_tree(Path(settings.BASE_DIR) / filepath)
         self._dedupe_namespaces(patterns)
@@ -117,13 +118,15 @@ class FileRouter:
                 views = getattr(module, '__all__', [])
                 if len(views) > 1 and getattr(module, '__namespace__', True):
                     # Module contains multiple views
-                    subpatterns = self._patterns_from_views(module, entry_name)
                     namespaces = getattr(module, '__namespace__', entry_name)
                     if isinstance(namespaces, str):
                         namespaces = {namespaces: namespaces}
                     for namespace, url in namespaces.items():
+                        # Deep copy does not work and shallow copy is not enough,
+                        # we can recreate it for each iteration.
+                        subpatterns = self._patterns_from_views(module, entry_name)
                         patterns.append(
-                            path(url + "/", include((subpatterns.copy(), namespace))),
+                            path(url + "/", include((subpatterns, namespace))),
                         )
                 else:
                     # Module contains a single view
@@ -146,8 +149,11 @@ class FileRouter:
                         namespaces = {namespaces: namespaces}
                     for namespace, url in namespaces.items():
                         url = url + "/" if url else ''
+                        # Deep copy does not work and shallow copy is not enough,
+                        # we can recreate it for each iteration.
+                        subpatterns = self.patterns_from_tree(entry)
                         patterns.append(
-                            path(url, include((subpatterns.copy(), namespace))),
+                            path(url, include((subpatterns, namespace))),
                         )
         return patterns
 
