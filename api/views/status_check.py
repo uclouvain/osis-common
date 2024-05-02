@@ -22,13 +22,13 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from rest_framework.views import APIView, Response, status
+from django.http import JsonResponse
+from django.views import View
 
-from osis_common.api.serializers.service_status import ServiceStatusSerializer
 from osis_common.status import db, cache, queue
 
 
-class StatusCheckView(APIView):
+class StatusCheckView(View):
     name = "status_check"
 
     def get(self, request, *args, **kwargs):
@@ -37,13 +37,16 @@ class StatusCheckView(APIView):
             cache.check_cache(),
             queue.check_queue()
         ]
-
-        data = ServiceStatusSerializer(
-            list_status,
-            many=True
-        ).data
+        data = []
+        for status in list_status:
+            data.append({
+                'service': status.service,
+                'error': status.is_in_error(),
+                'message': str(status)
+            })
         has_error = any(service_status.is_in_error() for service_status in list_status)
-        return Response(data, self.get_status_code(has_error))
+        return JsonResponse(data, status=self.get_status_code(has_error), safe=False)
 
-    def get_status_code(self, has_error: bool) -> int:
-        return status.HTTP_200_OK if not has_error else status.HTTP_503_SERVICE_UNAVAILABLE
+    @staticmethod
+    def get_status_code(has_error: bool) -> int:
+        return 200 if not has_error else 503
