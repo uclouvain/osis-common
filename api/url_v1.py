@@ -22,15 +22,8 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from django.urls import path, include, re_path
+from django.urls import path
 
-from assessments.api.views.assessment_mail import AssessmentMailView
-from assessments.api.views.assessments import CurrentSessionExamView, NextSessionExamView, PreviousSessionExamView
-from assessments.api.views.attendance_mark.calendar import AttendanceMarkCalendarListView
-from assessments.api.views.attendance_mark.request import RequestAttendanceMarkView
-from assessments.api.views.progress_overview import ProgressOverviewTutorView
-from assessments.api.views.score_responsibles import ScoreResponsibleList
-from assessments.api.views.score_sheet_xls_export import ScoreSheetXLSExportAPIView
 from osis_common.api.views.status_check import StatusCheckView
 
 app_name = "osis_common_api_v1"
