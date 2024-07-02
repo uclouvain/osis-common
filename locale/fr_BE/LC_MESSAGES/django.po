@@ -79,7 +79,7 @@ msgid "True"
 msgstr "Vrai"
 
 msgid "description"
-msgstr "description"
+msgstr "Description"
 
 msgid "file"
 msgstr "fichier"
@@ -95,7 +95,7 @@ msgid "sheet"
 msgstr "feuille"
 
 msgid "the checksum is invalid"
-msgstr "la somme de contrôle est invalide"
+msgstr "la somme de contrôle n'est pas valide"
 
 msgid "the only characters allowed are : digits and . and - and /"
 msgstr "les caractères autorisés sont : chiffres et . et - et /"
