@@ -225,7 +225,6 @@ def persist(structure):
             if isinstance(value, dict):
                 fields[field_name] = persist(value)
 
-        lookup_kwargs = {}
         if structure.get('model') == "base.Person":
             # La modification du global_id peut être entrainée par la gestion de compte (DigIT)
             filter_or_clause = Q(
@@ -234,7 +233,6 @@ def persist(structure):
             )
             query_set = model_class.objects.filter(filter_or_clause)
         else:
-            lookup_kwargs['uuid'] = fields.get('uuid')
             query_set = model_class.objects.filter(uuid=fields.get('uuid'))
 
         persisted_obj = query_set.first()
