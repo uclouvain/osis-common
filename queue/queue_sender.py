@@ -35,14 +35,11 @@ logger = logging.getLogger(settings.DEFAULT_LOGGER)
 def get_connection():
     credentials = pika.PlainCredentials(settings.QUEUES.get('QUEUE_USER'),
                                         settings.QUEUES.get('QUEUE_PASSWORD'))
-    use_ssl_conexion = False
-    if hasattr(settings, 'QUEUE_SSL_CONEXION'):
-        use_ssl_conexion = settings.QUEUE_SSL_CONEXION
+
     return pika.BlockingConnection(pika.ConnectionParameters(settings.QUEUES.get('QUEUE_URL'),
                                                              settings.QUEUES.get('QUEUE_PORT'),
                                                              settings.QUEUES.get('QUEUE_CONTEXT_ROOT'),
-                                                             credentials,
-                                                             ssl=use_ssl_conexion))
+                                                             credentials))
 
 
 def get_channel(connection, queue_name):
