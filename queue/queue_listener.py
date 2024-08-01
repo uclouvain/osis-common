@@ -90,7 +90,10 @@ def listen_queue_synchronously(queue_name, callback, counter=3):
                           durable=True)
     logger.debug("Queue declared.")
     logger.debug("Declaring on message callback...")
-    channel.basic_consume(queue_name, on_message)
+    if hasattr(settings, 'PIKA_NEW') and settings.PIKA_NEW:
+        channel.basic_consume(queue_name, on_message)
+    else:
+        channel.basic_consume(on_message, queue_name)
     logger.debug("Done.")
     try:
         logger.debug("Ready to synchronously consume messages")
@@ -383,7 +386,10 @@ class ExampleConsumer:
         """
         logger.debug('Issuing consumer related RPC commands')
         self.add_on_cancel_callback()
-        self._consumer_tag = self._channel.basic_consume(self._connection_parameters['queue_name'], self.on_message)
+        if hasattr(settings, 'PIKA_NEW') and settings.PIKA_NEW:
+            self._consumer_tag = self._channel.basic_consume(self._connection_parameters['queue_name'], self.on_message)
+        else:
+            self._consumer_tag = self._channel.basic_consume(self.on_message, self._connection_parameters['queue_name'])
 
     def add_on_cancel_callback(self):
         """
