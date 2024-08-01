@@ -87,14 +87,10 @@ def listen_queue_synchronously(queue_name, callback, counter=3):
     logger.debug("Channel opened.")
     logger.debug("Declaring queue (if it doesn't exist yet)...")
     channel.queue_declare(queue=queue_name,
-                          durable=True,
-                          # exclusive=False,
-                          # auto_delete=False,
-                          )
+                          durable=True)
     logger.debug("Queue declared.")
-    # channel.basic_qos(prefetch_count=1)
     logger.debug("Declaring on message callback...")
-    channel.basic_consume(on_message, queue_name)
+    channel.basic_consume(queue_name, on_message)
     logger.debug("Done.")
     try:
         logger.debug("Ready to synchronously consume messages")
@@ -387,8 +383,7 @@ class ExampleConsumer:
         """
         logger.debug('Issuing consumer related RPC commands')
         self.add_on_cancel_callback()
-        self._consumer_tag = self._channel.basic_consume(self.on_message,
-                                                         self._connection_parameters['queue_name'])
+        self._consumer_tag = self._channel.basic_consume(self._connection_parameters['queue_name'], self.on_message)
 
     def add_on_cancel_callback(self):
         """
