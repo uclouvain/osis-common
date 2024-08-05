@@ -76,29 +76,24 @@ def listen_queue_synchronously(queue_name, callback, counter=3):
         return # Stop the function
     logger.debug("Connecting to {0} (queue name = {1})...".format(settings.QUEUES.get('QUEUE_URL'), queue_name))
     credentials = pika.PlainCredentials(settings.QUEUES.get('QUEUE_USER'), settings.QUEUES.get('QUEUE_PASSWORD'))
-    use_ssl_conexion = False
-    if hasattr(settings, 'QUEUE_SSL_CONEXION'):
-        use_ssl_conexion = settings.QUEUE_SSL_CONEXION
 
     connection = pika.BlockingConnection(pika.ConnectionParameters(settings.QUEUES.get('QUEUE_URL'),
                                                                    settings.QUEUES.get('QUEUE_PORT'),
                                                                    settings.QUEUES.get('QUEUE_CONTEXT_ROOT'),
-                                                                   credentials,
-                                                                   ssl=use_ssl_conexion))
+                                                                   credentials))
     logger.debug("Connection opened.")
     logger.debug("Creating a new channel...")
     channel = connection.channel()
     logger.debug("Channel opened.")
     logger.debug("Declaring queue (if it doesn't exist yet)...")
     channel.queue_declare(queue=queue_name,
-                          durable=True,
-                          # exclusive=False,
-                          # auto_delete=False,
-                          )
+                          durable=True)
     logger.debug("Queue declared.")
-    # channel.basic_qos(prefetch_count=1)
     logger.debug("Declaring on message callback...")
-    channel.basic_consume(on_message, queue_name)
+    if hasattr(settings, 'PIKA_NEW') and settings.PIKA_NEW:
+        channel.basic_consume(queue_name, on_message)
+    else:
+        channel.basic_consume(on_message, queue_name)
     logger.debug("Done.")
     try:
         logger.debug("Ready to synchronously consume messages")
@@ -391,8 +386,10 @@ class ExampleConsumer:
         """
         logger.debug('Issuing consumer related RPC commands')
         self.add_on_cancel_callback()
-        self._consumer_tag = self._channel.basic_consume(self.on_message,
-                                                         self._connection_parameters['queue_name'])
+        if hasattr(settings, 'PIKA_NEW') and settings.PIKA_NEW:
+            self._consumer_tag = self._channel.basic_consume(self._connection_parameters['queue_name'], self.on_message)
+        else:
+            self._consumer_tag = self._channel.basic_consume(self.on_message, self._connection_parameters['queue_name'])
 
     def add_on_cancel_callback(self):
         """
