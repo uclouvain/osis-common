@@ -1,4 +1,4 @@
-##############################################################################
+# ##############################################################################
 #
 #    OSIS stands for Open Student Information System. It's an application
 #    designed to manage the core business of higher education institutions,
@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2019 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2024 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -22,17 +22,16 @@
 #    at the root of the source code of this program.  If not,
 #    see http://www.gnu.org/licenses/.
 #
-##############################################################################
-from functools import wraps
+# ##############################################################################
 
-from django.core.exceptions import PermissionDenied
+from django.views import View
+
+__namespace__ = False
+
+__all__ = [
+    'TestGeneralView',
+]
 
 
-def ajax_required(view):
-    @wraps(view)
-    def wrapper(request, *args, **kwargs):
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return view(request, *args, **kwargs)
-        raise PermissionDenied()
-
-    return wrapper
+class TestGeneralView(View):
+    urlpatterns = 'test_view'

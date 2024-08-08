@@ -1,4 +1,3 @@
-##############################################################################
 #
 #    OSIS stands for Open Student Information System. It's an application
 #    designed to manage the core business of higher education institutions,
@@ -6,7 +5,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2019 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2022 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -23,24 +22,33 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-import factory.fuzzy
+import pika
+from django.conf import settings
 
-from osis_common.models.document_file import CONTENT_TYPE_CHOICES
-from osis_common.models.enum import storage_duration
+from osis_common.status.service_status import ServiceStatus, ServiceStatusError, ServiceStatusSuccess
 
-CONTENT_TYPE_LIST = [x for (x, y) in CONTENT_TYPE_CHOICES]
+SERVICE_NAME = "queue"
 
 
-class DocumentFileFactory(factory.django.DjangoModelFactory):
-    class Meta:
-        model = 'osis_common.DocumentFile'
-
-    file_name = factory.fuzzy.FuzzyText(prefix='file_')
-    content_type = factory.fuzzy.FuzzyChoice(CONTENT_TYPE_LIST)
-    creation_date = factory.Faker('date_time_this_year', before_now=True, after_now=False)
-    storage_duration = storage_duration.FIVE_YEARS
-    file = factory.django.FileField(filename='document_file')
-    description = factory.fuzzy.FuzzyText(prefix='File description ')
-    update_by = 'system'
-    application_name = factory.Faker('text', max_nb_chars=100)
-    size = factory.fuzzy.FuzzyInteger(45, 200)
+def check_queue() -> 'ServiceStatus':
+    """
+    Check that the queues works.
+    :return ServiceStatus
+    """
+    try:
+        if hasattr(settings, 'QUEUES') and settings.QUEUES:
+            credentials = pika.PlainCredentials(
+                settings.QUEUES.get('QUEUE_USER'),
+                settings.QUEUES.get('QUEUE_PASSWORD')
+            )
+            connection = pika.BlockingConnection(
+                pika.ConnectionParameters(
+                    settings.QUEUES.get('QUEUE_URL'),
+                    settings.QUEUES.get('QUEUE_PORT'),
+                    settings.QUEUES.get('QUEUE_CONTEXT_ROOT'),
+                    credentials
+                )
+            )
+    except Exception as e:
+        return ServiceStatusError(service=SERVICE_NAME, original_error=e)
+    return ServiceStatusSuccess(service=SERVICE_NAME)

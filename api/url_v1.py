@@ -1,4 +1,3 @@
-##############################################################################
 #
 #    OSIS stands for Open Student Information System. It's an application
 #    designed to manage the core business of higher education institutions,
@@ -6,7 +5,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2019 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2020 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -23,16 +22,11 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from functools import wraps
+from django.urls import path
 
-from django.core.exceptions import PermissionDenied
+from osis_common.api.views.status_check import StatusCheckView
 
-
-def ajax_required(view):
-    @wraps(view)
-    def wrapper(request, *args, **kwargs):
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return view(request, *args, **kwargs)
-        raise PermissionDenied()
-
-    return wrapper
+app_name = "osis_common_api_v1"
+urlpatterns = [
+    path('status_check/', StatusCheckView.as_view(), name=StatusCheckView.name),
+]

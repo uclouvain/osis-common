@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2019 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2023 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -23,16 +23,21 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from functools import wraps
+from django import template
 
-from django.core.exceptions import PermissionDenied
+register = template.Library()
 
 
-def ajax_required(view):
-    @wraps(view)
-    def wrapper(request, *args, **kwargs):
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            return view(request, *args, **kwargs)
-        raise PermissionDenied()
+@register.filter
+def mul(value, arg):
+    return value * arg
 
-    return wrapper
+
+@register.filter
+def div(value, arg):
+    return value / arg
+
+
+@register.filter
+def add_float(value, arg):
+    return value + arg

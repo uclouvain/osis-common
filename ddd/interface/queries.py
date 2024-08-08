@@ -59,7 +59,7 @@ class DTO:
     pass
 
 
-class ReadModel(abc.ABC):
+class ReadModel:
     @classmethod
     def initialize(cls, *args, **kwargs) -> None:
         """

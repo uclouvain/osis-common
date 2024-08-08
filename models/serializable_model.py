@@ -34,8 +34,8 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
-from django.db.models import DateTimeField, DateField
-from django.utils.encoding import force_text
+from django.db.models import DateTimeField, DateField, Q
+from django.utils.encoding import force_str
 from pika.exceptions import ChannelClosed, ConnectionClosed
 
 from osis_common.models import message_queue_cache, osis_model_admin
@@ -184,7 +184,7 @@ def serialize(obj, to_delete, last_syncs=None):
                         dt = attribute
                         fields[f.name] = _convert_datetime_to_long(dt)
                     else:
-                        fields[f.name] = force_text(attribute)
+                        fields[f.name] = force_str(attribute)
         class_label = obj.__class__._meta.label
         last_sync = None
         if last_syncs:
@@ -224,7 +224,16 @@ def persist(structure):
         for field_name, value in fields.items():
             if isinstance(value, dict):
                 fields[field_name] = persist(value)
-        query_set = model_class.objects.filter(uuid=fields.get('uuid'))
+
+        if structure.get('model') == "base.Person":
+            # La modification du global_id peut être entrainée par la gestion de compte (DigIT)
+            query_set = model_class.objects.filter(
+                Q(global_id=fields.get('global_id')) |
+                Q(uuid=fields.get('uuid'))
+            )
+        else:
+            query_set = model_class.objects.filter(uuid=fields.get('uuid'))
+
         persisted_obj = query_set.first()
         super_class = model_class.__bases__[0]
         if not persisted_obj:
