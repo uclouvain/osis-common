@@ -23,31 +23,25 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-import contextlib
-import glob
 import logging
-import os
-import threading
 import traceback
 import uuid
-from importlib import util
+from decimal import Decimal
 from time import sleep
-from typing import Dict
 
 import cattr
 from django.conf import settings
 from django.core.management import BaseCommand
 from django.db import transaction
-from django.db.models import Model
-from django.utils.module_loading import import_string
 
 from infrastructure.messages_bus import message_bus_instance
-from infrastructure.utils import EventHandlers
+from osis_common.utils.thread import ConsumerThreadWorkerStrategy, OneThreadPerBoundedContextRunner
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
 
 cattr.register_structure_hook(uuid.UUID, lambda d, t: d)
+cattr.register_structure_hook(Decimal, lambda d, t: d)
 
 
 class EventClassNotFound(Exception):
@@ -56,22 +50,17 @@ class EventClassNotFound(Exception):
         super().__init__(self.message)
 
 
-class InboxThreadWorker(threading.Thread):
-    def __init__(self, consumer_name: str, event_handlers: EventHandlers, inbox_model: Model):
-        super().__init__()
-        self.consumer_name = consumer_name
-        self.event_handlers = event_handlers
-        self.inbox_model = inbox_model
+class InboxThreadWorker(ConsumerThreadWorkerStrategy):
 
     def run(self):
         while True:
             self._execute_unprocessed_events()
-            sleep(2)
+            sleep(5)
 
     def _execute_unprocessed_events(self):
         with transaction.atomic():
             unprocessed_events = self.inbox_model.objects.select_for_update().filter(
-                consumer=self.consumer_name,
+                consumer=self.bounded_context_name,
                 status=self.inbox_model.PENDING
             ).order_by('creation_date')
             if unprocessed_events:
@@ -103,14 +92,14 @@ class InboxThreadWorker(threading.Thread):
                 if event_cls.__name__ == unprocessed_event.event_name
             )
             return cattr.structure({
+                'transaction_id': unprocessed_event.transaction_id,
                 **unprocessed_event.payload,
-                'transaction_id': unprocessed_event.transaction_id
             }, event_cls)
         except StopIteration:
             raise EventClassNotFound(unprocessed_event.event_name)
 
     def _logger_prefix_message(self) -> str:
-        return f"[Inbox Worker - {self.consumer_name} - Thread: {self.ident}]"
+        return f"[Inbox Worker - {self.bounded_context_name} - Thread: {self.ident}]"
 
 
 class Command(BaseCommand):
@@ -119,54 +108,5 @@ class Command(BaseCommand):
     Script must be run in the root of the project
     """
 
-    def __init__(self, *args, **kwargs):
-        super(Command, self).__init__(*args, **kwargs)
-        self.threads = {}  # type: Dict[str, InboxThreadWorker]
-        self.__load_inbox_model()
-        self.__retrieve_consumers_and_its_event_handlers()
-
     def handle(self, *args, **options):
-        for consumer_name in self.consumers_list.keys():
-            self.__start_thread(consumer_name)
-
-        while True:
-            self.__check_thread_status()
-            sleep(2)
-
-    def __load_inbox_model(self):
-        inbox_model_path = settings.MESSAGE_BUS['INBOX_MODEL']
-        self.inbox_model = import_string(inbox_model_path)
-
-    def __retrieve_consumers_and_its_event_handlers(self):
-        self.consumers_list = {}
-        handlers_path = glob.glob("infrastructure/*/handlers.py", recursive=True)
-        for handler_path in handlers_path:
-            with contextlib.suppress(AttributeError):
-                handler_module = self.__import_file('handler_module', handler_path)
-                if handler_module.EVENT_HANDLERS:
-                    bounded_context = os.path.dirname(handler_path).split(os.sep)[-1]
-                    self.consumers_list[bounded_context] = handler_module.EVENT_HANDLERS
-
-    def __import_file(self, full_name, path):
-        spec = util.spec_from_file_location(full_name, path)
-        mod = util.module_from_spec(spec)
-
-        spec.loader.exec_module(mod)
-        return mod
-
-    def __check_thread_status(self):
-        logger.info("********** [THREAD STATUS] ************")
-        for consumer_name, thread in self.threads.items():
-            if not thread.is_alive():
-                logger.warning(f"| Consumer {consumer_name} : DOWN |")
-                self.__start_thread(consumer_name)
-            else:
-                logger.info(f"| Consumer {consumer_name} : OK |")
-        logger.info("***********************************")
-
-    def __start_thread(self, consumer_name):
-        logger.info(f"| Start Consumer {consumer_name} ...")
-        inbox_thread_worker = InboxThreadWorker(consumer_name, self.consumers_list[consumer_name], self.inbox_model)
-        inbox_thread_worker.setDaemon(True)
-        inbox_thread_worker.start()
-        self.threads[consumer_name] = inbox_thread_worker
+        OneThreadPerBoundedContextRunner(InboxThreadWorker).run()

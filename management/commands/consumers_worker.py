@@ -23,36 +23,70 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-import contextlib
-import glob
+import datetime
 import json
 import logging
-import os
-import threading
 import uuid
-from importlib import util
 from time import sleep
-from typing import List, Dict
 
 from django.conf import settings
 from django.core.management import BaseCommand
-from django.db.models import Model
-from django.utils.module_loading import import_string
+from django.db import transaction
 
-from infrastructure.utils import EventHandlers
 from osis_common.queue import queue_sender
+from osis_common.utils.thread import OneThreadPerBoundedContextRunner, ConsumerThreadWorkerStrategy
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
 
-class ConsumerThreadWorker(threading.Thread):
-    def __init__(self, consumer_name: str, event_handlers: EventHandlers, inbox_model: Model):
-        super().__init__()
-        self.consumer_name = consumer_name
-        self.event_handlers = event_handlers
-        self.inbox_model = inbox_model
+class Command(BaseCommand):
+    help = """
+    Command to start 1 thread/bounded context in order to read events from the queue and store it to the inbox table
+    for further processing (via inbox_worker)
+    Script must be run in the root of the project
+    """
 
-        consumer_queue_name = f"{self.consumer_name}_consumer"
+    def handle(self, *args, **options):
+        if settings.ASYNC_CONSUMING_STRATEGY == "WITH_BROKER":
+            OneThreadPerBoundedContextRunner(BrokerConsumerThreadWorker).run()
+        else:
+            OneThreadPerBoundedContextRunner(LocalConsumerThreadWorker).run()
+
+
+class LocalConsumerThreadWorker(ConsumerThreadWorkerStrategy):
+    def run(self):
+        while True:
+            self._execute_unprocessed_events()
+            sleep(5)
+
+    def _execute_unprocessed_events(self):
+        logger.info(f"{self._logger_prefix_message()}: Start consuming...")
+        with transaction.atomic():
+            unprocessed_events = self.outbox_model.objects.select_for_update().filter(
+                event_name__in=self.get_interested_events(),
+                sent=False,
+            ).order_by('creation_date')
+            if unprocessed_events:
+                logger.info(f"{self._logger_prefix_message()}: Sending {len(unprocessed_events)} unprocessed events...")
+
+            for unprocessed_event in unprocessed_events:
+                self.inbox_model.objects.get_or_create(
+                    consumer=self.bounded_context_name,
+                    transaction_id=unprocessed_event.transaction_id,
+                    defaults={
+                        "event_name": unprocessed_event.event_name,
+                        "payload": unprocessed_event.payload,
+                    }
+                )
+                unprocessed_event.sent = True
+                unprocessed_event.sent_date = datetime.datetime.now()
+                unprocessed_event.save()
+
+
+class BrokerConsumerThreadWorker(ConsumerThreadWorkerStrategy):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        consumer_queue_name = f"{self.bounded_context_name}_consumer"
         self.connection = queue_sender.get_connection(client_properties={'connection_name': consumer_queue_name})
         self.channel = self.connection.channel()
         self.channel.queue_declare(
@@ -86,7 +120,7 @@ class ConsumerThreadWorker(threading.Thread):
             return
 
         self.inbox_model.objects.get_or_create(
-            consumer=self.consumer_name,
+            consumer=self.bounded_context_name,
             transaction_id=uuid.UUID(header_frame.message_id),
             defaults={
                 "event_name": method_frame.routing_key.split('.')[-1],
@@ -95,88 +129,3 @@ class ConsumerThreadWorker(threading.Thread):
         )
         ch.basic_ack(delivery_tag=method_frame.delivery_tag)
         logger.info(f"{self._logger_prefix_message()}: Process message finished...")
-
-    def get_interested_events(self) -> List[str]:
-        return [event.__name__ for event in self.event_handlers.keys()]
-
-    def _logger_prefix_message(self) -> str:
-        return f"[Consumer Worker - {self.consumer_name} - Thread: {self.ident}]"
-
-
-class Command(BaseCommand):
-    help = """
-    Command to start 1 thread/bounded context in order to read events from the queue and store it to the inbox table
-    for further processing (via inbox_worker)
-    Script must be run in the root of the project
-    """
-
-    def __init__(self, *args, **kwargs):
-        super(Command, self).__init__(*args, **kwargs)
-        self.threads = {}  # type: Dict[str, ConsumerThreadWorker]
-        self.__load_inbox_model()
-        self.__retrieve_consumers_and_its_event_handlers()
-
-    def handle(self, *args, **options):
-        self.__initialize_broker_channel()
-
-        for consumer_name in self.consumers_list.keys():
-            self.__start_thread(consumer_name)
-
-        while True:
-            self.__check_thread_status()
-            sleep(5)
-
-    def __load_inbox_model(self):
-        inbox_model_path = settings.MESSAGE_BUS['INBOX_MODEL']
-        self.inbox_model = import_string(inbox_model_path)
-
-    def __initialize_broker_channel(self) -> None:
-        connection = queue_sender.get_connection()
-        channel = connection.channel()
-        channel.exchange_declare(
-            exchange=settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME'],
-            exchange_type='topic',
-            passive=False,
-            durable=True,
-            auto_delete=False
-        )
-        channel.close()
-        connection.close()
-
-    def __retrieve_consumers_and_its_event_handlers(self):
-        self.consumers_list = {}
-        handlers_path = glob.glob("infrastructure/*/handlers.py", recursive=True)
-        for handler_path in handlers_path:
-            with contextlib.suppress(AttributeError):
-                handler_module = self.__import_file('handler_module', handler_path)
-                if handler_module.EVENT_HANDLERS:
-                    bounded_context = os.path.dirname(handler_path).split(os.sep)[-1]
-                    self.consumers_list[bounded_context] = handler_module.EVENT_HANDLERS
-
-    def __import_file(self, full_name, path):
-        spec = util.spec_from_file_location(full_name, path)
-        mod = util.module_from_spec(spec)
-
-        spec.loader.exec_module(mod)
-        return mod
-
-    def __check_thread_status(self):
-        logger.info("********** [THREAD STATUS] ************")
-        for consumer_name, thread in self.threads.items():
-            if not thread.is_alive():
-                logger.warning(f"| Consumer {consumer_name} : DOWN |")
-                self.__start_thread(consumer_name)
-            else:
-                logger.info(f"| Consumer {consumer_name} : OK |")
-        logger.info("***********************************")
-
-    def __start_thread(self, consumer_name):
-        logger.info(f"| Start Consumer {consumer_name} ...")
-        consumer_thread_worker = ConsumerThreadWorker(
-            consumer_name,
-            self.consumers_list[consumer_name],
-            self.inbox_model,
-        )
-        consumer_thread_worker.setDaemon(True)
-        consumer_thread_worker.start()
-        self.threads[consumer_name] = consumer_thread_worker
