@@ -98,14 +98,10 @@ class OneThreadPerBoundedContextRunner:
         return mod
 
     def __check_thread_status(self):
-        logger.info("********** [THREAD STATUS] ************")
         for consumer_name, thread in self.threads.items():
             if not thread.is_alive():
                 logger.warning(f"| Consumer {consumer_name} : DOWN |")
                 self.__start_thread(consumer_name)
-            else:
-                logger.info(f"| Consumer {consumer_name} : OK |")
-        logger.info("***********************************")
 
     def __start_thread(self, consumer_name):
         logger.info(f"| Start Consumer {consumer_name} ...")
