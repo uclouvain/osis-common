@@ -67,6 +67,7 @@ class InboxThreadWorker(ConsumerThreadWorkerStrategy):
                 logger.info(f"{self._logger_prefix_message()}: Process {len(unprocessed_events)} events...")
 
             for unprocessed_event in unprocessed_events:
+                event_instance = None
                 event_name = unprocessed_event.event_name
                 try:
                     event_instance = self._build_event_instance(unprocessed_event)
