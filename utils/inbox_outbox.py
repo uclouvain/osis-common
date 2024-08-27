@@ -41,8 +41,7 @@ from django.db import transaction
 from django.db.models import Model
 from django.utils.module_loading import import_string
 
-from infrastructure.messages_bus import message_bus_instance
-from infrastructure.utils import EventHandlers
+from osis_common.ddd.interface.domain_models import EventHandlers
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
@@ -62,7 +61,7 @@ def _load_outbox_model() -> Model:
 
 
 class ConsumerThreadWorkerStrategy(threading.Thread):
-    def __init__(self, bounded_context_name: str, event_handlers: EventHandlers):
+    def __init__(self, bounded_context_name: str, event_handlers: 'EventHandlers'):
         super().__init__()
         self.bounded_context_name = bounded_context_name
         self.event_handlers = event_handlers
@@ -104,8 +103,9 @@ class HandlersPerContextFactory:
 
 
 class InboxConsumer:
-    def __init__(self, context_name: str, event_handlers: 'EventHandlers', *args, **kwargs):
+    def __init__(self, message_bus_instance, context_name: str, event_handlers: 'EventHandlers', *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.message_bus_instance = message_bus_instance
         self.context_name = context_name
         self.event_handlers = event_handlers
         self.inbox_model = _load_inbox_model()
@@ -127,7 +127,7 @@ class InboxConsumer:
         try:
             event_instance = self.__build_event_instance(unprocessed_event)
             for function in self.event_handlers[event_instance.__class__]:
-                function(message_bus_instance, event_instance)
+                function(self.message_bus_instance, event_instance)
             unprocessed_event.mark_as_processed()
         except EventClassNotFound as e:
             logger.warning(e.message)

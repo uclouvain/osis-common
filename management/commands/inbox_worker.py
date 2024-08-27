@@ -34,8 +34,13 @@ from osis_common.utils.inbox_outbox import ConsumerThreadWorkerStrategy, OneThre
 class InboxThreadWorker(ConsumerThreadWorkerStrategy):
 
     def run(self):
+        from infrastructure.messages_bus import message_bus_instance
         while True:
-            InboxConsumer(self.bounded_context_name, self.event_handlers).consume_all_unprocessed_events()
+            InboxConsumer(
+                message_bus_instance=message_bus_instance,
+                context_name=self.bounded_context_name,
+                event_handlers=self.event_handlers,
+            ).consume_all_unprocessed_events()
             sleep(5)
 
 
