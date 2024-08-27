@@ -25,8 +25,11 @@
 ##############################################################################
 import datetime
 
+import cattr
+from django.contrib import admin
 from django.db import models
 
+from osis_common.management.commands.inbox_worker import EventClassNotFound
 from osis_common.models import osis_model_admin
 
 
@@ -40,6 +43,32 @@ class InboxAdmin(osis_model_admin.OsisModelAdmin):
     )
     ordering = ['-creation_date']
     search_fields = ['event_name', 'consumer']
+    actions = [
+        'republier_evenement',
+    ]
+
+    @admin.action(
+        description='Republie les événement sélectionnés et déclenche les réactions immédiatement (en synchrone)'
+    )
+    def republier_evenement(self, request, queryset):
+        from infrastructure.messages_bus import message_bus_instance
+        for unprocessed_event in queryset:
+            event_instance = self._build_event_instance(message_bus_instance, unprocessed_event)
+            message_bus_instance.publish(event_instance)
+            unprocessed_event.mark_as_processed()
+
+    def _build_event_instance(self, message_bus_instance, unprocessed_event):
+        try:
+            event_cls = next(
+                event_cls for event_cls, fn_list in message_bus_instance.event_handlers.items()
+                if event_cls.__name__ == unprocessed_event.event_name
+            )
+            return cattr.structure({
+                'transaction_id': unprocessed_event.transaction_id,
+                **unprocessed_event.payload,
+            }, event_cls)
+        except StopIteration:
+            raise EventClassNotFound(unprocessed_event.event_name)
 
     def has_change_permission(self, request, obj=None):
         return False
