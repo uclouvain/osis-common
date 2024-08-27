@@ -34,7 +34,7 @@ from django.core.management import BaseCommand
 from django.db import transaction
 
 from osis_common.queue import queue_sender
-from osis_common.utils.thread import OneThreadPerBoundedContextRunner, ConsumerThreadWorkerStrategy
+from osis_common.utils.inbox_outbox import OneThreadPerBoundedContextRunner, ConsumerThreadWorkerStrategy
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
