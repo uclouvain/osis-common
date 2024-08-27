@@ -50,10 +50,15 @@ class InboxAdmin(osis_model_admin.OsisModelAdmin):
         description='Consomme les événements sélectionnés (déclenche les réactions immédiatement - en synchrone)'
     )
     def consommer_evenement(self, request, queryset):
+        from infrastructure.messages_bus import message_bus_instance
         handlers = HandlersPerContextFactory.get()
         for unprocessed_event in queryset:
             context_name = unprocessed_event.consumer
-            inbox_consumer = InboxConsumer(context_name=context_name, event_handlers=handlers[context_name])
+            inbox_consumer = InboxConsumer(
+                message_bus_instance=message_bus_instance,
+                context_name=context_name,
+                event_handlers=handlers[context_name],
+            )
             inbox_consumer.consume(unprocessed_event)
 
     def has_change_permission(self, request, obj=None):
