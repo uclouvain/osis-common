@@ -43,7 +43,7 @@ from django.utils.module_loading import import_string
 
 from osis_common.ddd.interface.domain_models import EventHandlers
 
-logger = logging.getLogger(settings.DEFAULT_LOGGER)
+logger = logging.getLogger(settings.ASYNC_WORKERS_LOGGER)
 
 # Converters to serialize / deserialize events payload
 cattr.register_structure_hook(uuid.UUID, lambda d, t: d)
@@ -117,7 +117,7 @@ class InboxConsumer:
                 status=self.inbox_model.PENDING,
             ).order_by('creation_date')
             if unprocessed_events:
-                logger.info(f"{self._logger_prefix_message()}: Process {len(unprocessed_events)} events...")
+                logger.debug(f"{self._logger_prefix_message()}: Process {len(unprocessed_events)} events...")
             for unprocessed_event in unprocessed_events:
                 self.consume(unprocessed_event)
 
@@ -133,7 +133,7 @@ class InboxConsumer:
             logger.warning(e.message)
             unprocessed_event.mark_as_error(e.message)
         except Exception:
-            logger.error(
+            logger.exception(
                 f"{self._logger_prefix_message()}: Cannot process {event_name} event ({event_instance})",
                 exc_info=True
             )
@@ -177,7 +177,7 @@ class OneThreadPerBoundedContextRunner:
                 self.__start_thread(context_name, self.consumers_list[context_name])
 
     def __start_thread(self, context_name: str, handlers: 'EventHandlers'):
-        logger.info(f"| Start Consumer {context_name} ...")
+        logger.debug(f"| Start Consumer {context_name} ...")
         consumer_thread_worker = self.consumer_thread_worker_strategy(context_name, handlers)
         consumer_thread_worker.setDaemon(True)
         consumer_thread_worker.start()
