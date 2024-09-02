@@ -25,6 +25,7 @@
 ##############################################################################
 import json
 import logging
+from typing import Optional, Dict
 
 import pika
 from django.conf import settings
@@ -32,17 +33,18 @@ from django.conf import settings
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 
 
-def get_connection():
+def get_connection(client_properties: Optional[Dict] = None):
     credentials = pika.PlainCredentials(settings.QUEUES.get('QUEUE_USER'),
                                         settings.QUEUES.get('QUEUE_PASSWORD'))
-    use_ssl_conexion = False
-    if hasattr(settings, 'QUEUE_SSL_CONEXION'):
-        use_ssl_conexion = settings.QUEUE_SSL_CONEXION
-    return pika.BlockingConnection(pika.ConnectionParameters(settings.QUEUES.get('QUEUE_URL'),
-                                                             settings.QUEUES.get('QUEUE_PORT'),
-                                                             settings.QUEUES.get('QUEUE_CONTEXT_ROOT'),
-                                                             credentials,
-                                                             ssl=use_ssl_conexion))
+    return pika.BlockingConnection(
+        pika.ConnectionParameters(
+            settings.QUEUES.get('QUEUE_URL'),
+            settings.QUEUES.get('QUEUE_PORT'),
+            settings.QUEUES.get('QUEUE_CONTEXT_ROOT'),
+            credentials,
+            client_properties=client_properties,
+        )
+    )
 
 
 def get_channel(connection, queue_name):
