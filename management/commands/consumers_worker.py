@@ -101,13 +101,19 @@ class BrokerConsumerThreadWorker(ConsumerThreadWorkerStrategy):
                 exchange=settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME'],
                 routing_key=f"{settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME']}.{interested_event}"
             )
-
-        self.channel.basic_consume(
-            self._process_message,
-            queue=consumer_queue_name,
-            no_ack=False,  # Manual acknowledgement,
-            exclusive=True  # Force only one consumer by queue
-        )
+        if hasattr(settings, 'PIKA_NEW') and settings.PIKA_NEW:
+            self.channel.basic_consume(
+                on_message_callback=self._process_message,
+                queue=consumer_queue_name,
+                exclusive=True  # Force only one consumer by queue
+            )
+        else:
+            self.channel.basic_consume(
+                consumer_callback=self._process_message,
+                queue=consumer_queue_name,
+                no_ack=False,  # Manual acknowledgement,
+                exclusive=True  # Force only one consumer by queue
+            )
 
     def run(self):
         logger.debug(f"{self._logger_prefix_message()}: Start consuming...")
