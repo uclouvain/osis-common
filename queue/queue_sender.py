@@ -30,7 +30,7 @@ from typing import Optional, Dict
 import pika
 from django.conf import settings
 
-logger = logging.getLogger(settings.DEFAULT_LOGGER)
+logger = logging.getLogger(settings.QUEUE_EXCEPTION_LOGGER)
 
 
 def get_connection(client_properties: Optional[Dict] = None):
