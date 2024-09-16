@@ -25,7 +25,7 @@
 ##############################################################################
 import abc
 import uuid
-from typing import Optional, List
+from typing import Optional, List, Dict, Callable
 
 import attr
 
@@ -130,3 +130,6 @@ class AbstractRepository(abc.ABC):
         :param entity: Any domain root entity.
         """
         pass
+
+
+EventHandlers = Dict[Event, List[Callable]]

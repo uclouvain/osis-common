@@ -34,9 +34,9 @@ from django.core.management import BaseCommand
 from django.db import transaction
 
 from osis_common.queue import queue_sender
-from osis_common.utils.thread import OneThreadPerBoundedContextRunner, ConsumerThreadWorkerStrategy
+from osis_common.utils.inbox_outbox import OneThreadPerBoundedContextRunner, ConsumerThreadWorkerStrategy
 
-logger = logging.getLogger(settings.DEFAULT_LOGGER)
+logger = logging.getLogger(settings.ASYNC_WORKERS_LOGGER)
 
 
 class Command(BaseCommand):
@@ -60,14 +60,14 @@ class LocalConsumerThreadWorker(ConsumerThreadWorkerStrategy):
             sleep(5)
 
     def _execute_unprocessed_events(self):
-        logger.info(f"{self._logger_prefix_message()}: Start consuming...")
+        logger.debug(f"{self._logger_prefix_message()}: Start consuming...")
         with transaction.atomic():
             unprocessed_events = self.outbox_model.objects.select_for_update().filter(
                 event_name__in=self.get_interested_events(),
                 sent=False,
             ).order_by('creation_date')
             if unprocessed_events:
-                logger.info(f"{self._logger_prefix_message()}: Sending {len(unprocessed_events)} unprocessed events...")
+                logger.debug(f"{self._logger_prefix_message()}: Sending {len(unprocessed_events)} unprocessed events...")
 
             for unprocessed_event in unprocessed_events:
                 self.inbox_model.objects.get_or_create(
@@ -90,32 +90,39 @@ class BrokerConsumerThreadWorker(ConsumerThreadWorkerStrategy):
         self.connection = queue_sender.get_connection(client_properties={'connection_name': consumer_queue_name})
         self.channel = self.connection.channel()
         self.channel.queue_declare(
-            consumer_queue_name,
+            queue=consumer_queue_name,
             auto_delete=False,
             durable=True
         )
 
         for interested_event in self.get_interested_events():
             self.channel.queue_bind(
-                consumer_queue_name,
-                settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME'],
+                queue=consumer_queue_name,
+                exchange=settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME'],
                 routing_key=f"{settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME']}.{interested_event}"
             )
-        self.channel.basic_consume(
-            self._process_message,
-            queue=consumer_queue_name,
-            no_ack=False,  # Manual acknowledgement,
-            exclusive=True  # Force only one consumer by queue
-        )
+        if hasattr(settings, 'PIKA_NEW') and settings.PIKA_NEW:
+            self.channel.basic_consume(
+                on_message_callback=self._process_message,
+                queue=consumer_queue_name,
+                exclusive=True  # Force only one consumer by queue
+            )
+        else:
+            self.channel.basic_consume(
+                consumer_callback=self._process_message,
+                queue=consumer_queue_name,
+                no_ack=False,  # Manual acknowledgement,
+                exclusive=True  # Force only one consumer by queue
+            )
 
     def run(self):
-        logger.info(f"{self._logger_prefix_message()}: Start consuming...")
+        logger.debug(f"{self._logger_prefix_message()}: Start consuming...")
         self.channel.start_consuming()
 
     def _process_message(self, ch, method_frame, header_frame, body):
-        logger.info(f"{self._logger_prefix_message()}: Process message started...")
+        logger.debug(f"{self._logger_prefix_message()}: Process message started...")
         if not header_frame.message_id:
-            logger.warning(f"{self._logger_prefix_message()}: Missing message_id in header_frame.")
+            logger.error(f"{self._logger_prefix_message()}: Missing message_id in header_frame.")
             ch.basic_reject(delivery_tag=method_frame.delivery_tag, requeue=False)
             return
 
@@ -128,4 +135,4 @@ class BrokerConsumerThreadWorker(ConsumerThreadWorkerStrategy):
             }
         )
         ch.basic_ack(delivery_tag=method_frame.delivery_tag)
-        logger.info(f"{self._logger_prefix_message()}: Process message finished...")
+        logger.debug(f"{self._logger_prefix_message()}: Process message finished...")
