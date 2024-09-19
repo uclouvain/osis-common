@@ -117,7 +117,7 @@ class InboxConsumer:
                 status=self.inbox_model.PENDING,
             ).order_by('creation_date')
             if unprocessed_events:
-                logger.debug(f"{self._logger_prefix_message()}: Process {len(unprocessed_events)} events...")
+                logger.info(f"{self._logger_prefix_message()}: Process {len(unprocessed_events)} events...")
             for unprocessed_event in unprocessed_events:
                 self.consume(unprocessed_event)
 

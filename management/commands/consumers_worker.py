@@ -67,7 +67,7 @@ class LocalConsumerThreadWorker(ConsumerThreadWorkerStrategy):
                 sent=False,
             ).order_by('creation_date')
             if unprocessed_events:
-                logger.debug(f"{self._logger_prefix_message()}: Sending {len(unprocessed_events)} unprocessed events...")
+                logger.info(f"{self._logger_prefix_message()}: Sending {len(unprocessed_events)} unprocessed events...")
 
             for unprocessed_event in unprocessed_events:
                 self.inbox_model.objects.get_or_create(
@@ -120,7 +120,7 @@ class BrokerConsumerThreadWorker(ConsumerThreadWorkerStrategy):
         self.channel.start_consuming()
 
     def _process_message(self, ch, method_frame, header_frame, body):
-        logger.debug(f"{self._logger_prefix_message()}: Process message started...")
+        logger.info(f"{self._logger_prefix_message()}: Process message started...")
         if not header_frame.message_id:
             logger.error(f"{self._logger_prefix_message()}: Missing message_id in header_frame.")
             ch.basic_reject(delivery_tag=method_frame.delivery_tag, requeue=False)
@@ -135,4 +135,4 @@ class BrokerConsumerThreadWorker(ConsumerThreadWorkerStrategy):
             }
         )
         ch.basic_ack(delivery_tag=method_frame.delivery_tag)
-        logger.debug(f"{self._logger_prefix_message()}: Process message finished...")
+        logger.info(f"{self._logger_prefix_message()}: Process message finished...")
