@@ -75,11 +75,13 @@ class Inbox(models.Model):
     PENDING = "PENDING"
     PROCESSED = "PROCESSED"
     ERROR = "ERROR"
+    DEAD_LETTER = "DEAD_LETTER"
 
     STATUS_CHOICES = [
         (PENDING, 'Pending'),
         (PROCESSED, 'Done'),
-        (ERROR, 'Error')
+        (ERROR, 'Error'),
+        (DEAD_LETTER, 'Dead letter')
     ]
     consumer = models.CharField(max_length=255)
     event_name = models.CharField(max_length=255)
@@ -87,12 +89,13 @@ class Inbox(models.Model):
     payload = models.JSONField(default=dict, blank=True)
     creation_date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(
-        max_length=10,
+        max_length=15,
         choices=STATUS_CHOICES,
         default=PENDING,
     )
     last_execution_date = models.DateTimeField(null=True, blank=True)
     traceback = models.TextField(null=True, blank=True)
+    attempts_number = models.IntegerField(default=0)
 
     class Meta:
         verbose_name_plural = "inbox"
@@ -103,10 +106,22 @@ class Inbox(models.Model):
     def mark_as_processed(self):
         self.status = self.PROCESSED
         self.last_execution_date = datetime.datetime.now()
+        self.attempts_number += 1
         self.save()
 
     def mark_as_error(self, error_description: str = None):
         self.status = self.ERROR
         self.last_execution_date = datetime.datetime.now()
         self.traceback = error_description
+        self.attempts_number += 1
         self.save()
+
+    def mark_as_dead_letter(self, error_description: str = None):
+        self.status = self.DEAD_LETTER
+        self.last_execution_date = datetime.datetime.now()
+        self.traceback = error_description
+        self.attempts_number += 1
+        self.save()
+
+    def is_successfully_processed(self) -> bool:
+        return self.status == self.PROCESSED

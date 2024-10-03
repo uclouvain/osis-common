@@ -49,6 +49,8 @@ logger = logging.getLogger(settings.ASYNC_WORKERS_LOGGER)
 cattr.register_structure_hook(uuid.UUID, lambda d, t: d)
 cattr.register_structure_hook(Decimal, lambda d, t: d)
 
+MAX_ATTEMPS_BEFORE_DEAD_LETTER = 15
+
 
 def _load_inbox_model() -> Model:
     inbox_model_path = settings.MESSAGE_BUS['INBOX_MODEL']
@@ -114,12 +116,28 @@ class InboxConsumer:
         with transaction.atomic():
             unprocessed_events = self.inbox_model.objects.select_for_update().filter(
                 consumer=self.context_name,
-                status=self.inbox_model.PENDING,
+            ).exclude(
+                status__in=[self.inbox_model.PROCESSED, self.inbox_model.DEAD_LETTER]
             ).order_by('creation_date')
             if unprocessed_events:
                 logger.info(f"{self._logger_prefix_message()}: Process {len(unprocessed_events)} events...")
+
             for unprocessed_event in unprocessed_events:
-                self.consume(unprocessed_event)
+                processed_event = self.consume(unprocessed_event)
+                if not processed_event.is_successfully_processed():
+                    if processed_event.attempts_number >= MAX_ATTEMPS_BEFORE_DEAD_LETTER:
+                        logger.error(
+                            f"{self._logger_prefix_message()}: Mark event as dead letter because max attemps reached "
+                            f"(ID: {processed_event.id} - Name {processed_event.event_name})"
+                        )
+                        processed_event.mark_as_dead_letter()
+                    else:
+                        logger.warning(
+                            f"{self._logger_prefix_message()}: Stop events processing because "
+                            f"current event (ID: {processed_event.id} - Name {processed_event.event_name}) "
+                            f"not correctly processed..."
+                        )
+                        break
 
     def consume(self, unprocessed_event):
         event_instance = None
@@ -138,6 +156,7 @@ class InboxConsumer:
                 exc_info=True
             )
             unprocessed_event.mark_as_error(traceback.format_exc())
+        return unprocessed_event
 
     def __build_event_instance(self, unprocessed_event: 'Inbox'):
         try:
