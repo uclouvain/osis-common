@@ -94,7 +94,7 @@ class BrokerStrategy:
                 sent=False
             ).order_by('creation_date')
             if unprocessed_events:
-                logger.debug(f"{self._logger_prefix_message()}: Sending {len(unprocessed_events)} unprocessed events...")
+                logger.info(f"{self._logger_prefix_message()}: Sending {len(unprocessed_events)} unprocessed events...")
 
             for unprocessed_event in unprocessed_events:
                 self.channel.basic_publish(
