@@ -67,7 +67,7 @@ class LocalConsumerThreadWorker(ConsumerThreadWorkerStrategy):
                 sent=False,
             ).order_by('creation_date')
             if unprocessed_events:
-                logger.debug(f"{self._logger_prefix_message()}: Sending {len(unprocessed_events)} unprocessed events...")
+                logger.info(f"{self._logger_prefix_message()}: Sending {len(unprocessed_events)} unprocessed events...")
 
             for unprocessed_event in unprocessed_events:
                 self.inbox_model.objects.get_or_create(
@@ -120,7 +120,7 @@ class BrokerConsumerThreadWorker(ConsumerThreadWorkerStrategy):
         self.channel.start_consuming()
 
     def _process_message(self, ch, method_frame, header_frame, body):
-        logger.debug(f"{self._logger_prefix_message()}: Process message started...")
+        logger.info(f"{self._logger_prefix_message()}: Process message started...")
         if not header_frame.message_id:
             logger.error(f"{self._logger_prefix_message()}: Missing message_id in header_frame.")
             ch.basic_reject(delivery_tag=method_frame.delivery_tag, requeue=False)
@@ -135,4 +135,57 @@ class BrokerConsumerThreadWorker(ConsumerThreadWorkerStrategy):
             }
         )
         ch.basic_ack(delivery_tag=method_frame.delivery_tag)
-        logger.debug(f"{self._logger_prefix_message()}: Process message finished...")
+        logger.info(f"{self._logger_prefix_message()}: Process message finished...")
+
+
+class BrokerSyncConsumerThreadWorker(ConsumerThreadWorkerStrategy):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.connection = queue_sender.get_connection(
+            client_properties={'connection_name': self.get_consumer_queue_name()}
+        )
+        self.channel = self.connection.channel()
+        self.channel.queue_declare(
+            queue=self.get_consumer_queue_name(),
+            auto_delete=False,
+            durable=True
+        )
+
+        for interested_event in self.get_interested_events():
+            self.channel.queue_bind(
+                queue=self.get_consumer_queue_name(),
+                exchange=settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME'],
+                routing_key=f"{settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME']}.{interested_event}"
+            )
+
+    def get_consumer_queue_name(self) -> str:
+        return f"{self.bounded_context_name}_consumer"
+
+    def run(self):
+        logger.debug(f"{self._logger_prefix_message()}: Start consuming...")
+        method_frame, header_frame, body = self.channel.basic_get(
+            queue=self.get_consumer_queue_name(),
+            auto_ack=False,
+        )
+        if method_frame:
+            self._process_message(self.channel, method_frame, header_frame, body)
+        else:
+            logger.debug(f"{self._logger_prefix_message()}: No message to consume...")
+
+    def _process_message(self, ch, method_frame, header_frame, body):
+        logger.info(f"{self._logger_prefix_message()}: Process message started...")
+        if not header_frame.message_id:
+            logger.error(f"{self._logger_prefix_message()}: Missing message_id in header_frame.")
+            ch.basic_reject(delivery_tag=method_frame.delivery_tag, requeue=False)
+            return
+
+        self.inbox_model.objects.get_or_create(
+            consumer=self.bounded_context_name,
+            transaction_id=uuid.UUID(header_frame.message_id),
+            defaults={
+                "event_name": method_frame.routing_key.split('.')[-1],
+                "payload": json.loads(body),
+            }
+        )
+        ch.basic_ack(delivery_tag=method_frame.delivery_tag)
+        logger.info(f"{self._logger_prefix_message()}: Process message finished...")
