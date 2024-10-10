@@ -168,3 +168,7 @@ class Command(BaseCommand):
         kwargs = {self._clean_header_from_special_chars(foreign_key_field): value}
 
         return foreign_key_field, model_class.objects.get(**kwargs)
+
+
+    def __deepcopy__(self, memo):
+        return Command()
