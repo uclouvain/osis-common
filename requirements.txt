@@ -2,4 +2,4 @@ django-ckeditor==6.7.1
 voluptuous==0.15.2
 weasyprint==62.3
 attrs==24.2.0
-cattrs==24.1.0
+cattrs==24.1.2
