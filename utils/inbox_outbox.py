@@ -43,11 +43,13 @@ from django.utils.module_loading import import_string
 
 from osis_common.ddd.interface.domain_models import EventHandlers
 
-logger = logging.getLogger(settings.DEFAULT_LOGGER)
+logger = logging.getLogger(settings.ASYNC_WORKERS_LOGGER)
 
 # Converters to serialize / deserialize events payload
 cattr.register_structure_hook(uuid.UUID, lambda d, t: d)
 cattr.register_structure_hook(Decimal, lambda d, t: d)
+
+MAX_ATTEMPS_BEFORE_DEAD_LETTER = 15
 
 
 def _load_inbox_model() -> Model:
@@ -87,6 +89,8 @@ class HandlersPerContextFactory:
         consumers_list = {}
         handlers_path = glob.glob("infrastructure/*/handlers.py", recursive=True)
         for handler_path in handlers_path:
+            if 'deliberation' in handler_path and 'deliberation' not in settings.INSTALLED_APPS:
+                continue
             with contextlib.suppress(AttributeError):
                 handler_module = HandlersPerContextFactory.__import_file('handler_module', handler_path)
                 if handler_module.EVENT_HANDLERS:
@@ -114,12 +118,28 @@ class InboxConsumer:
         with transaction.atomic():
             unprocessed_events = self.inbox_model.objects.select_for_update().filter(
                 consumer=self.context_name,
-                status=self.inbox_model.PENDING,
+            ).exclude(
+                status__in=[self.inbox_model.PROCESSED, self.inbox_model.DEAD_LETTER]
             ).order_by('creation_date')
             if unprocessed_events:
                 logger.info(f"{self._logger_prefix_message()}: Process {len(unprocessed_events)} events...")
+
             for unprocessed_event in unprocessed_events:
-                self.consume(unprocessed_event)
+                processed_event = self.consume(unprocessed_event)
+                if not processed_event.is_successfully_processed():
+                    if processed_event.attempts_number >= MAX_ATTEMPS_BEFORE_DEAD_LETTER:
+                        logger.error(
+                            f"{self._logger_prefix_message()}: Mark event as dead letter because max attemps reached "
+                            f"(ID: {processed_event.id} - Name {processed_event.event_name})"
+                        )
+                        processed_event.mark_as_dead_letter()
+                    else:
+                        logger.warning(
+                            f"{self._logger_prefix_message()}: Stop events processing because "
+                            f"current event (ID: {processed_event.id} - Name {processed_event.event_name}) "
+                            f"not correctly processed..."
+                        )
+                        break
 
     def consume(self, unprocessed_event):
         event_instance = None
@@ -133,11 +153,12 @@ class InboxConsumer:
             logger.warning(e.message)
             unprocessed_event.mark_as_error(e.message)
         except Exception:
-            logger.error(
+            logger.exception(
                 f"{self._logger_prefix_message()}: Cannot process {event_name} event ({event_instance})",
                 exc_info=True
             )
             unprocessed_event.mark_as_error(traceback.format_exc())
+        return unprocessed_event
 
     def __build_event_instance(self, unprocessed_event: 'Inbox'):
         try:
@@ -177,7 +198,7 @@ class OneThreadPerBoundedContextRunner:
                 self.__start_thread(context_name, self.consumers_list[context_name])
 
     def __start_thread(self, context_name: str, handlers: 'EventHandlers'):
-        logger.info(f"| Start Consumer {context_name} ...")
+        logger.debug(f"| Start Consumer {context_name} ...")
         consumer_thread_worker = self.consumer_thread_worker_strategy(context_name, handlers)
         consumer_thread_worker.setDaemon(True)
         consumer_thread_worker.start()

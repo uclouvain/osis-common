@@ -42,7 +42,7 @@ from django.utils.module_loading import import_string
 
 from osis_common.queue import queue_sender
 
-logger = logging.getLogger(settings.DEFAULT_LOGGER)
+logger = logging.getLogger(settings.ASYNC_WORKERS_LOGGER)
 
 
 class Command(BaseCommand):
@@ -83,7 +83,7 @@ class BrokerStrategy:
         self.channel = channel
 
     def run(self):
-        logger.info(f"{self._logger_prefix_message()}: Start to listen unsent events...")
+        logger.debug(f"{self._logger_prefix_message()}: Start to listen unsent events...")
         while True:
             self._send_unprocessed_events()
             self.connection.sleep(5)  # TODO CONST CONNECTION SLEEP
