@@ -3,3 +3,4 @@ voluptuous==0.15.2
 weasyprint==62.3
 attrs==24.2.0
 cattrs==24.1.2
+freezegun==1.5.1
