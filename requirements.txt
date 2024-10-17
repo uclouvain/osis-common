@@ -1,5 +1,6 @@
-django-ckeditor==6.3.2
-voluptuous==0.14.1
-weasyprint==52.5
+django-ckeditor==6.7.1
+voluptuous==0.15.2
+weasyprint==62.3
 attrs==24.2.0
-cattrs==23.1.2
+cattrs==24.1.2
+freezegun==1.5.1

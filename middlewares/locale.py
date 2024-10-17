@@ -26,6 +26,9 @@ from django.middleware.locale import LocaleMiddleware
 from django.utils import translation
 
 
+LANGUAGE_SESSION_KEY = '_language'
+
+
 class CustomLocaleMiddleware(LocaleMiddleware):
     """
         Set language by priority:
@@ -38,7 +41,7 @@ class CustomLocaleMiddleware(LocaleMiddleware):
 
         language = request.GET.get(
             'lang',
-            request.session.get(translation.LANGUAGE_SESSION_KEY)
+            request.session.get(LANGUAGE_SESSION_KEY)
         )
         if language:
             translation.activate(language)
