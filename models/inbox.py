@@ -119,7 +119,8 @@ class Inbox(models.Model):
     def mark_as_dead_letter(self, error_description: str = None):
         self.status = self.DEAD_LETTER
         self.last_execution_date = datetime.datetime.now()
-        self.traceback = error_description
+        if error_description is not None:
+            self.traceback = error_description
         self.attempts_number += 1
         self.save()
 
