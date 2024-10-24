@@ -132,7 +132,7 @@ class InboxConsumer:
             with transaction.atomic():
                 unprocessed_events_in_batch = self.inbox_model.objects.select_for_update().filter(
                     pk__in=unprocessed_events_qs.values_list('pk', flat=True)[:batch_size]
-                )
+                ).order_by('creation_date')
                 logger.info(f"{self._logger_prefix_message()}: Process {len(unprocessed_events_in_batch)} events...")
                 for unprocessed_event in unprocessed_events_in_batch:
                     processed_event = self.consume(unprocessed_event)
