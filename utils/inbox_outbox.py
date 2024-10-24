@@ -125,8 +125,9 @@ class InboxConsumer:
             status__in=[self.inbox_model.PROCESSED, self.inbox_model.DEAD_LETTER]
         ).order_by('creation_date')
 
-        if unprocessed_events_qs.count():
-            logger.info(f"{self._logger_prefix_message()}: Remaining {len(unprocessed_events_qs)} unprocess events...")
+        unprocessed_events_count = unprocessed_events_qs.count()
+        if unprocessed_events_count:
+            logger.info(f"{self._logger_prefix_message()}: Remaining {unprocessed_events_count} unprocess events...")
 
             with transaction.atomic():
                 unprocessed_events_in_batch = self.inbox_model.objects.select_for_update().filter(
