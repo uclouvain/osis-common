@@ -50,6 +50,7 @@ cattr.register_structure_hook(uuid.UUID, lambda d, t: d)
 cattr.register_structure_hook(Decimal, lambda d, t: d)
 
 MAX_ATTEMPS_BEFORE_DEAD_LETTER = 15
+INBOX_BATCH_EVENTS = 5
 
 
 def _load_inbox_model() -> Model:
@@ -114,32 +115,40 @@ class InboxConsumer:
         self.event_handlers = event_handlers
         self.inbox_model = _load_inbox_model()
 
-    def consume_all_unprocessed_events(self):
-        with transaction.atomic():
-            unprocessed_events = self.inbox_model.objects.select_for_update().filter(
-                consumer=self.context_name,
-            ).exclude(
-                status__in=[self.inbox_model.PROCESSED, self.inbox_model.DEAD_LETTER]
-            ).order_by('creation_date')
-            if unprocessed_events:
-                logger.info(f"{self._logger_prefix_message()}: Process {len(unprocessed_events)} events...")
+    def consume_all_unprocessed_events(self, batch_size: int = None):
+        if batch_size is None:
+            batch_size = INBOX_BATCH_EVENTS
 
-            for unprocessed_event in unprocessed_events:
-                processed_event = self.consume(unprocessed_event)
-                if not processed_event.is_successfully_processed():
-                    if processed_event.attempts_number >= MAX_ATTEMPS_BEFORE_DEAD_LETTER:
-                        logger.error(
-                            f"{self._logger_prefix_message()}: Mark event as dead letter because max attemps reached "
-                            f"(ID: {processed_event.id} - Name {processed_event.event_name})"
-                        )
-                        processed_event.mark_as_dead_letter()
-                    else:
-                        logger.warning(
-                            f"{self._logger_prefix_message()}: Stop events processing because "
-                            f"current event (ID: {processed_event.id} - Name {processed_event.event_name}) "
-                            f"not correctly processed..."
-                        )
-                        break
+        unprocessed_events_qs = self.inbox_model.objects.filter(
+            consumer=self.context_name,
+        ).exclude(
+            status__in=[self.inbox_model.PROCESSED, self.inbox_model.DEAD_LETTER]
+        ).order_by('creation_date')
+
+        if unprocessed_events_qs.count():
+            logger.info(f"{self._logger_prefix_message()}: Remaining {len(unprocessed_events_qs)} unprocess events...")
+
+            with transaction.atomic():
+                unprocessed_events_in_batch = self.inbox_model.objects.select_for_update().filter(
+                    pk__in=unprocessed_events_qs.values_list('pk', flat=True)[:batch_size]
+                )
+                logger.info(f"{self._logger_prefix_message()}: Process {len(unprocessed_events_in_batch)} events...")
+                for unprocessed_event in unprocessed_events_in_batch:
+                    processed_event = self.consume(unprocessed_event)
+                    if not processed_event.is_successfully_processed():
+                        if processed_event.attempts_number >= MAX_ATTEMPS_BEFORE_DEAD_LETTER:
+                            logger.error(
+                                f"{self._logger_prefix_message()}: Mark event as dead letter because max attemps reached "
+                                f"(ID: {processed_event.id} - Name {processed_event.event_name})"
+                            )
+                            processed_event.mark_as_dead_letter()
+                        else:
+                            logger.warning(
+                                f"{self._logger_prefix_message()}: Stop events processing because "
+                                f"current event (ID: {processed_event.id} - Name {processed_event.event_name}) "
+                                f"not correctly processed..."
+                            )
+                            break
 
     def consume(self, unprocessed_event):
         event_instance = None
