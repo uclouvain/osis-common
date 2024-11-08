@@ -26,6 +26,7 @@ import pika
 from django.conf import settings
 
 from osis_common.status.service_status import ServiceStatus, ServiceStatusError, ServiceStatusSuccess
+from osis_common.queue.queue_utils import get_pika_connexion_parameters
 
 SERVICE_NAME = "queue"
 
@@ -37,18 +38,8 @@ def check_queue() -> 'ServiceStatus':
     """
     try:
         if hasattr(settings, 'QUEUES') and settings.QUEUES:
-            credentials = pika.PlainCredentials(
-                settings.QUEUES.get('QUEUE_USER'),
-                settings.QUEUES.get('QUEUE_PASSWORD')
-            )
             connection = pika.BlockingConnection(
-                pika.ConnectionParameters(
-                    settings.QUEUES.get('QUEUE_URL'),
-                    settings.QUEUES.get('QUEUE_PORT'),
-                    settings.QUEUES.get('QUEUE_CONTEXT_ROOT'),
-                    credentials
-                )
-            )
+                parameters=get_pika_connexion_parameters())
     except Exception as e:
         return ServiceStatusError(service=SERVICE_NAME, original_error=e)
     return ServiceStatusSuccess(service=SERVICE_NAME)

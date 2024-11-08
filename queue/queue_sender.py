@@ -29,22 +29,12 @@ from typing import Optional, Dict
 
 import pika
 from django.conf import settings
+from osis_common.queue.queue_utils import get_pika_connexion_parameters
 
 logger = logging.getLogger(settings.QUEUE_EXCEPTION_LOGGER)
 
-
 def get_connection(client_properties: Optional[Dict] = None):
-    credentials = pika.PlainCredentials(settings.QUEUES.get('QUEUE_USER'),
-                                        settings.QUEUES.get('QUEUE_PASSWORD'))
-    return pika.BlockingConnection(
-        pika.ConnectionParameters(
-            settings.QUEUES.get('QUEUE_URL'),
-            settings.QUEUES.get('QUEUE_PORT'),
-            settings.QUEUES.get('QUEUE_CONTEXT_ROOT'),
-            credentials,
-            client_properties=client_properties,
-        )
-    )
+    return pika.BlockingConnection(parameters=get_pika_connexion_parameters(client_properties=client_properties))
 
 
 def get_channel(connection, queue_name):
