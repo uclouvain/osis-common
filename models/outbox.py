@@ -33,7 +33,8 @@ class OutboxAdmin(osis_model_admin.OsisModelAdmin):
     list_display = ('transaction_id', 'event_name',  'payload', 'creation_date', 'sent', 'sent_date',)
     readonly_fields = ('transaction_id', 'event_name', 'payload', 'creation_date', 'sent', 'sent_date',)
     ordering = ['-creation_date']
-    search_fields = ['event_name']
+    list_filter = ['event_name']
+    search_fields = ['payload']
 
     def has_change_permission(self, request, obj=None):
         return False
