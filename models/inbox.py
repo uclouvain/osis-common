@@ -41,7 +41,8 @@ class InboxAdmin(osis_model_admin.OsisModelAdmin):
         'transaction_id', 'consumer', 'event_name', 'payload', 'creation_date', 'status', 'last_execution_date',
     )
     ordering = ['-creation_date']
-    search_fields = ['event_name', 'consumer']
+    search_fields = ['consumer', 'payload']
+    list_filter = ['event_name']
     actions = [
         'consommer_evenement',
     ]
