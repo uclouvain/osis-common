@@ -31,6 +31,7 @@ import traceback
 import pika
 from django.conf import settings
 from pika.exceptions import ConnectionClosed
+from osis_common.queue.queue_utils import get_pika_connexion_parameters
 
 from osis_common.models.queue_exception import QueueException
 
@@ -48,7 +49,6 @@ class SynchronousConsumerThread(threading.Thread):
 
     def run(self):
         listen_queue_synchronously(self._queue_name, self.callback)
-
 
 def listen_queue_synchronously(queue_name, callback, counter=3):
 
@@ -74,13 +74,8 @@ def listen_queue_synchronously(queue_name, callback, counter=3):
 
     if counter == 0:
         return # Stop the function
-    logger.debug("Connecting to {0} (queue name = {1})...".format(settings.QUEUES.get('QUEUE_URL'), queue_name))
-    credentials = pika.PlainCredentials(settings.QUEUES.get('QUEUE_USER'), settings.QUEUES.get('QUEUE_PASSWORD'))
-
-    connection = pika.BlockingConnection(pika.ConnectionParameters(settings.QUEUES.get('QUEUE_URL'),
-                                                                   settings.QUEUES.get('QUEUE_PORT'),
-                                                                   settings.QUEUES.get('QUEUE_CONTEXT_ROOT'),
-                                                                   credentials))
+    conn_params = get_pika_connexion_parameters(queue_name=queue_name)
+    connection = pika.BlockingConnection(conn_params)
     logger.debug("Connection opened.")
     logger.debug("Creating a new channel...")
     channel = connection.channel()
@@ -90,10 +85,7 @@ def listen_queue_synchronously(queue_name, callback, counter=3):
                           durable=True)
     logger.debug("Queue declared.")
     logger.debug("Declaring on message callback...")
-    if hasattr(settings, 'PIKA_NEW') and settings.PIKA_NEW:
-        channel.basic_consume(queue_name, on_message)
-    else:
-        channel.basic_consume(on_message, queue_name)
+    channel.basic_consume(queue_name, on_message)
     logger.debug("Done.")
     try:
         logger.debug("Ready to synchronously consume messages")
@@ -206,13 +198,10 @@ class ExampleConsumer:
 
         :rtype: pika.SelectConnection
         """
-        logger.debug('Connecting to %s' % (self._connection_parameters['queue_url']))
-        credentials = pika.PlainCredentials(self._connection_parameters['queue_user'], self._connection_parameters['queue_password'])
-        return pika.SelectConnection(pika.ConnectionParameters(self._connection_parameters['queue_url'],
-                                                               self._connection_parameters['queue_port'],
-                                                               self._connection_parameters['queue_context_root'],
-                                                               credentials),
-                                     self.on_connection_open,
+        logger.debug('Connecting to %s' % (self._connection_parameters['queue_name']))
+        conn_params = get_pika_connexion_parameters(queue_name=self._connection_parameters['queue_name'])
+        return pika.SelectConnection(parameters=conn_params,
+                                     on_open_callback=self.on_connection_open,
                                      stop_ioloop_on_close=False)
 
     def on_connection_open(self, unused_connection):
@@ -360,8 +349,10 @@ class ExampleConsumer:
         :param pika.frame.Method method_frame: The Queue.DeclareOk frame
         """
         logger.debug('Binding %s to %s with %s' % (self.EXCHANGE, self._connection_parameters['queue_name'], self.ROUTING_KEY))
-        self._channel.queue_bind(self.on_bindok, self._connection_parameters['queue_name'],
-                                 self.EXCHANGE, self.ROUTING_KEY)
+        self._channel.queue_bind(queue=self._connection_parameters['queue_name'],
+                                 exchange=self.EXCHANGE,
+                                 routing_key=self.ROUTING_KEY,
+                                 callbacks=self.on_bindok)
 
     def on_bindok(self, unused_frame):
         """
@@ -386,10 +377,8 @@ class ExampleConsumer:
         """
         logger.debug('Issuing consumer related RPC commands')
         self.add_on_cancel_callback()
-        if hasattr(settings, 'PIKA_NEW') and settings.PIKA_NEW:
-            self._consumer_tag = self._channel.basic_consume(self._connection_parameters['queue_name'], self.on_message)
-        else:
-            self._consumer_tag = self._channel.basic_consume(self.on_message, self._connection_parameters['queue_name'])
+        self._consumer_tag = self._channel.basic_consume(queue=self._connection_parameters['queue_name'],
+                                                         on_message_callback=self.on_message)
 
     def add_on_cancel_callback(self):
         """
