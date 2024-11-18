@@ -94,8 +94,6 @@ class HandlersPerContextFactory:
             for app in unreleased_apps:
                 if app in handler_path and app not in settings.INSTALLED_APPS:
                     continue
-            if 'deliberation' in handler_path and 'deliberation' not in settings.INSTALLED_APPS:
-                continue
             with contextlib.suppress(AttributeError):
                 handler_module = HandlersPerContextFactory.__import_file('handler_module', handler_path)
                 if handler_module.EVENT_HANDLERS:
