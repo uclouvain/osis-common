@@ -90,7 +90,7 @@ class HandlersPerContextFactory:
         consumers_list = {}
         handlers_path = glob.glob("infrastructure/*/handlers.py", recursive=True)
         for handler_path in handlers_path:
-            unreleased_apps = ['deliberation', 'gestion_des_recommandantions']
+            unreleased_apps = ['deliberation', 'gestion_des_recommandations']
             for app in unreleased_apps:
                 if app in handler_path and app not in settings.INSTALLED_APPS:
                     continue
