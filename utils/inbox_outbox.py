@@ -92,6 +92,11 @@ class HandlersPerContextFactory:
         for handler_path in handlers_path:
             if 'deliberation' in handler_path and 'deliberation' not in settings.INSTALLED_APPS:
                 continue
+            if (
+                'gestion_des_recommandations' in handler_path
+                and 'gestion_des_recommandations' not in settings.INSTALLED_APPS
+            ):
+                continue
             with contextlib.suppress(AttributeError):
                 handler_module = HandlersPerContextFactory.__import_file('handler_module', handler_path)
                 if handler_module.EVENT_HANDLERS:
