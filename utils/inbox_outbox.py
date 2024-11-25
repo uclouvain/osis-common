@@ -90,7 +90,8 @@ class HandlersPerContextFactory:
         consumers_list = {}
         handlers_path = glob.glob("infrastructure/*/handlers.py", recursive=True)
         for handler_path in handlers_path:
-            if 'deliberation' in handler_path and 'deliberation' not in settings.INSTALLED_APPS:
+            unreleased_apps = ['deliberation', 'gestion_des_recommandations']
+            if any(app in handler_path and app not in settings.INSTALLED_APPS for app in unreleased_apps):
                 continue
             with contextlib.suppress(AttributeError):
                 handler_module = HandlersPerContextFactory.__import_file('handler_module', handler_path)
