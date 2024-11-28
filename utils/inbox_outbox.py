@@ -162,13 +162,13 @@ class InboxConsumer:
             unprocessed_event.mark_as_processed()
         except EventClassNotFound as e:
             logger.warning(e.message)
-            unprocessed_event.mark_as_error(e.message)
-        except Exception:
+            unprocessed_event.mark_as_error('\n'.join(traceback.format_exception(e)))
+        except Exception as e:
             logger.exception(
                 f"{self._logger_prefix_message()}: Cannot process {event_name} event ({event_instance})",
                 exc_info=True
             )
-            unprocessed_event.mark_as_error(traceback.format_exc())
+            unprocessed_event.mark_as_error('\n'.join(traceback.format_exception(e)))
         return unprocessed_event
 
     def __build_event_instance(self, unprocessed_event: 'Inbox'):
