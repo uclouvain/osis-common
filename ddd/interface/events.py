@@ -26,8 +26,6 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from infrastructure.utils import MessageBus
-from .domain_models import Event
 
 __all__ = [
     "EventHandler",
@@ -44,5 +42,5 @@ class EventConsumptionMode(Enum):
 class EventHandler:
     consumption_mode: EventConsumptionMode = EventConsumptionMode.SYNCHRONOUS
 
-    def run(self, msg_bus: 'MessageBus', event: 'Event') -> None:
+    def run(self, msg_bus, event) -> None:
         raise NotImplemented()

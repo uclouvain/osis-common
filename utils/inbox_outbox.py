@@ -42,7 +42,7 @@ from django.db.models import Model
 from django.utils.module_loading import import_string
 
 from osis_common.ddd.interface.domain_models import EventHandlers
-from osis_common.ddd.interface.events import EventHandler, EventConsumptionMode
+from osis_common.ddd.interface import EventHandler, EventConsumptionMode
 
 logger = logging.getLogger(settings.ASYNC_WORKERS_LOGGER)
 
