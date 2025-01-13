@@ -42,6 +42,7 @@ from django.db.models import Model
 from django.utils.module_loading import import_string
 
 from osis_common.ddd.interface.domain_models import EventHandlers
+from osis_common.ddd.interface.events import EventHandler, EventConsumptionMode
 
 logger = logging.getLogger(settings.ASYNC_WORKERS_LOGGER)
 
@@ -157,7 +158,11 @@ class InboxConsumer:
         event_name = unprocessed_event.event_name
         try:
             event_instance = self.__build_event_instance(unprocessed_event)
-            for function in self.event_handlers[event_instance.__class__]:
+            function_declared_as_async = [
+                f for f in self.event_handlers[event_instance.__class__]
+                if isinstance(f, EventHandler) and f.consumption_mode == EventConsumptionMode.ASYNCHRONOUS
+            ]
+            for function in function_declared_as_async:
                 function(self.message_bus_instance, event_instance)
             unprocessed_event.mark_as_processed()
         except EventClassNotFound as e:
