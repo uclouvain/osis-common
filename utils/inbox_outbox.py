@@ -91,9 +91,6 @@ class HandlersPerContextFactory:
         consumers_list = {}
         handlers_path = glob.glob("infrastructure/*/handlers.py", recursive=True)
         for handler_path in handlers_path:
-            unreleased_apps = ['deliberation', 'gestion_des_recommandations']
-            if any(app in handler_path and app not in settings.INSTALLED_APPS for app in unreleased_apps):
-                continue
             with contextlib.suppress(AttributeError):
                 handler_module = HandlersPerContextFactory.__import_file('handler_module', handler_path)
                 if handler_module.EVENT_HANDLERS:
@@ -158,12 +155,12 @@ class InboxConsumer:
         event_name = unprocessed_event.event_name
         try:
             event_instance = self.__build_event_instance(unprocessed_event)
-            functions_declared_as_async = [
+            event_handlers_declared_as_async = [
                 f for f in self.event_handlers[event_instance.__class__]
                 if isinstance(f, EventHandler) and f.consumption_mode == EventConsumptionMode.ASYNCHRONOUS
             ]
-            for function in functions_declared_as_async:
-                function(self.message_bus_instance, event_instance)
+            for event_handler in event_handlers_declared_as_async:
+                event_handler.handle(self.message_bus_instance, event_instance)
             unprocessed_event.mark_as_processed()
         except EventClassNotFound as e:
             logger.warning(e.message)

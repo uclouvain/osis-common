@@ -42,5 +42,5 @@ class EventConsumptionMode(Enum):
 class EventHandler:
     consumption_mode: EventConsumptionMode = EventConsumptionMode.SYNCHRONOUS
 
-    def run(self, msg_bus, event) -> None:
+    def handle(self, msg_bus, event) -> None:
         raise NotImplemented()
