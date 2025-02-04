@@ -47,7 +47,7 @@ logger = logging.getLogger(settings.ASYNC_WORKERS_LOGGER)
 
 class Command(BaseCommand):
     help = """
-    Command to send events (aka. message_bus_instance.apublish) produce by the application to the message broker
+    Command to send events produce by the application to the message broker
     Script must be run in the root of the project
     """
 
