@@ -41,8 +41,14 @@ class Command(BaseCommand):
     """
 
     def add_arguments(self, parser):
-        # Positional arguments
-        parser.add_argument("context_name", nargs="+", type=str)
+        parser.add_argument(
+            "-c",
+            "--context_name",
+            dest='context_name',
+            type=str,
+            required=True,
+            help="The name of the bounded context"
+        )
 
     def handle(self, *args, **options):
         context_name = options['context_name']

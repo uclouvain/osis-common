@@ -37,13 +37,18 @@ class Command(BaseCommand):
     """
 
     def add_arguments(self, parser):
-        # Positional arguments
-        parser.add_argument("context_name", nargs="+", type=str)
+        parser.add_argument(
+            "-c",
+            "--context_name",
+            dest='context_name',
+            type=str,
+            required=True,
+            help="The name of the bounded context"
+        )
 
     def handle(self, *args, **options):
         from infrastructure.messages_bus import message_bus_instance
         context_name = options['context_name']
-
         InboxConsumer(
             message_bus_instance=message_bus_instance,
             context_name=context_name,

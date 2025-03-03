@@ -70,7 +70,6 @@ def _load_outbox_model() -> Model:
     return import_string(inbox_model_path)
 
 
-
 class EventClassNotFound(Exception):
     def __init__(self, event_name: str, **kwargs):
         self.message = f"Cannot process {event_name} events because not found in handlers definition..."
@@ -141,7 +140,7 @@ class EventQueueProducer:
 
     def _start_as_current_span_from_unprocessed_event(self, unprocess_event_rowdb):
         otel_data = unprocess_event_rowdb.meta.get('OTEL')
-        parent_span = None
+        otel_context = None
         if otel_data and all(key in otel_data for key in ['TRACE_ID', 'SPAN_ID']):
             span_context = SpanContext(
                 trace_id=otel_data["TRACE_ID"],
@@ -149,8 +148,8 @@ class EventQueueProducer:
                 trace_flags=TraceFlags.SAMPLED,
                 is_remote=True
             )
-            parent_span = NonRecordingSpan(span_context)
-        return tracer.start_as_current_span("outbox_worker.process_unprocessed_event", parent=parent_span)
+            otel_context = trace.set_span_in_context(NonRecordingSpan(span_context))
+        return tracer.start_as_current_span("outbox_worker.process_unprocessed_event", context=otel_context)
 
     def _process_unprocessed_event(self, unprocess_event_rowdb):
         headers = {}
@@ -229,10 +228,9 @@ class EventQueueConsumer:
 
     def _process_message(self, ch, method, properties, body):
         headers = properties.headers if properties and properties.headers else {}
-        otel_context = propagate.extract(headers)  # type: SpanContext
-        parent_span = NonRecordingSpan(otel_context) if otel_context.is_valid else None
+        otel_context = propagate.extract(headers)
 
-        with tracer.start_as_current_span("consumers_worker.process_incoming_event", parent=parent_span) as span:
+        with tracer.start_as_current_span("consumers_worker.process_incoming_event", context=otel_context) as span:
             logger.info(f"{self.get_logger_prefix_message()}: Process message started...")
             if not properties.message_id:
                 span.set_status(trace.StatusCode.ERROR, "Missing message_id in properties")
@@ -321,7 +319,7 @@ class InboxConsumer:
 
     def _start_as_current_span_from_unprocessed_event(self, unprocess_event_rowdb):
         otel_data = unprocess_event_rowdb.meta.get('OTEL')
-        parent_span = None
+        otel_context = None
         if otel_data and all(key in otel_data for key in ['TRACE_ID', 'SPAN_ID']):
             span_context = SpanContext(
                 trace_id=otel_data["TRACE_ID"],
@@ -329,8 +327,8 @@ class InboxConsumer:
                 trace_flags=TraceFlags.SAMPLED,
                 is_remote=True
             )
-            parent_span = NonRecordingSpan(span_context)
-        return tracer.start_as_current_span("inbox_worker.process_unprocessed_event", parent=parent_span)
+            otel_context = trace.set_span_in_context(NonRecordingSpan(span_context))
+        return tracer.start_as_current_span("inbox_worker.process_unprocessed_event", context=otel_context)
 
     def consume(self, unprocessed_event):
         event_instance = None
