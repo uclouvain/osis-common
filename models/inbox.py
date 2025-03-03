@@ -48,7 +48,8 @@ class InboxAdmin(osis_model_admin.OsisModelAdmin):
     ]
 
     @admin.action(
-        description='Consomme les événements sélectionnés (déclenche les réactions immédiatement - en synchrone)'
+        description="Consomme les événements sélectionnés (déclenche les réactions immédiatement - en synchrone) "
+                    "/!\ Non respect de l'ordre peut mener à des inconsistances"
     )
     def consommer_evenement(self, request, queryset):
         from infrastructure.messages_bus import message_bus_instance
@@ -72,7 +73,7 @@ class InboxAdmin(osis_model_admin.OsisModelAdmin):
         return False
 
 
-class Inbox(models.Model):
+class InboxAbstractModel(models.Model):
     PENDING = "PENDING"
     PROCESSED = "PROCESSED"
     ERROR = "ERROR"
@@ -97,7 +98,13 @@ class Inbox(models.Model):
     last_execution_date = models.DateTimeField(null=True, blank=True)
     traceback = models.TextField(null=True, blank=True)
     attempts_number = models.IntegerField(default=0)
+    meta = models.JSONField(default=dict, blank=True)
 
+    class Meta:
+        abstract = True
+
+
+class Inbox(InboxAbstractModel):
     class Meta:
         verbose_name_plural = "inbox"
         unique_together = (
@@ -127,3 +134,10 @@ class Inbox(models.Model):
 
     def is_successfully_processed(self) -> bool:
         return self.status == self.PROCESSED
+
+
+class InboxArchived(InboxAbstractModel):
+    creation_date = models.DateTimeField()
+
+    class Meta:
+        verbose_name_plural = "inbox archived"

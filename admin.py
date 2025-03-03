@@ -17,5 +17,9 @@ admin.site.register(application_notice.ApplicationNotice,
                     application_notice.ApplicationNoticeAdmin)
 admin.site.register(outbox.Outbox,
                     outbox.OutboxAdmin)
+admin.site.register(outbox.OutboxArchived,
+                    outbox.OutboxAdmin)
 admin.site.register(inbox.Inbox,
+                    inbox.InboxAdmin)
+admin.site.register(inbox.InboxArchived,
                     inbox.InboxAdmin)
