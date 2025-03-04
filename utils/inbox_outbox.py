@@ -49,8 +49,7 @@ from osis_common.ddd.interface.domain_models import EventHandlers
 from osis_common.queue import queue_sender
 
 logger = logging.getLogger(settings.ASYNC_WORKERS_LOGGER)
-
-tracer = trace.get_tracer('InboxOutbox', '1.0.0')
+tracer = trace.get_tracer(settings.OTEL_TRACER_MODULE_NAME, settings.OTEL_TRACER_LIBRARY_VERSION)
 
 # Converters to serialize / deserialize events payload
 cattr.register_structure_hook(uuid.UUID, lambda d, t: d)
