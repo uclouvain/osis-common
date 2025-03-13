@@ -130,7 +130,7 @@ class EventQueueProducer:
             for unprocessed_event in unprocessed_events:
                 with self._start_as_current_span_from_unprocessed_event(unprocessed_event) as span:
                     span.set_attribute("event.class", unprocessed_event.event_name)
-                    span.set_attribute("event.value", unprocessed_event.payload)
+                    span.set_attribute("event.value", json.dumps(unprocessed_event.payload))
                     self._process_unprocessed_event(unprocessed_event)
 
     def close_connection(self):
@@ -144,11 +144,14 @@ class EventQueueProducer:
             span_context = SpanContext(
                 trace_id=otel_data["TRACE_ID"],
                 span_id=otel_data["SPAN_ID"],
-                trace_flags=TraceFlags.SAMPLED,
+                trace_flags=TraceFlags(TraceFlags.SAMPLED),
                 is_remote=True
             )
             otel_context = trace.set_span_in_context(NonRecordingSpan(span_context))
-        return tracer.start_as_current_span("outbox_worker.process_unprocessed_event", context=otel_context)
+        return tracer.start_as_current_span(
+            f"outbox_worker.publish.{unprocess_event_rowdb.event_name}",
+            context=otel_context
+        )
 
     def _process_unprocessed_event(self, unprocess_event_rowdb):
         headers = {}
@@ -229,7 +232,11 @@ class EventQueueConsumer:
         headers = properties.headers if properties and properties.headers else {}
         otel_context = propagate.extract(headers)
 
-        with tracer.start_as_current_span("consumers_worker.process_incoming_event", context=otel_context) as span:
+        event_name = method.routing_key.split('.')[-1]
+        with tracer.start_as_current_span(
+            f"{self.context_name}.consumers_worker.process.{event_name}",
+            context=otel_context
+        ) as span:
             logger.info(f"{self.get_logger_prefix_message()}: Process message started...")
             if not properties.message_id:
                 span.set_status(trace.StatusCode.ERROR, "Missing message_id in properties")
@@ -241,7 +248,7 @@ class EventQueueConsumer:
                 consumer=self.context_name,
                 transaction_id=uuid.UUID(properties.message_id),
                 defaults={
-                    "event_name": method.routing_key.split('.')[-1],
+                    "event_name": event_name,
                     "payload": json.loads(body),
                     "meta": {
                         'OTEL': self._get_otel_metadata(span)
@@ -296,7 +303,7 @@ class InboxConsumer:
                 for unprocessed_event in unprocessed_events_in_batch:
                     with self._start_as_current_span_from_unprocessed_event(unprocessed_event) as span:
                         span.set_attribute("event.class", unprocessed_event.event_name)
-                        span.set_attribute("event.value", unprocessed_event.payload)
+                        span.set_attribute("event.value", json.dumps(unprocessed_event.payload))
 
                         processed_event = self.consume(unprocessed_event)
                         if not processed_event.is_successfully_processed():
@@ -323,11 +330,14 @@ class InboxConsumer:
             span_context = SpanContext(
                 trace_id=otel_data["TRACE_ID"],
                 span_id=otel_data["SPAN_ID"],
-                trace_flags=TraceFlags.SAMPLED,
+                trace_flags=TraceFlags(TraceFlags.SAMPLED),
                 is_remote=True
             )
             otel_context = trace.set_span_in_context(NonRecordingSpan(span_context))
-        return tracer.start_as_current_span("inbox_worker.process_unprocessed_event", context=otel_context)
+        return tracer.start_as_current_span(
+            f"{unprocess_event_rowdb.consumer}.inbox_worker.process.{unprocess_event_rowdb.event_name}",
+            context=otel_context
+        )
 
     def consume(self, unprocessed_event):
         event_instance = None
