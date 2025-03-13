@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2023 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2025 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -24,27 +24,32 @@
 #
 ##############################################################################
 import contextlib
+import datetime
 import glob
+import json
 import logging
 import os
-import threading
 import traceback
 import uuid
 from decimal import Decimal
 from importlib import util
-from time import sleep
-from typing import List, Dict, Type
+from typing import List, Dict
 
 import cattr
+import pika
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Model
 from django.utils.module_loading import import_string
+from opentelemetry import trace, propagate
+from opentelemetry.trace import SpanContext, TraceFlags, NonRecordingSpan, Span
 
-from osis_common.ddd.interface.domain_models import EventHandlers
 from osis_common.ddd.interface import EventHandler, EventConsumptionMode
+from osis_common.ddd.interface.domain_models import EventHandlers
+from osis_common.queue import queue_sender
 
 logger = logging.getLogger(settings.ASYNC_WORKERS_LOGGER)
+tracer = trace.get_tracer(settings.OTEL_TRACER_MODULE_NAME, settings.OTEL_TRACER_LIBRARY_VERSION)
 
 # Converters to serialize / deserialize events payload
 cattr.register_structure_hook(uuid.UUID, lambda d, t: d)
@@ -62,21 +67,6 @@ def _load_inbox_model() -> Model:
 def _load_outbox_model() -> Model:
     inbox_model_path = settings.MESSAGE_BUS['OUTBOX_MODEL']
     return import_string(inbox_model_path)
-
-
-class ConsumerThreadWorkerStrategy(threading.Thread):
-    def __init__(self, bounded_context_name: str, event_handlers: 'EventHandlers'):
-        super().__init__()
-        self.bounded_context_name = bounded_context_name
-        self.event_handlers = event_handlers
-        self.inbox_model = _load_inbox_model()
-        self.outbox_model = _load_outbox_model()
-
-    def get_interested_events(self) -> List[str]:
-        return [event.__name__ for event in self.event_handlers.keys()]
-
-    def _logger_prefix_message(self) -> str:
-        return f"[Consumer Worker - {self.bounded_context_name} - Thread: {self.ident}]"
 
 
 class EventClassNotFound(Exception):
@@ -106,7 +96,181 @@ class HandlersPerContextFactory:
         return mod
 
 
+class EventQueueProducer:
+    """
+    Class which is in charge to read on outbox model and send it to the rabbitMQ queue
+    """
+    def __init__(self):
+        self.outbox_model = _load_outbox_model()
+        self.establish_connection()
+
+    def establish_connection(self):
+        self.connection = queue_sender.get_connection(client_properties={'connection_name': 'outbox_worker'})
+        channel = self.connection.channel()
+        channel.exchange_declare(
+            exchange=settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME'],
+            exchange_type='topic',
+            passive=False,
+            durable=True,
+            auto_delete=False
+        )
+        channel.confirm_delivery()
+        self.channel = channel
+
+    def send_pending_events_to_queue(self):
+        with transaction.atomic():
+            unprocessed_events = self.outbox_model.objects.select_for_update().filter(
+                sent=False
+            ).order_by('creation_date')
+            if unprocessed_events:
+                logger.info(
+                    f"{self.get_logger_prefix_message()}: Sending {len(unprocessed_events)} unprocessed events..."
+                )
+
+            for unprocessed_event in unprocessed_events:
+                with self._start_as_current_span_from_unprocessed_event(unprocessed_event) as span:
+                    span.set_attribute("event.class", unprocessed_event.event_name)
+                    span.set_attribute("event.value", json.dumps(unprocessed_event.payload))
+                    self._process_unprocessed_event(unprocessed_event)
+
+    def close_connection(self):
+        if self.connection:
+            self.connection.close()
+
+    def _start_as_current_span_from_unprocessed_event(self, unprocess_event_rowdb):
+        otel_data = unprocess_event_rowdb.meta.get('OTEL')
+        otel_context = None
+        if otel_data and all(key in otel_data for key in ['TRACE_ID', 'SPAN_ID']):
+            span_context = SpanContext(
+                trace_id=otel_data["TRACE_ID"],
+                span_id=otel_data["SPAN_ID"],
+                trace_flags=TraceFlags(TraceFlags.SAMPLED),
+                is_remote=True
+            )
+            otel_context = trace.set_span_in_context(NonRecordingSpan(span_context))
+        return tracer.start_as_current_span(
+            f"outbox_worker.publish.{unprocess_event_rowdb.event_name}",
+            context=otel_context
+        )
+
+    def _process_unprocessed_event(self, unprocess_event_rowdb):
+        headers = {}
+        propagate.inject(headers)
+
+        self.channel.basic_publish(
+            exchange=settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME'],
+            routing_key='.'.join(
+                [settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME'], unprocess_event_rowdb.event_name]
+            ),
+            body=json.dumps(unprocess_event_rowdb.payload),
+            properties=pika.BasicProperties(
+                headers=headers,
+                message_id=str(unprocess_event_rowdb.transaction_id),
+                content_encoding='utf-8',
+                content_type='application/json',
+                delivery_mode=2,
+            )
+        )
+        unprocess_event_rowdb.sent = True
+        unprocess_event_rowdb.sent_date = datetime.datetime.now()
+        unprocess_event_rowdb.save()
+
+    def get_logger_prefix_message(self) -> str:
+        return f"[EventQueueProducer]"
+
+
+class EventQueueConsumer:
+    """
+    Class which is in charge to read on the rabbitMQ queue and store event to inbox model for a specific
+    bounded context
+    """
+    def __init__(self, context_name: str, event_handlers: 'EventHandlers', *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.context_name = context_name
+        self.event_handlers = event_handlers
+        self.inbox_model = _load_inbox_model()
+        self.establish_connection()
+
+    def establish_connection(self):
+        self.connection = queue_sender.get_connection(
+            client_properties={'connection_name': self.get_consumer_queue_name()}
+        )
+        self.channel = self.connection.channel()
+        self.channel.queue_declare(
+            queue=self.get_consumer_queue_name(),
+            auto_delete=False,
+            durable=True
+        )
+        for interested_event in self.get_interested_events():
+            self.channel.queue_bind(
+                queue=self.get_consumer_queue_name(),
+                exchange=settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME'],
+                routing_key=f"{settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME']}.{interested_event}"
+            )
+
+    def get_consumer_queue_name(self) -> str:
+        return f"{self.context_name}_consumer"
+
+    def get_interested_events(self) -> List[str]:
+        return [event.__name__ for event in self.event_handlers.keys()]
+
+    def get_logger_prefix_message(self) -> str:
+        return f"[EventQueueConsumer - {self.context_name}]"
+
+    def read_queue(self):
+        logger.debug(f"{self.get_logger_prefix_message()}: Start consuming...")
+        method, properties, body = self.channel.basic_get(
+            queue=self.get_consumer_queue_name(),
+            auto_ack=False,
+        )
+        if method:
+            self._process_message(self.channel, method, properties, body)
+        else:
+            logger.debug(f"{self.get_logger_prefix_message()}: No message to consume...")
+
+    def _process_message(self, ch, method, properties, body):
+        headers = properties.headers if properties and properties.headers else {}
+        otel_context = propagate.extract(headers)
+
+        event_name = method.routing_key.split('.')[-1]
+        with tracer.start_as_current_span(
+            f"{self.context_name}.consumers_worker.process.{event_name}",
+            context=otel_context
+        ) as span:
+            logger.info(f"{self.get_logger_prefix_message()}: Process message started...")
+            if not properties.message_id:
+                span.set_status(trace.StatusCode.ERROR, "Missing message_id in properties")
+                logger.error(f"{self.get_logger_prefix_message()}: Missing message_id in properties.")
+                ch.basic_reject(delivery_tag=method.delivery_tag, requeue=False)
+                return
+
+            self.inbox_model.objects.get_or_create(
+                consumer=self.context_name,
+                transaction_id=uuid.UUID(properties.message_id),
+                defaults={
+                    "event_name": event_name,
+                    "payload": json.loads(body),
+                    "meta": {
+                        'OTEL': self._get_otel_metadata(span)
+                    }
+                }
+            )
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            logger.info(f"{self.get_logger_prefix_message()}: Process message finished...")
+
+    @staticmethod
+    def _get_otel_metadata(span: 'Span') -> Dict[str, int]:
+        return {
+            "TRACE_ID": span.get_span_context().trace_id,
+            "SPAN_ID": span.get_span_context().span_id,
+        }
+
+
 class InboxConsumer:
+    """
+    Class which is in charge to read the event in inbox model and execute event handler function for a specific
+    bounded context
+    """
     def __init__(self, message_bus_instance, context_name: str, event_handlers: 'EventHandlers', *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.message_bus_instance = message_bus_instance
@@ -121,34 +285,59 @@ class InboxConsumer:
         unprocessed_events_qs = self.inbox_model.objects.filter(
             consumer=self.context_name,
         ).exclude(
-            status__in=[self.inbox_model.PROCESSED, self.inbox_model.DEAD_LETTER]
+            status__in=[
+                self.inbox_model.PROCESSED,
+                self.inbox_model.DEAD_LETTER,
+            ]
         ).order_by('creation_date')
 
         unprocessed_events_count = unprocessed_events_qs.count()
         if unprocessed_events_count:
-            logger.info(f"{self._logger_prefix_message()}: Remaining {unprocessed_events_count} unprocess events...")
+            logger.info(f"{self.get_logger_prefix_message()}: Remaining {unprocessed_events_count} unprocess events...")
 
             with transaction.atomic():
                 unprocessed_events_in_batch = self.inbox_model.objects.select_for_update().filter(
                     pk__in=unprocessed_events_qs.values_list('pk', flat=True)[:batch_size]
                 ).order_by('creation_date')
-                logger.info(f"{self._logger_prefix_message()}: Process {len(unprocessed_events_in_batch)} events...")
+                logger.info(f"{self.get_logger_prefix_message()}: Process {len(unprocessed_events_in_batch)} events...")
                 for unprocessed_event in unprocessed_events_in_batch:
-                    processed_event = self.consume(unprocessed_event)
-                    if not processed_event.is_successfully_processed():
-                        if processed_event.attempts_number >= MAX_ATTEMPS_BEFORE_DEAD_LETTER:
-                            logger.error(
-                                f"{self._logger_prefix_message()}: Mark event as dead letter because max attemps reached "
-                                f"(ID: {processed_event.id} - Name {processed_event.event_name})"
-                            )
-                            processed_event.mark_as_dead_letter()
-                        else:
-                            logger.warning(
-                                f"{self._logger_prefix_message()}: Stop events processing because "
-                                f"current event (ID: {processed_event.id} - Name {processed_event.event_name}) "
-                                f"not correctly processed..."
-                            )
-                            break
+                    with self._start_as_current_span_from_unprocessed_event(unprocessed_event) as span:
+                        span.set_attribute("event.class", unprocessed_event.event_name)
+                        span.set_attribute("event.value", json.dumps(unprocessed_event.payload))
+
+                        processed_event = self.consume(unprocessed_event)
+                        if not processed_event.is_successfully_processed():
+                            if processed_event.attempts_number >= MAX_ATTEMPS_BEFORE_DEAD_LETTER:
+                                span.set_status(trace.StatusCode.ERROR, "Max attemps retried reached")
+                                logger.error(
+                                    f"{self.get_logger_prefix_message()}: "
+                                    f"Mark event as dead letter because max attemps reached "
+                                    f"(ID: {processed_event.id} - Name {processed_event.event_name})"
+                                )
+                                processed_event.mark_as_dead_letter()
+                            else:
+                                logger.warning(
+                                    f"{self.get_logger_prefix_message()}: Stop events processing because "
+                                    f"current event (ID: {processed_event.id} - Name {processed_event.event_name}) "
+                                    f"not correctly processed..."
+                                )
+                                break
+
+    def _start_as_current_span_from_unprocessed_event(self, unprocess_event_rowdb):
+        otel_data = unprocess_event_rowdb.meta.get('OTEL')
+        otel_context = None
+        if otel_data and all(key in otel_data for key in ['TRACE_ID', 'SPAN_ID']):
+            span_context = SpanContext(
+                trace_id=otel_data["TRACE_ID"],
+                span_id=otel_data["SPAN_ID"],
+                trace_flags=TraceFlags(TraceFlags.SAMPLED),
+                is_remote=True
+            )
+            otel_context = trace.set_span_in_context(NonRecordingSpan(span_context))
+        return tracer.start_as_current_span(
+            f"{unprocess_event_rowdb.consumer}.inbox_worker.process.{unprocess_event_rowdb.event_name}",
+            context=otel_context
+        )
 
     def consume(self, unprocessed_event):
         event_instance = None
@@ -167,7 +356,7 @@ class InboxConsumer:
             unprocessed_event.mark_as_error('\n'.join(traceback.format_exception(e)))
         except Exception as e:
             logger.exception(
-                f"{self._logger_prefix_message()}: Cannot process {event_name} event ({event_instance})",
+                f"{self.get_logger_prefix_message()}: Cannot process {event_name} event ({event_instance})",
                 exc_info=True
             )
             unprocessed_event.mark_as_error('\n'.join(traceback.format_exception(e)))
@@ -186,33 +375,5 @@ class InboxConsumer:
         except StopIteration:
             raise EventClassNotFound(unprocessed_event.event_name)
 
-    def _logger_prefix_message(self) -> str:
+    def get_logger_prefix_message(self) -> str:
         return f"[Inbox Worker - {self.context_name}]"
-
-
-class OneThreadPerBoundedContextRunner:
-    def __init__(self, consumer_thread_worker_strategy: Type[ConsumerThreadWorkerStrategy], *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.threads = {}  # type: Dict[str, threading.Thread]
-        self.consumer_thread_worker_strategy = consumer_thread_worker_strategy
-        self.consumers_list = HandlersPerContextFactory().get()
-
-    def run(self):
-        for context_name, handlers in self.consumers_list.items():
-            self.__start_thread(context_name, handlers)
-        while True:
-            self.__check_thread_status()
-            sleep(5)
-
-    def __check_thread_status(self):
-        for context_name, thread in self.threads.items():
-            if not thread.is_alive():
-                logger.warning(f"| Consumer {context_name} : DOWN |")
-                self.__start_thread(context_name, self.consumers_list[context_name])
-
-    def __start_thread(self, context_name: str, handlers: 'EventHandlers'):
-        logger.debug(f"| Start Consumer {context_name} ...")
-        consumer_thread_worker = self.consumer_thread_worker_strategy(context_name, handlers)
-        consumer_thread_worker.setDaemon(True)
-        consumer_thread_worker.start()
-        self.threads[context_name] = consumer_thread_worker
