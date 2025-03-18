@@ -353,7 +353,9 @@ class InboxConsumer:
             unprocessed_event.mark_as_processed()
         except EventClassNotFound as e:
             logger.warning(e.message)
-            unprocessed_event.mark_as_error('\n'.join(traceback.format_exception(e)))
+            # mark as dead letter pour éviter de bloquer le processus de consommation pour une raison autre que métier
+            # Si l'event n'est plus dans les handlers, pas nécessaire de réessayer 15 fois (peut-être obsolète)
+            unprocessed_event.mark_as_dead_letter('\n'.join(traceback.format_exception(e)))
         except Exception as e:
             logger.exception(
                 f"{self.get_logger_prefix_message()}: Cannot process {event_name} event ({event_instance})",
