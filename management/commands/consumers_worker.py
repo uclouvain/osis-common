@@ -28,13 +28,15 @@ import json
 import logging
 import uuid
 from time import sleep
+from typing import List
 
 from django.conf import settings
 from django.core.management import BaseCommand
 from django.db import transaction
 
 from osis_common.queue import queue_sender
-from osis_common.utils.inbox_outbox import OneThreadPerBoundedContextRunner, ConsumerThreadWorkerStrategy
+from osis_common.utils.inbox_outbox import OneThreadPerBoundedContextRunner, ConsumerThreadWorkerStrategy, \
+    _load_inbox_model
 
 logger = logging.getLogger(settings.ASYNC_WORKERS_LOGGER)
 
@@ -138,9 +140,15 @@ class BrokerConsumerThreadWorker(ConsumerThreadWorkerStrategy):
         logger.info(f"{self._logger_prefix_message()}: Process message finished...")
 
 
-class BrokerSyncConsumerThreadWorker(ConsumerThreadWorkerStrategy):
-    def __init__(self, *args, **kwargs):
+class BrokerSyncConsumerThreadWorker:
+    def __init__(self, bounded_context_name: str, event_handlers: 'EventHandlers', *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.bounded_context_name = bounded_context_name
+        self.event_handlers = event_handlers
+        self.inbox_model = _load_inbox_model()
+        self.establish_connection()
+
+    def establish_connection(self):
         self.connection = queue_sender.get_connection(
             client_properties={'connection_name': self.get_consumer_queue_name()}
         )
@@ -158,10 +166,20 @@ class BrokerSyncConsumerThreadWorker(ConsumerThreadWorkerStrategy):
                 routing_key=f"{settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME']}.{interested_event}"
             )
 
+    def get_interested_events(self) -> List[str]:
+        return [event.__name__ for event in self.event_handlers.keys()]
+
+    def _logger_prefix_message(self) -> str:
+        return f"[EventQueueConsumer - {self.bounded_context_name}]"
+
     def get_consumer_queue_name(self) -> str:
         return f"{self.bounded_context_name}_consumer"
 
     def run(self):
+        """
+        Read queue to persist the serialized event into Inbox model
+        (to be processed by inbox model in another process)
+        """
         logger.debug(f"{self._logger_prefix_message()}: Start consuming...")
         method_frame, header_frame, body = self.channel.basic_get(
             queue=self.get_consumer_queue_name(),
