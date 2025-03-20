@@ -86,6 +86,8 @@ def profile(only_project_and_native_method=False):
             ps.print_stats()
 
             output = s.getvalue()
+            header = "\n".join(output.splitlines()[:5])
+
             if only_project_and_native_method:
                 project_path = os.getcwd()
                 venv_path = sys.prefix
@@ -93,7 +95,7 @@ def profile(only_project_and_native_method=False):
                     line for line in output.splitlines()
                     if (project_path in line or "{method" in line) and venv_path not in line
                 ]
-                output = "\n".join(filtered_lines)
+                output = "\n".join([header] + filtered_lines)
 
             print(output)
             return result
