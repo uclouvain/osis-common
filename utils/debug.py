@@ -28,6 +28,7 @@ import cProfile
 import functools
 import io
 import logging
+import os
 import pstats
 import sys
 
@@ -54,7 +55,7 @@ def profile_db(func):
     return _func
 
 
-def profile(exclude_venv=False):
+def profile(only_project_and_native_method=False):
     """
         A decorator that uses cProfile to profile a function or method.
 
@@ -62,10 +63,11 @@ def profile(exclude_venv=False):
         and prints the results to the standard output, sorted by cumulative time.
 
         Args:
-            exclude_venv (bool): If True, filter out calls from the virtual environment.
+            only_project_and_native_method (bool): If True, keep only calls from the project's source code
+                                                   and built-in methods (e.g., {method 'count' of 'str' objects}).
 
         Usage:
-            @profile(exclude_venv=True)
+            @profile(only_project_and_native_method=True)
             def my_function():
 
             @profile()
@@ -84,11 +86,12 @@ def profile(exclude_venv=False):
             ps.print_stats()
 
             output = s.getvalue()
-            if exclude_venv:
+            if only_project_and_native_method:
+                project_path = os.getcwd()
                 venv_path = sys.prefix
                 filtered_lines = [
                     line for line in output.splitlines()
-                    if venv_path not in line  # Supprime les lignes contenant le chemin de la venv
+                    if (project_path in line or "{method" in line) and venv_path not in line
                 ]
                 output = "\n".join(filtered_lines)
 
