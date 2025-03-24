@@ -55,8 +55,8 @@ tracer = trace.get_tracer(settings.OTEL_TRACER_MODULE_NAME, settings.OTEL_TRACER
 cattr.register_structure_hook(uuid.UUID, lambda d, t: d)
 cattr.register_structure_hook(Decimal, lambda d, t: d)
 
-MAX_ATTEMPS_BEFORE_DEAD_LETTER = 15
-INBOX_BATCH_EVENTS = 5
+MAX_ATTEMPS_BEFORE_DEAD_LETTER = settings.MESSAGE_BUS['INBOX_MAX_RETRIES']
+INBOX_BATCH_EVENTS = settings.MESSAGE_BUS['INBOX_BATCH_EVENTS']
 
 
 def _load_inbox_model() -> Model:
