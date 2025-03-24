@@ -27,21 +27,7 @@ from time import sleep
 
 from django.core.management import BaseCommand
 
-from osis_common.utils.inbox_outbox import ConsumerThreadWorkerStrategy, OneThreadPerBoundedContextRunner, \
-    InboxConsumer
-
-
-class InboxThreadWorker(ConsumerThreadWorkerStrategy):
-
-    def run(self):
-        from infrastructure.messages_bus import message_bus_instance
-        while True:
-            InboxConsumer(
-                message_bus_instance=message_bus_instance,
-                context_name=self.bounded_context_name,
-                event_handlers=self.event_handlers,
-            ).consume_all_unprocessed_events()
-            sleep(5)
+from osis_common.utils.inbox_outbox import InboxConsumer, HandlersPerContextFactory
 
 
 class Command(BaseCommand):
@@ -50,5 +36,21 @@ class Command(BaseCommand):
     Script must be run in the root of the project
     """
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "-c",
+            "--context_name",
+            dest='context_name',
+            type=str,
+            required=True,
+            help="The name of the bounded context"
+        )
+
     def handle(self, *args, **options):
-        OneThreadPerBoundedContextRunner(InboxThreadWorker).run()
+        from infrastructure.messages_bus import message_bus_instance
+        context_name = options['context_name']
+        InboxConsumer(
+            message_bus_instance=message_bus_instance,
+            context_name=context_name,
+            event_handlers=HandlersPerContextFactory.get()[context_name]
+        ).consume_all_unprocessed_events()
