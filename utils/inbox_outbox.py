@@ -206,8 +206,11 @@ class EventQueueConsumer:
             self.channel.queue_bind(
                 queue=self.get_consumer_queue_name(),
                 exchange=settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME'],
-                routing_key=f"{settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME']}.{interested_event}"
+                routing_key=self.get_routing_key(interested_event)
             )
+
+    def get_routing_key(self, event_name: str):
+        return f"{settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME']}.{event_name}"
 
     def clear_uninterested_events(self) -> None:
         """
@@ -237,10 +240,7 @@ class EventQueueConsumer:
             return
 
         bindings_current = [binding["routing_key"] for binding in response.json()]
-        bindings_to_keep = [
-            f"{settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME']}.{interested_event}"
-            for interested_event in self.get_interested_events()
-        ]
+        bindings_to_keep = [self.get_routing_key(interested_event) for interested_event in self.get_interested_events()]
         for routing_key in bindings_current:
             if routing_key not in bindings_to_keep:
                 logger.info(f"{self.get_logger_prefix_message()}: Suppression du binding: {routing_key}")
