@@ -37,6 +37,7 @@ from typing import List, Dict
 
 import cattr
 import pika
+import requests
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Model
@@ -207,6 +208,47 @@ class EventQueueConsumer:
                 exchange=settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME'],
                 routing_key=f"{settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME']}.{interested_event}"
             )
+
+    def clear_uninterested_events(self) -> None:
+        """
+        This function will remove bindings (= eventname) which are not used anymore
+        Pika doesn't provided a function, we need to call API manager
+        """
+        logger.info(f"{self.get_logger_prefix_message()}: Starting clear uninterested events")
+        self.establish_connection()
+
+        VHOST = settings.QUEUES.get('QUEUE_CONTEXT_ROOT')
+        if VHOST == '/':
+            VHOST='%2F'
+
+        url = f"{settings.QUEUES.get('API_MANAGEMENT_URL')}/bindings/{VHOST}/e/" \
+              f"{settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME']}/q/{self.get_consumer_queue_name()}"
+        response = requests.get(
+            url, auth=(
+                settings.QUEUES.get('QUEUE_USER'),
+                settings.QUEUES.get('QUEUE_PASSWORD')
+            )
+        )
+        if response.status_code != 200:
+            logger.error(
+                f"{self.get_logger_prefix_message()}: Erreur lors de la récupération des bindings "
+                f"(URL: {url} / Result: f{response.text})"
+            )
+            return
+
+        bindings_current = [binding["routing_key"] for binding in response.json()]
+        bindings_to_keep = [
+            f"{settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME']}.{interested_event}"
+            for interested_event in self.get_interested_events()
+        ]
+        for routing_key in bindings_current:
+            if routing_key not in bindings_to_keep:
+                logger.info(f"{self.get_logger_prefix_message()}: Suppression du binding: {routing_key}")
+                self.channel.queue_unbind(
+                    queue=self.get_consumer_queue_name(),
+                    exchange=settings.MESSAGE_BUS['ROOT_TOPIC_EXCHANGE_NAME'],
+                    routing_key=routing_key
+                )
 
     def get_consumer_queue_name(self) -> str:
         return f"{self.context_name}_consumer"
