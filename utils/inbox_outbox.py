@@ -56,9 +56,6 @@ tracer = trace.get_tracer(settings.OTEL_TRACER_MODULE_NAME, settings.OTEL_TRACER
 cattr.register_structure_hook(uuid.UUID, lambda d, t: d)
 cattr.register_structure_hook(Decimal, lambda d, t: d)
 
-MAX_ATTEMPS_BEFORE_DEAD_LETTER = settings.MESSAGE_BUS['INBOX_MAX_RETRIES']
-INBOX_BATCH_EVENTS = settings.MESSAGE_BUS['INBOX_BATCH_EVENTS']
-
 
 def _load_inbox_model() -> Model:
     inbox_model_path = settings.MESSAGE_BUS['INBOX_MODEL']
@@ -322,7 +319,7 @@ class InboxConsumer:
 
     def consume_all_unprocessed_events(self, batch_size: int = None):
         if batch_size is None:
-            batch_size = INBOX_BATCH_EVENTS
+            batch_size = settings.MESSAGE_BUS['INBOX_BATCH_EVENTS']
 
         unprocessed_events_qs = self.inbox_model.objects.filter(
             consumer=self.context_name,
@@ -349,7 +346,7 @@ class InboxConsumer:
 
                         processed_event = self.consume(unprocessed_event)
                         if not processed_event.is_successfully_processed():
-                            if processed_event.attempts_number >= MAX_ATTEMPS_BEFORE_DEAD_LETTER:
+                            if processed_event.attempts_number >= settings.MESSAGE_BUS['INBOX_MAX_RETRIES']:
                                 span.set_status(trace.StatusCode.ERROR, "Max attemps retried reached")
                                 logger.error(
                                     f"{self.get_logger_prefix_message()}: "
