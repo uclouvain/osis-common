@@ -28,7 +28,9 @@ import cProfile
 import functools
 import io
 import logging
+import os
 import pstats
+import sys
 
 from django.conf import settings
 
@@ -53,22 +55,49 @@ def profile_db(func):
     return _func
 
 
-def profile(func):
+def profile(only_project_and_native_method=False):
     """
         A decorator that uses cProfile to profile a function or method.
 
         This decorator profiles the execution time of the decorated function or method
         and prints the results to the standard output, sorted by cumulative time.
+
+        Args:
+            only_project_and_native_method (bool): If True, keep only calls from the project's source code
+                                                   and built-in methods (e.g., {method 'count' of 'str' objects}).
+
+        Usage:
+            @profile(only_project_and_native_method=True)
+            def my_function():
+
+            @profile()
+            def my_function():
     """
-    @functools.wraps(func)
-    def _func(*args, **kwargs):
-        pr = cProfile.Profile()
-        pr.enable()
-        result = func(*args, **kwargs)
-        pr.disable()
-        s = io.StringIO()
-        ps = pstats.Stats(pr, stream=s).sort_stats('cumulative')
-        ps.print_stats()
-        print(s.getvalue())
-        return result
-    return _func
+    def decorator(func):
+        @functools.wraps(func)
+        def _func(*args, **kwargs):
+            pr = cProfile.Profile()
+            pr.enable()
+            result = func(*args, **kwargs)
+            pr.disable()
+
+            s = io.StringIO()
+            ps = pstats.Stats(pr, stream=s).sort_stats('cumulative')
+            ps.print_stats()
+
+            output = s.getvalue()
+            header = "\n".join(output.splitlines()[:5])
+
+            if only_project_and_native_method:
+                project_path = os.getcwd()
+                venv_path = sys.prefix
+                filtered_lines = [
+                    line for line in output.splitlines()
+                    if (project_path in line or "{method" in line) and venv_path not in line
+                ]
+                output = "\n".join([header] + filtered_lines)
+
+            print(output)
+            return result
+        return _func
+    return decorator
