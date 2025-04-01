@@ -24,8 +24,11 @@
 #
 ##############################################################################
 import abc
+import datetime
+import json
 import uuid
-from typing import Optional, List, Dict, Callable
+from decimal import Decimal
+from typing import Optional, List, Dict, Callable, Any
 
 import attr
 
@@ -41,16 +44,47 @@ __all__ = [
     "AbstractRepository",
 ]
 
+import cattr
+from django.conf import settings
+
 
 @attr.s(frozen=True, slots=True)
 class CommandRequest(abc.ABC):
     transaction_id = attr.ib(init=False, type=uuid.UUID, default=attr.Factory(uuid.uuid4), eq=False)
 
 
+@attr.dataclass
+class ValueSerializer:
+    value: Any
+
+    def serialize(self):
+        if isinstance(self.value, (Decimal, uuid.UUID)):
+            return str(self.value)
+        elif isinstance(self.value, datetime.datetime):
+            return self.value.strftime(settings.EVENT_DATETIME_FORMAT)
+        elif isinstance(self.value, datetime.date):
+            return self.value.strftime(settings.EVENT_DATE_FORMAT)
+        elif isinstance(self.value, EntityIdentity):
+            return self.value.serialize()
+        return self.value
+
+
 @attr.dataclass(frozen=True, slots=True)
 class Event(abc.ABC):
     entity_id: 'EntityIdentity'
     transaction_id: uuid.UUID = attr.Factory(uuid.uuid4)
+
+    def serialize(self) -> Dict:
+        return attr.asdict(
+            self,
+            value_serializer=lambda inst, field, value: ValueSerializer(value).serialize(),
+        )
+
+    @classmethod
+    def deserialize(cls, payload: Dict) -> 'Event':
+        return cattr.structure({
+            **payload,
+        }, cls)
 
 
 class ValueObject(abc.ABC):
@@ -62,7 +96,18 @@ class ValueObject(abc.ABC):
 
 
 class EntityIdentity(ValueObject, abc.ABC):
-    pass
+
+    def serialize(self) -> Dict:
+        return attr.asdict(
+            self,
+            value_serializer=lambda inst, field, value: ValueSerializer(value).serialize(),
+        )
+
+    @classmethod
+    def deserialize(cls, payload: Dict) -> Optional['EntityIdentity']:
+        if not payload:
+            return
+        return cls(**payload)
 
 
 class Entity(abc.ABC):
