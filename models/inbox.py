@@ -27,7 +27,6 @@ import datetime
 
 from django.contrib import admin
 from django.db import models
-from django_admin_listfilter_dropdown.filters import DropdownFilter
 
 from osis_common.models import osis_model_admin
 from osis_common.utils.inbox_outbox import HandlersPerContextFactory, InboxConsumer
@@ -43,7 +42,7 @@ class InboxAdmin(osis_model_admin.OsisModelAdmin):
     )
     ordering = ['-creation_date']
     search_fields = ['consumer', 'payload']
-    list_filter = ['status', 'consumer', ('event_name', DropdownFilter),]
+    list_filter = ['event_name']
     actions = [
         'consommer_evenement',
     ]
