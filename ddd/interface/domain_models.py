@@ -78,6 +78,7 @@ class Event(abc.ABC):
         return attr.asdict(
             self,
             value_serializer=lambda inst, field, value: ValueSerializer(value).serialize(),
+            recurse=True,
         )
 
     @classmethod
@@ -101,6 +102,7 @@ class EntityIdentity(ValueObject, abc.ABC):
         return attr.asdict(
             self,
             value_serializer=lambda inst, field, value: ValueSerializer(value).serialize(),
+            recurse=True,
         )
 
     @classmethod
