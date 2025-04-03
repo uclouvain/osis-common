@@ -24,6 +24,7 @@
 #
 ##############################################################################
 from django.db import models
+from django_admin_listfilter_dropdown.filters import DropdownFilter
 
 from osis_common.models import osis_model_admin
 
@@ -33,7 +34,7 @@ class OutboxAdmin(osis_model_admin.OsisModelAdmin):
     list_display = ('transaction_id', 'event_name',  'payload', 'creation_date', 'sent', 'sent_date',)
     readonly_fields = ('transaction_id', 'event_name', 'payload', 'creation_date', 'sent', 'sent_date',)
     ordering = ['-creation_date']
-    list_filter = ['event_name']
+    list_filter = ['sent', ('event_name', DropdownFilter),]
     search_fields = ['payload']
 
     def has_change_permission(self, request, obj=None):
