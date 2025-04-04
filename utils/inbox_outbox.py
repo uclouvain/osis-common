@@ -420,8 +420,8 @@ class InboxConsumer:
                 if event_cls.__name__ == unprocessed_event.event_name
             )
             return event_cls.deserialize({
+                'transaction_id': str(unprocessed_event.transaction_id),
                 **unprocessed_event.payload,
-                'transaction_id': unprocessed_event.transaction_id,
             })
         except StopIteration:
             raise EventClassNotFound(unprocessed_event.event_name)
