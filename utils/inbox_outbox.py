@@ -45,6 +45,7 @@ from django.utils.module_loading import import_string
 from opentelemetry import trace, propagate
 from opentelemetry.trace import SpanContext, TraceFlags, NonRecordingSpan, Span
 
+from osis_common.ddd import interface
 from osis_common.ddd.interface import EventHandler, EventConsumptionMode
 from osis_common.ddd.interface.domain_models import EventHandlers
 from osis_common.queue import queue_sender
@@ -53,8 +54,17 @@ logger = logging.getLogger(settings.ASYNC_WORKERS_LOGGER)
 tracer = trace.get_tracer(settings.OTEL_TRACER_MODULE_NAME, settings.OTEL_TRACER_LIBRARY_VERSION)
 
 # Converters to serialize / deserialize events payload
-cattr.register_structure_hook(uuid.UUID, lambda d, t: d)
-cattr.register_structure_hook(Decimal, lambda d, t: d)
+cattr.register_structure_hook(uuid.UUID, lambda value, klass: uuid.UUID(value))
+cattr.register_structure_hook(Decimal, lambda value, klass: Decimal(value))
+cattr.register_structure_hook(interface.EntityIdentity, lambda value, klass: klass.deserialize(value))
+cattr.register_structure_hook(
+    datetime.datetime,
+    lambda value, klass: datetime.datetime.strptime(value, settings.EVENT_DATETIME_FORMAT)
+)
+cattr.register_structure_hook(
+    datetime.date,
+    lambda value, klass: datetime.datetime.strptime(value, settings.EVENT_DATE_FORMAT).date()
+)
 
 
 def _load_inbox_model() -> Model:
@@ -409,10 +419,10 @@ class InboxConsumer:
                 event_cls for event_cls, fn_list in self.event_handlers.items()
                 if event_cls.__name__ == unprocessed_event.event_name
             )
-            return cattr.structure({
-                'transaction_id': unprocessed_event.transaction_id,
+            return event_cls.deserialize({
                 **unprocessed_event.payload,
-            }, event_cls)
+                'transaction_id': unprocessed_event.transaction_id,
+            })
         except StopIteration:
             raise EventClassNotFound(unprocessed_event.event_name)
 
