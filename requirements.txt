@@ -1,12 +1,13 @@
-django-ckeditor==6.6.1
+django-ckeditor==6.7.2
 voluptuous==0.15.2
-weasyprint==62.3
-attrs==24.2.0
+weasyprint==65.0
+attrs==25.3.0
 cattrs==24.1.2
+certifi==2025.1.31
 
 # Testing & quality
 tblib==3.0.0  # Useful to get better stacktrace with parallel tests
-diff-cover==9.2.0  # Useful for diff-quality
+diff-cover==9.2.4  # Useful for diff-quality
 pycodestyle==2.12.1
-pylint==3.3.1
+pylint==3.3.5
 freezegun==1.5.1
