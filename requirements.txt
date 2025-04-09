@@ -1,6 +1,6 @@
 django-ckeditor==6.7.2
 voluptuous==0.15.2
-weasyprint==65.0
+weasyprint==64.1  # Pending correction
 attrs==25.3.0
 cattrs==24.1.2
 certifi==2025.1.31
