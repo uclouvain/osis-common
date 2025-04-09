@@ -1,4 +1,4 @@
-django-ckeditor==6.7.2
+django-ckeditor==6.6.1  # Next version show security alert (maybe update ckeditor version 5)
 voluptuous==0.15.2
 weasyprint==64.1  # Pending correction
 attrs==25.3.0
