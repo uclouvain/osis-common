@@ -266,18 +266,27 @@ class EventQueueConsumer:
     def get_logger_prefix_message(self) -> str:
         return f"[EventQueueConsumer - {self.context_name}]"
 
-    def read_queue(self):
-        logger.debug(f"{self.get_logger_prefix_message()}: Start consuming...")
-        method, properties, body = self.channel.basic_get(
-            queue=self.get_consumer_queue_name(),
-            auto_ack=False,
-        )
-        if method:
-            self._process_message(self.channel, method, properties, body)
-        else:
-            logger.debug(f"{self.get_logger_prefix_message()}: No message to consume...")
+    def read_queue(self, batch_size=None):
+        if batch_size is None:
+            batch_size = settings.MESSAGE_BUS['CONSUMER_BATCH_SIZE']
 
-    def _process_message(self, ch, method, properties, body):
+        logger.debug(f"{self.get_logger_prefix_message()}: Start consuming (batch_size={batch_size})...")
+        current_message_count = 0
+        while current_message_count < batch_size:
+            method, properties, body = self.channel.basic_get(
+                queue=self.get_consumer_queue_name(),
+                auto_ack=False,
+            )
+            if method:
+                is_message_processed_with_success = self._process_message(self.channel, method, properties, body)
+                if not is_message_processed_with_success:
+                    break
+            else:
+                logger.debug(f"{self.get_logger_prefix_message()}: No message to consume...")
+                break
+            current_message_count += 1
+
+    def _process_message(self, ch, method, properties, body) -> bool:
         headers = properties.headers if properties and properties.headers else {}
         otel_context = propagate.extract(headers)
 
@@ -291,7 +300,7 @@ class EventQueueConsumer:
                 span.set_status(trace.StatusCode.ERROR, "Missing message_id in properties")
                 logger.error(f"{self.get_logger_prefix_message()}: Missing message_id in properties.")
                 ch.basic_reject(delivery_tag=method.delivery_tag, requeue=False)
-                return
+                return False
 
             self.inbox_model.objects.get_or_create(
                 consumer=self.context_name,
@@ -306,6 +315,7 @@ class EventQueueConsumer:
             )
             ch.basic_ack(delivery_tag=method.delivery_tag)
             logger.info(f"{self.get_logger_prefix_message()}: Process message finished...")
+            return True
 
     @staticmethod
     def _get_otel_metadata(span: 'Span') -> Dict[str, int]:
