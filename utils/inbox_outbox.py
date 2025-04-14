@@ -33,7 +33,7 @@ import traceback
 import uuid
 from decimal import Decimal
 from importlib import util
-from typing import List, Dict
+from typing import List, Dict, Type, Callable
 
 import cattr
 import pika
@@ -47,7 +47,7 @@ from opentelemetry.trace import SpanContext, TraceFlags, NonRecordingSpan, Span
 
 from osis_common.ddd import interface
 from osis_common.ddd.interface import EventHandler, EventConsumptionMode
-from osis_common.ddd.interface.domain_models import EventHandlers
+from osis_common.ddd.interface.domain_models import EventHandlers, Event
 from osis_common.queue import queue_sender
 
 logger = logging.getLogger(settings.ASYNC_WORKERS_LOGGER)
@@ -438,3 +438,28 @@ class InboxConsumer:
 
     def get_logger_prefix_message(self) -> str:
         return f"[Inbox Worker - {self.context_name}]"
+
+
+class InboxConsumerRoutingStrategy:
+    """
+      Class which is in charge to read the inbox consumer strategy for a specific context.
+      This allow to consume multiple event at the same time for a specific context according to the routing key
+    """
+    def __init__(self, context_name: str, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.context_name = context_name
+        self.strategies = {}
+
+    def register_strategy(
+        self,
+        strategy_name: str,
+        events_cls: List[Type],
+        routing_fn: Callable[[Event], str]
+    ):
+        self.strategies[strategy_name] = {event_cls: routing_fn for event_cls in events_cls}
+
+    def get(self):
+        pass
+
+    def _read_routing_strategy_configuration(self):
+        pass
