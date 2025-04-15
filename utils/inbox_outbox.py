@@ -330,12 +330,36 @@ class InboxConsumer:
     Class which is in charge to read the event in inbox model and execute event handler function for a specific
     bounded context
     """
-    def __init__(self, message_bus_instance, context_name: str, event_handlers: 'EventHandlers', *args, **kwargs):
+    def __init__(
+        self,
+        message_bus_instance,
+        context_name: str,
+        event_handlers: 'EventHandlers',
+        consumer_id: int = 0,
+        strategy_name: str = "default",
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.message_bus_instance = message_bus_instance
         self.context_name = context_name
+        self.strategy_name = strategy_name
+        self.consumer_id = consumer_id
         self.event_handlers = event_handlers
         self.inbox_model = _load_inbox_model()
+        self.routing_strategy = self._load_routing_strategy()
+
+    def _load_routing_strategy(self):
+        try:
+            routing_module_path = f"infrastructure.{self.context_name}.inbox_consumer_routing"
+            routing_module = import_string(routing_module_path)
+            return routing_module.get()
+        except (ImportError, AttributeError) as e:
+            logger.warning(
+                f"{self.get_logger_prefix_message()}: Failed to load routing strategy from {routing_module_path}, "
+                f"defaulting to built-in fallback. Error: {str(e)}"
+            )
+            return InboxConsumerRoutingStrategy(self.context_name)
 
     def consume_all_unprocessed_events(self, batch_size: int = None):
         if batch_size is None:
@@ -348,8 +372,19 @@ class InboxConsumer:
                 self.inbox_model.PROCESSED,
                 self.inbox_model.DEAD_LETTER,
             ]
-        ).order_by('creation_date')
+        )
+        if self.strategy_name == "default":
+            # Exclude events which are declared in other strategies
+            unprocessed_events_qs = unprocessed_events_qs.exclude(
+                event_name__in=self.routing_strategy.get_all_handled_event_names()
+            )
+        else:
+            # Filter only on event which are declared in strategies
+            unprocessed_events_qs = unprocessed_events_qs.filter(
+                event_name__in=self.routing_strategy.handled_event_names(strategy_name=self.strategy_name)
+            )
 
+        unprocessed_events_qs = unprocessed_events_qs.order_by('creation_date')
         unprocessed_events_count = unprocessed_events_qs.count()
         if unprocessed_events_count:
             logger.info(f"{self.get_logger_prefix_message()}: Remaining {unprocessed_events_count} unprocess events...")
@@ -437,29 +472,114 @@ class InboxConsumer:
             raise EventClassNotFound(unprocessed_event.event_name)
 
     def get_logger_prefix_message(self) -> str:
-        return f"[Inbox Worker - {self.context_name}]"
+        return f"[Inbox Worker - {self.context_name} - " \
+               f"Routing Strategy name: {self.strategy_name} - Consumer ID: {str(self.consumer_id)}]"
+
+
+class RoutingStrategy:
+    def __init__(self, name: str, total_consumers: int = 1):
+        self.name = name
+        self.total_consumers = total_consumers
+        self.event_routing_functions: Dict[Type[Event], Callable[[Event], str]] = {}
+
+    def register(self, event_cls: Type[Event], routing_fn: Callable[[Event], str]):
+        if event_cls in self.event_routing_functions:
+            raise ValueError(f"{event_cls.__name__} already registered in strategy '{self.name}'")
+        self.event_routing_functions[event_cls] = routing_fn
+
+    def can_handle(self, event_instance: Event) -> bool:
+        return type(event_instance) in self.event_routing_functions
+
+    def get_routing_key(self, event_instance: Event) -> str:
+        event_cls = type(event_instance)
+        if event_cls not in self.event_routing_functions:
+            raise ValueError(f"Strategy '{self.name}' cannot handle event class {event_cls.__name__}")
+        raw_key = self.event_routing_functions[event_cls](event_instance)
+        return f"{self.name}:{raw_key}"
+
+    def get_handled_event_names(self) -> List[str]:
+        return [event_cls.__name__ for event_cls in self.event_routing_functions]
+
+    def should_process(self, event_instance: Event, consumer_id: int) -> bool:
+        routing_key = self.get_routing_key(event_instance)
+        return hash(routing_key) % self.total_consumers == consumer_id
+
+
+class DefaultRoutingStrategy(RoutingStrategy):
+    def __init__(self):
+        super().__init__(name='default', total_consumers=1)
+
+    def register(self, event_cls: Type[Event], routing_fn: Callable[[Event], str]):
+        raise ValueError('Event cannot be register in DefaultRoutingStrategy')
+
+    def can_handle(self, event_instance: Event) -> bool:
+        return True
+
+    def get_routing_key(self, event_instance: Event) -> str:
+        return 'default'
+
+    def should_process(self, event_instance: Event, consumer_id: int) -> bool:
+        return consumer_id == 0  # Un seul consommateur autorisé par défaut
+
+    def get_handled_event_names(self) -> List[str]:
+        raise ValueError('Cannot get handled_event_names in DefaultRoutingStrategy')
 
 
 class InboxConsumerRoutingStrategy:
     """
-      Class which is in charge to read the inbox consumer strategy for a specific context.
-      This allow to consume multiple event at the same time for a specific context according to the routing key
+    Class which is in charge to read the inbox consumer strategy for a specific context.
+    This allow to consume multiple event at the same time for a specific context according to the routing key
     """
     def __init__(self, context_name: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.context_name = context_name
-        self.strategies = {}
+        self.strategies: Dict[str, RoutingStrategy] = {'default': DefaultRoutingStrategy()}
 
     def register_strategy(
         self,
         strategy_name: str,
-        events_cls: List[Type],
-        routing_fn: Callable[[Event], str]
+        events_cls: List[Type[Event]],
+        routing_fn: Callable[[Event], str],
+        total_consumers: int = 1
     ):
-        self.strategies[strategy_name] = {event_cls: routing_fn for event_cls in events_cls}
+        if strategy_name not in self.strategies:
+            self.strategies[strategy_name] = RoutingStrategy(
+                name=strategy_name,
+                total_consumers=total_consumers,
+            )
 
-    def get(self):
-        pass
+        strategy = self.strategies[strategy_name]
+        for event_cls in events_cls:
+            # Vérifie que l'événement n'est pas déjà enregistré dans une autre stratégie
+            for other_strategy_name, other_strategy in self.strategies.items():
+                if other_strategy_name != strategy_name and event_cls in other_strategy.event_routing_functions:
+                    raise ValueError(
+                        f"{event_cls.__name__} already registered in strategy '{other_strategy_name}'"
+                    )
+            strategy.register(event_cls, routing_fn)
 
-    def _read_routing_strategy_configuration(self):
-        pass
+    def get_routing_key(
+        self,
+        event_instance: Event
+    ) -> str:
+        strategy = self._resolve_strategy_for_event(event_instance)
+        return strategy.get_routing_key(event_instance)
+
+    def should_process(self, event_instance: Event, consumer_id: int) -> bool:
+        strategy = self._resolve_strategy_for_event(event_instance)
+        return strategy.should_process(event_instance, consumer_id)
+
+    def _resolve_strategy_for_event(self, event_instance: Event) -> RoutingStrategy:
+        return next(
+            (s for name, s in self.strategies.items() if name != 'default' and s.can_handle(event_instance)),
+            self.strategies['default']
+        )
+
+    def handled_event_names(self, strategy_name: str) -> List[str]:
+        return self.strategies[strategy_name].get_handled_event_names()
+
+    def get_all_handled_event_names(self) -> List[str]:
+        all_handled_event_names = []
+        for strategy_name, strategy in self.strategies.items():
+            all_handled_event_names.extend(strategy.get_handled_event_names())
+        return all_handled_event_names
