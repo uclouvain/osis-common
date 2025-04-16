@@ -26,6 +26,7 @@
 import contextlib
 import datetime
 import glob
+import importlib
 import json
 import logging
 import os
@@ -327,8 +328,10 @@ class EventQueueConsumer:
 
 class InboxConsumer:
     """
-    Class which is in charge to read the event in inbox model and execute event handler function for a specific
-    bounded context
+    Consume events from the Inbox model for a specific bounded context.
+
+    This class dynamically loads a routing strategy, filters events according to the strategy and consumer ID,
+    and dispatches them to the appropriate asynchronous event handlers.
     """
     def __init__(
         self,
@@ -348,64 +351,64 @@ class InboxConsumer:
         self.event_handlers = event_handlers
         self.inbox_model = _load_inbox_model()
         self.routing_strategy = self._load_routing_strategy()
+        self._validate_configuration()
 
     def _load_routing_strategy(self):
+        routing_module_path = f"infrastructure.{self.context_name}.inbox_consumer_routing"
         try:
-            routing_module_path = f"infrastructure.{self.context_name}.inbox_consumer_routing"
-            routing_module = import_string(routing_module_path)
-            return routing_module.get()
+            routing_module = importlib.import_module(routing_module_path)
+            routing_strategy = routing_module.get()
+            log_msg = f"Custom routing strategy found for {self.context_name}"
+            logger.info(f"{self.get_logger_prefix_message()}: {log_msg} ({routing_module_path})")
         except (ImportError, AttributeError) as e:
-            logger.warning(
-                f"{self.get_logger_prefix_message()}: Failed to load routing strategy from {routing_module_path}, "
-                f"defaulting to built-in fallback. Error: {str(e)}"
+            routing_strategy = InboxConsumerRoutingStrategy(context_name=self.context_name)
+            log_msg = f"No custom routing strategy for {self.context_name}, using fallback 'default'"
+            logger.info(f"{self.get_logger_prefix_message()}: {log_msg} ({routing_module_path})")
+        return routing_strategy
+
+    def _validate_configuration(self):
+        if self.strategy_name not in self.routing_strategy.strategies:
+            raise ValueError(
+                f"Strategy '{self.strategy_name}' is not registered for context '{self.context_name}'."
             )
-            return InboxConsumerRoutingStrategy(self.context_name)
+
+        strategy = self.routing_strategy.strategies[self.strategy_name]
+        if self.consumer_id >= strategy.total_consumers:
+            raise ValueError(
+                f"Consumer ID {self.consumer_id} is out of bounds for strategy '{self.strategy_name}' "
+                f"(total consumers: {strategy.total_consumers})."
+            )
 
     def consume_all_unprocessed_events(self, batch_size: int = None):
         if batch_size is None:
             batch_size = settings.MESSAGE_BUS['INBOX_BATCH_EVENTS']
 
-        unprocessed_events_qs = self.inbox_model.objects.filter(
-            consumer=self.context_name,
-        ).exclude(
-            status__in=[
-                self.inbox_model.PROCESSED,
-                self.inbox_model.DEAD_LETTER,
-            ]
+        unprocessed_events_ids = self.get_unprocessed_events_ids(batch_size=batch_size)
+        logger.info(
+            f"{self.get_logger_prefix_message()}: Found {len(unprocessed_events_ids)} "
+            f"events matching strategy and consumer"
         )
-        if self.strategy_name == "default":
-            # Exclude events which are declared in other strategies
-            unprocessed_events_qs = unprocessed_events_qs.exclude(
-                event_name__in=self.routing_strategy.get_all_handled_event_names()
-            )
-        else:
-            # Filter only on event which are declared in strategies
-            unprocessed_events_qs = unprocessed_events_qs.filter(
-                event_name__in=self.routing_strategy.handled_event_names(strategy_name=self.strategy_name)
-            )
-
-        unprocessed_events_qs = unprocessed_events_qs.order_by('creation_date')
-        unprocessed_events_count = unprocessed_events_qs.count()
-        if unprocessed_events_count:
-            logger.info(f"{self.get_logger_prefix_message()}: Remaining {unprocessed_events_count} unprocess events...")
-
+        if len(unprocessed_events_ids):
             with transaction.atomic():
                 unprocessed_events_in_batch = self.inbox_model.objects.select_for_update().filter(
-                    pk__in=unprocessed_events_qs.values_list('pk', flat=True)[:batch_size]
+                    pk__in=unprocessed_events_ids
                 ).order_by('creation_date')
+
                 logger.info(f"{self.get_logger_prefix_message()}: Process {len(unprocessed_events_in_batch)} events...")
                 for unprocessed_event in unprocessed_events_in_batch:
                     with self._start_as_current_span_from_unprocessed_event(unprocessed_event) as span:
                         span.set_attribute("event.class", unprocessed_event.event_name)
                         span.set_attribute("event.value", json.dumps(unprocessed_event.payload))
+                        span.set_attribute("inbox_consumer.strategy_name", self.strategy_name)
+                        span.set_attribute("inbox_consumer.consumer_id", self.consumer_id)
 
                         processed_event = self.consume(unprocessed_event)
                         if not processed_event.is_successfully_processed():
                             if processed_event.attempts_number >= settings.MESSAGE_BUS['INBOX_MAX_RETRIES']:
-                                span.set_status(trace.StatusCode.ERROR, "Max attemps retried reached")
+                                span.set_status(trace.StatusCode.ERROR, "Max attempts retried reached")
                                 logger.error(
                                     f"{self.get_logger_prefix_message()}: "
-                                    f"Mark event as dead letter because max attemps reached "
+                                    f"Mark event as dead letter because max attempts reached "
                                     f"(ID: {processed_event.id} - Name {processed_event.event_name})"
                                 )
                                 processed_event.mark_as_dead_letter()
@@ -416,6 +419,48 @@ class InboxConsumer:
                                     f"not correctly processed..."
                                 )
                                 break
+
+    def get_unprocessed_events_ids(self, batch_size: int) -> List[int]:
+        """
+        Return a list of unprocessed events id of the current strategy routing and current consumer
+        order by creation date
+        """
+        # Step 1 : Filter to routing strategy
+        unprocessed_events_qs = self.inbox_model.objects.filter(
+            consumer=self.context_name,
+        ).exclude(
+            status__in=[
+                self.inbox_model.PROCESSED,
+                self.inbox_model.DEAD_LETTER,
+            ]
+        )
+        if self.strategy_name == "default":
+            # Exclude events which are declared in other strategies because default strategy doesn't required
+            # event registration
+            unprocessed_events_qs = unprocessed_events_qs.exclude(
+                event_name__in=self.routing_strategy.get_all_handled_event_names()
+            )
+        else:
+            # Filter only on event which are declared in current strategy
+            unprocessed_events_qs = unprocessed_events_qs.filter(
+                event_name__in=self.routing_strategy.handled_event_names(strategy_name=self.strategy_name)
+            )
+        unprocessed_events_qs = unprocessed_events_qs.order_by('creation_date')
+
+        # Step 2 : Filter to consumer ID
+        unprocessed_events_of_current_strategy = list(unprocessed_events_qs[:batch_size * 3])
+        unprocessed_events_of_current_consumer = []
+        for unprocessed_event in unprocessed_events_of_current_strategy:
+            try:
+                event_instance = self.__build_event_instance(unprocessed_event)
+            except EventClassNotFound:
+                continue
+
+            if self.routing_strategy.should_process(event_instance, self.consumer_id):
+                unprocessed_events_of_current_consumer.append(unprocessed_event.pk)
+            if len(unprocessed_events_of_current_consumer) >= batch_size:
+                break
+        return unprocessed_events_of_current_consumer
 
     def _start_as_current_span_from_unprocessed_event(self, unprocess_event_rowdb):
         otel_data = unprocess_event_rowdb.meta.get('OTEL')
@@ -522,7 +567,7 @@ class DefaultRoutingStrategy(RoutingStrategy):
         return consumer_id == 0  # Un seul consommateur autorisé par défaut
 
     def get_handled_event_names(self) -> List[str]:
-        raise ValueError('Cannot get handled_event_names in DefaultRoutingStrategy')
+        raise ValueError('Cannot get handled_event_names in DefaultRoutingStrategy because no event is registered.')
 
 
 class InboxConsumerRoutingStrategy:
@@ -581,5 +626,6 @@ class InboxConsumerRoutingStrategy:
     def get_all_handled_event_names(self) -> List[str]:
         all_handled_event_names = []
         for strategy_name, strategy in self.strategies.items():
-            all_handled_event_names.extend(strategy.get_handled_event_names())
+            if strategy_name != 'default':
+                all_handled_event_names.extend(strategy.get_handled_event_names())
         return all_handled_event_names
