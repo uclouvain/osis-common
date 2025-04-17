@@ -30,7 +30,6 @@ from django.db import models
 from django_admin_listfilter_dropdown.filters import DropdownFilter
 
 from osis_common.models import osis_model_admin
-from osis_common.utils.inbox_outbox import HandlersPerContextFactory, InboxConsumer
 
 
 class InboxAdmin(osis_model_admin.OsisModelAdmin):
@@ -44,25 +43,6 @@ class InboxAdmin(osis_model_admin.OsisModelAdmin):
     ordering = ['-creation_date']
     search_fields = ['consumer', 'payload']
     list_filter = ['status', 'consumer', ('event_name', DropdownFilter),]
-    actions = [
-        'consommer_evenement',
-    ]
-
-    @admin.action(
-        description="Consomme les événements sélectionnés (déclenche les réactions immédiatement - en synchrone) "
-                    "/!\ Non respect de l'ordre peut mener à des inconsistances"
-    )
-    def consommer_evenement(self, request, queryset):
-        from infrastructure.messages_bus import message_bus_instance
-        handlers = HandlersPerContextFactory.get()
-        for unprocessed_event in queryset:
-            context_name = unprocessed_event.consumer
-            inbox_consumer = InboxConsumer(
-                message_bus_instance=message_bus_instance,
-                context_name=context_name,
-                event_handlers=handlers[context_name],
-            )
-            inbox_consumer.consume(unprocessed_event)
 
     def has_change_permission(self, request, obj=None):
         return False

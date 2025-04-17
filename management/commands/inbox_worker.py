@@ -23,15 +23,18 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from django.core.management import BaseCommand
+from django.core.management import BaseCommand, CommandError
 
-from osis_common.utils.inbox_outbox import InboxConsumer, HandlersPerContextFactory
+from osis_common.utils.inbox_outbox import InboxConsumer
 
 
 class Command(BaseCommand):
     help = """
     Command to start 1 thread/bounded context in order to processing reaction according to event
     Script must be run in the root of the project
+    
+    Usage example:
+    python manage.py inbox_worker -c deliberation -s default -i 0
     """
 
     def add_arguments(self, parser):
@@ -67,11 +70,10 @@ class Command(BaseCommand):
         strategy_name = options["strategy_name"]
         consumer_id = options["consumer_id"]
 
-
-        InboxConsumer(
+        inbox_consumer = InboxConsumer(
             message_bus_instance=message_bus_instance,
             context_name=context_name,
             strategy_name=strategy_name,
             consumer_id=consumer_id,
-            event_handlers=HandlersPerContextFactory.get()[context_name]
-        ).consume_all_unprocessed_events()
+        )
+        inbox_consumer.consume_all_unprocessed_events()

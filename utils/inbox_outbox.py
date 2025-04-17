@@ -105,6 +105,22 @@ class HandlersPerContextFactory:
         return mod
 
 
+class InboxConsumerRoutingStrategyFactory:
+    @staticmethod
+    def get(context_name: str) -> 'InboxConsumerRoutingStrategy':
+        routing_module_path = f"infrastructure.{context_name}.inbox_consumer_routing"
+        try:
+            routing_module = importlib.import_module(routing_module_path)
+            routing_strategy = routing_module.get()
+            log_msg = f"Custom routing strategy found for {context_name}"
+            logger.info(f"{log_msg} ({routing_module_path})")
+        except (ImportError, AttributeError) as e:
+            routing_strategy = InboxConsumerRoutingStrategy(context_name=context_name)
+            log_msg = f"No custom routing strategy for {context_name}, using fallback 'default'"
+            logger.info(f"{log_msg} ({routing_module_path})")
+        return routing_strategy
+
+
 class EventQueueProducer:
     """
     Class which is in charge to read on outbox model and send it to the rabbitMQ queue
@@ -193,10 +209,10 @@ class EventQueueConsumer:
     Class which is in charge to read on the rabbitMQ queue and store event to inbox model for a specific
     bounded context
     """
-    def __init__(self, context_name: str, event_handlers: 'EventHandlers', *args, **kwargs):
+    def __init__(self, context_name: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.context_name = context_name
-        self.event_handlers = event_handlers
+        self.event_handlers = HandlersPerContextFactory.get()[self.context_name]
         self.inbox_model = _load_inbox_model()
         self.establish_connection()
 
@@ -337,7 +353,6 @@ class InboxConsumer:
         self,
         message_bus_instance,
         context_name: str,
-        event_handlers: 'EventHandlers',
         consumer_id: int = 0,
         strategy_name: str = "default",
         *args,
@@ -348,23 +363,10 @@ class InboxConsumer:
         self.context_name = context_name
         self.strategy_name = strategy_name
         self.consumer_id = consumer_id
-        self.event_handlers = event_handlers
+        self.routing_strategy = InboxConsumerRoutingStrategyFactory.get(context_name=self.context_name)
+        self.event_handlers = HandlersPerContextFactory.get()[self.context_name]
         self.inbox_model = _load_inbox_model()
-        self.routing_strategy = self._load_routing_strategy()
         self._validate_configuration()
-
-    def _load_routing_strategy(self):
-        routing_module_path = f"infrastructure.{self.context_name}.inbox_consumer_routing"
-        try:
-            routing_module = importlib.import_module(routing_module_path)
-            routing_strategy = routing_module.get()
-            log_msg = f"Custom routing strategy found for {self.context_name}"
-            logger.info(f"{self.get_logger_prefix_message()}: {log_msg} ({routing_module_path})")
-        except (ImportError, AttributeError) as e:
-            routing_strategy = InboxConsumerRoutingStrategy(context_name=self.context_name)
-            log_msg = f"No custom routing strategy for {self.context_name}, using fallback 'default'"
-            logger.info(f"{self.get_logger_prefix_message()}: {log_msg} ({routing_module_path})")
-        return routing_strategy
 
     def _validate_configuration(self):
         if self.strategy_name not in self.routing_strategy.strategies:
@@ -373,10 +375,13 @@ class InboxConsumer:
             )
 
         strategy = self.routing_strategy.strategies[self.strategy_name]
+        if self.consumer_id < 0:
+            raise ValueError("consumer_id must be greater than or equal to 0")
+
         if self.consumer_id >= strategy.total_consumers:
             raise ValueError(
                 f"Consumer ID {self.consumer_id} is out of bounds for strategy '{self.strategy_name}' "
-                f"(total consumers: {strategy.total_consumers})."
+                f"(total consumers: {strategy.total_consumers} - start at 0)."
             )
 
     def consume_all_unprocessed_events(self, batch_size: int = None):
