@@ -66,6 +66,7 @@ cattr.register_structure_hook(
     datetime.date,
     lambda value, klass: datetime.datetime.strptime(value, settings.EVENT_DATE_FORMAT).date()
 )
+DEFAULT_ROUTING_STRATEGY_NAME = 'default'
 
 
 def _load_inbox_model() -> Model:
@@ -116,7 +117,7 @@ class InboxConsumerRoutingStrategyFactory:
             logger.info(f"{log_msg} ({routing_module_path})")
         except (ImportError, AttributeError) as e:
             routing_strategy = InboxConsumerRoutingStrategy(context_name=context_name)
-            log_msg = f"No custom routing strategy for {context_name}, using fallback 'default'"
+            log_msg = f"No custom routing strategy for {context_name}, using fallback '{DEFAULT_ROUTING_STRATEGY_NAME}'"
             logger.info(f"{log_msg} ({routing_module_path})")
         return routing_strategy
 
@@ -354,7 +355,7 @@ class InboxConsumer:
         message_bus_instance,
         context_name: str,
         consumer_id: int = 0,
-        strategy_name: str = "default",
+        strategy_name: str = DEFAULT_ROUTING_STRATEGY_NAME,
         *args,
         **kwargs,
     ):
@@ -439,21 +440,24 @@ class InboxConsumer:
                 self.inbox_model.DEAD_LETTER,
             ]
         )
-        if self.strategy_name == "default":
+        if self.strategy_name == DEFAULT_ROUTING_STRATEGY_NAME:
             # Exclude events which are declared in other strategies because default strategy doesn't required
             # event registration
             unprocessed_events_qs = unprocessed_events_qs.exclude(
                 event_name__in=self.routing_strategy.get_all_handled_event_names()
             )
+            delta_event = 1
         else:
             # Filter only on event which are declared in current strategy
             unprocessed_events_qs = unprocessed_events_qs.filter(
                 event_name__in=self.routing_strategy.handled_event_names(strategy_name=self.strategy_name)
             )
+            delta_event = self.routing_strategy.strategies[self.strategy_name].total_consumers
         unprocessed_events_qs = unprocessed_events_qs.order_by('creation_date')
 
         # Step 2 : Filter to consumer ID
-        unprocessed_events_of_current_strategy = list(unprocessed_events_qs[:batch_size * 3])
+        # /!\ Take more data than batch size (* delta_event) because, we filter in memory according to routing_key
+        unprocessed_events_of_current_strategy = list(unprocessed_events_qs[:batch_size * delta_event])
         unprocessed_events_of_current_consumer = []
         for unprocessed_event in unprocessed_events_of_current_strategy:
             try:
@@ -497,9 +501,6 @@ class InboxConsumer:
             unprocessed_event.mark_as_processed()
         except EventClassNotFound as e:
             logger.warning(e.message)
-            # mark as dead letter pour éviter de bloquer le processus de consommation pour une raison autre que métier
-            # Si l'event n'est plus dans les handlers, pas nécessaire de réessayer 15 fois (peut-être obsolète)
-            unprocessed_event.mark_as_dead_letter('\n'.join(traceback.format_exception(e)))
         except Exception as e:
             logger.exception(
                 f"{self.get_logger_prefix_message()}: Cannot process {event_name} event ({event_instance})",
@@ -519,7 +520,11 @@ class InboxConsumer:
                 **unprocessed_event.payload,
             })
         except StopIteration:
-            raise EventClassNotFound(unprocessed_event.event_name)
+            # mark as dead letter pour éviter de bloquer le processus de consommation pour une raison autre que métier
+            # Si l'event n'est plus dans les handlers, pas nécessaire de réessayer
+            exception = EventClassNotFound(unprocessed_event.event_name)
+            unprocessed_event.mark_as_dead_letter('\n'.join(traceback.format_exception(exception)))
+            raise exception
 
     def get_logger_prefix_message(self) -> str:
         return f"[Inbox Worker - {self.context_name} - " \
@@ -554,10 +559,9 @@ class RoutingStrategy:
         routing_key = self.get_routing_key(event_instance)
         return hash(routing_key) % self.total_consumers == consumer_id
 
-
 class DefaultRoutingStrategy(RoutingStrategy):
     def __init__(self):
-        super().__init__(name='default', total_consumers=1)
+        super().__init__(name=DEFAULT_ROUTING_STRATEGY_NAME, total_consumers=1)
 
     def register(self, event_cls: Type[Event], routing_fn: Callable[[Event], str]):
         raise ValueError('Event cannot be register in DefaultRoutingStrategy')
@@ -566,7 +570,7 @@ class DefaultRoutingStrategy(RoutingStrategy):
         return True
 
     def get_routing_key(self, event_instance: Event) -> str:
-        return 'default'
+        return DEFAULT_ROUTING_STRATEGY_NAME
 
     def should_process(self, event_instance: Event, consumer_id: int) -> bool:
         return consumer_id == 0  # Un seul consommateur autorisé par défaut
@@ -583,7 +587,7 @@ class InboxConsumerRoutingStrategy:
     def __init__(self, context_name: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.context_name = context_name
-        self.strategies: Dict[str, RoutingStrategy] = {'default': DefaultRoutingStrategy()}
+        self.strategies: Dict[str, RoutingStrategy] = {DEFAULT_ROUTING_STRATEGY_NAME: DefaultRoutingStrategy()}
 
     def register_strategy(
         self,
@@ -621,8 +625,11 @@ class InboxConsumerRoutingStrategy:
 
     def _resolve_strategy_for_event(self, event_instance: Event) -> RoutingStrategy:
         return next(
-            (s for name, s in self.strategies.items() if name != 'default' and s.can_handle(event_instance)),
-            self.strategies['default']
+            (
+                s for name, s in self.strategies.items()
+                if name != DEFAULT_ROUTING_STRATEGY_NAME and s.can_handle(event_instance)
+            ),
+            self.strategies[DEFAULT_ROUTING_STRATEGY_NAME]
         )
 
     def handled_event_names(self, strategy_name: str) -> List[str]:
@@ -631,6 +638,6 @@ class InboxConsumerRoutingStrategy:
     def get_all_handled_event_names(self) -> List[str]:
         all_handled_event_names = []
         for strategy_name, strategy in self.strategies.items():
-            if strategy_name != 'default':
+            if strategy_name != DEFAULT_ROUTING_STRATEGY_NAME:
                 all_handled_event_names.extend(strategy.get_handled_event_names())
         return all_handled_event_names

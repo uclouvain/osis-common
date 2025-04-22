@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2023 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2025 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
 ##############################################################################
 from django.core.management import BaseCommand, CommandError
 
-from osis_common.utils.inbox_outbox import InboxConsumer
+from osis_common.utils.inbox_outbox import DEFAULT_ROUTING_STRATEGY_NAME, InboxConsumer
 
 
 class Command(BaseCommand):
@@ -51,8 +51,8 @@ class Command(BaseCommand):
             "--strategy_name",
             dest="strategy_name",
             type=str,
-            default="default",
-            help="The name of the routing strategy (default: 'default')"
+            default=DEFAULT_ROUTING_STRATEGY_NAME,
+            help=f"The name of the routing strategy (default: '{DEFAULT_ROUTING_STRATEGY_NAME}')"
         )
         parser.add_argument(
             "-i",
