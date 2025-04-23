@@ -28,7 +28,7 @@ import logging
 from django.conf import settings
 from django.core.management import BaseCommand
 
-from osis_common.utils.inbox_outbox import EventQueueConsumer, HandlersPerContextFactory
+from osis_common.utils.inbox_outbox import EventQueueConsumer
 
 logger = logging.getLogger(settings.ASYNC_WORKERS_LOGGER)
 
@@ -52,7 +52,4 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         context_name = options['context_name']
-        EventQueueConsumer(
-            context_name=context_name,
-            event_handlers=HandlersPerContextFactory.get()[context_name]
-        ).read_queue()
+        EventQueueConsumer(context_name=context_name).read_queue()
