@@ -167,6 +167,36 @@ class InboxConsumerDefaultStrategyTestCase(InboxConsumerTestCaseMixin):
                 strategy_name='not_existing_strategy_name',
             )
 
+    def test_consumer_all_unprocessed_events_mark_as_dead_letter_queue_when_event_cannot_be_found(self):
+        event_C = Inbox.objects.create(
+            transaction_id=uuid.uuid4(),
+            consumer=self.context_name,
+            event_name="UnexistingEvent",
+            payload={
+                "entity_id": None,
+                "noma": "15454545454"
+            },
+            status=Inbox.PENDING,
+        )
+
+        consumer = InboxConsumer(
+            message_bus_instance=message_bus_instance,
+            context_name=self.context_name,
+            consumer_id=self.consumer_id,
+            strategy_name=self.strategy_name,
+        )
+        consumer.consume_all_unprocessed_events(batch_size=10)
+
+        self.event_A.refresh_from_db()
+        self.assertEqual(self.event_A.status, Inbox.PROCESSED)
+
+        self.event_B.refresh_from_db()
+        self.assertEqual(self.event_B.status, Inbox.PROCESSED)
+        
+        event_C.refresh_from_db()
+        self.assertEqual(event_C.status, Inbox.DEAD_LETTER)
+
+
 
 class InboxConsumerCustomStrategyTestCase(InboxConsumerTestCaseMixin):
     def setUp(self):
