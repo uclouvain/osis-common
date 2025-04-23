@@ -26,6 +26,7 @@
 import contextlib
 import datetime
 import glob
+import hashlib
 import importlib
 import json
 import logging
@@ -557,7 +558,8 @@ class RoutingStrategy:
 
     def should_process(self, event_instance: Event, consumer_id: int) -> bool:
         routing_key = self.get_routing_key(event_instance)
-        return hash(routing_key) % self.total_consumers == consumer_id
+        return int(hashlib.md5(routing_key.encode()).hexdigest(), 16) % self.total_consumers == consumer_id
+
 
 class DefaultRoutingStrategy(RoutingStrategy):
     def __init__(self):
