@@ -27,11 +27,13 @@ import uuid
 from unittest.mock import patch
 
 import attr
+import mock
 from django.test import TestCase
 
 from osis_common.ddd.interface import Event
 from osis_common.models.inbox import Inbox
-from osis_common.utils.inbox_outbox import InboxConsumer, DEFAULT_ROUTING_STRATEGY_NAME, InboxConsumerRoutingStrategy
+from osis_common.utils.inbox_outbox import InboxConsumer, DEFAULT_ROUTING_STRATEGY_NAME, InboxConsumerRoutingStrategy, \
+    EventClassNotFound
 from infrastructure.messages_bus import message_bus_instance
 
 
@@ -196,6 +198,33 @@ class InboxConsumerDefaultStrategyTestCase(InboxConsumerTestCaseMixin):
         event_C.refresh_from_db()
         self.assertEqual(event_C.status, Inbox.DEAD_LETTER)
 
+    @mock.patch.object(InboxConsumer, "_deserialize_event")
+    def test_should_manage_any_error_when_consuming(self, mock_deserialize):
+        """
+        Toute erreur à la désérialisation d'un événement doit gérer l'état de l'Inbox
+        afin d'éviter le risque qu'un Inbox reste en PENDING, qu'il ne soit jamais traité
+        et qu'il ne bloque le traitement des Inbox suivants
+        """
+        consumer = InboxConsumer(
+            message_bus_instance=message_bus_instance,
+            context_name=self.context_name,
+            consumer_id=self.consumer_id,
+            strategy_name=self.strategy_name,
+        )
+        # Cas 1
+        mock_deserialize.side_effect = StopIteration()
+        consumer.consume_all_unprocessed_events(batch_size=10)
+        self.assertTrue(all(inbox.status == Inbox.DEAD_LETTER for inbox in Inbox.objects.all()))
+        Inbox.objects.update(status=Inbox.PENDING)  # reset events to process
+        # Cas 2
+        mock_deserialize.side_effect = EventClassNotFound(event_name=self.event_A.event_name)
+        consumer.consume_all_unprocessed_events(batch_size=10)
+        self.assertTrue(all(inbox.status == Inbox.DEAD_LETTER for inbox in Inbox.objects.all()))
+        Inbox.objects.update(status=Inbox.PENDING)  # reset events to process
+        # Cas 3
+        mock_deserialize.side_effect = Exception()
+        consumer.consume_all_unprocessed_events(batch_size=10)
+        self.assertTrue(all(inbox.status == Inbox.ERROR for inbox in Inbox.objects.all()))
 
 
 class InboxConsumerCustomStrategyTestCase(InboxConsumerTestCaseMixin):
