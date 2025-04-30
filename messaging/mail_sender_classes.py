@@ -66,6 +66,13 @@ class MasterMailSender(MailSenderInterface):
     def get_real_cc_list(self):
         return []
 
+    def get_original_bcc_list(self):
+        cc = self.kwargs.get('bcc') or []
+        return [person.email for person in cc]
+
+    def get_real_bcc_list(self):
+        return []
+
     def send_mail(self):
         msg = EmailMultiAlternatives(
             subject=self.kwargs.get('subject'),
@@ -73,13 +80,16 @@ class MasterMailSender(MailSenderInterface):
             from_email=self.kwargs.get('from_email'),
             to=self.real_receivers_list,
             attachments=_get_attachments(self.kwargs),
-            cc=self.get_real_cc_list()
+            cc=self.get_real_cc_list(),
+            bcc=self.get_real_bcc_list(),
+            reply_to=self.kwargs.get('reply_to', []),
         )
         msg.attach_alternative(self.kwargs.get('html_message'), "text/html")
         logger.info(
-            'Sending mail to {} with cc = {} (MailSenderClass : {})'.format(
+            'Sending mail to {} with cc = {}, bcc = {} (MailSenderClass : {})'.format(
                 ', '.join(self.real_receivers_list),
                 ', '.join(self.get_real_cc_list()),
+                ', '.join(self.get_real_bcc_list()),
                 self.__class__.__name__
             )
         )
@@ -99,7 +109,10 @@ class MessageHistorySender(MasterMailSender):
         original_cc = "<p> INFO (not sent in production): Original cc : {original_cc} </p> ".format(
             original_cc=self.get_original_cc_list()
         )
-        return original_receivers + original_cc + content
+        original_bcc = "<p> INFO (not sent in production): Original bcc : {original_bcc} </p> ".format(
+            original_bcc=self.get_original_bcc_list()
+        )
+        return original_receivers + original_cc + original_bcc + content
 
     def send_mail(self):
         receiver_emails = ', '.join(r['receiver_email'] for r in self.receivers if r.get('receiver_email'))
@@ -126,6 +139,9 @@ class GenericMailSender(MasterMailSender):
     def get_real_cc_list(self):
         return [settings.COMMON_EMAIL_RECEIVER]
 
+    def get_real_bcc_list(self):
+        return [settings.COMMON_EMAIL_RECEIVER]
+
     def send_mail(self):
         add_testing_information_to_contents(self)
         super().send_mail()
@@ -150,6 +166,11 @@ class ConnectedUserMailSender(MasterMailSender):
             return self.get_real_receivers_list()
         return []
 
+    def get_real_bcc_list(self):
+        if self.get_original_bcc_list():
+            return self.get_real_receivers_list()
+        return []
+
     def send_mail(self):
         add_testing_information_to_contents(self)
         super().send_mail()
@@ -165,6 +186,9 @@ class RealReceiverMailSender(MasterMailSender):
 
     def get_real_cc_list(self):
         return self.get_original_cc_list()
+
+    def get_real_bcc_list(self):
+        return self.get_original_bcc_list()
 
 
 def _get_attachments(attributes_message):
