@@ -187,6 +187,7 @@ class MailClassesTestCase(TestCase):
             )
         ]
         self.cc = [PersonFactory()]
+        self.bcc = [PersonFactory()]
 
     @patch('django.core.mail.message.EmailMessage.send')
     def test_message_history_mail_sender(self, mock_mail_send):
@@ -199,7 +200,8 @@ class MailClassesTestCase(TestCase):
             html_message="<p>test html message</p>",
             from_email=settings.DEFAULT_FROM_EMAIL,
             attachment=None,
-            cc=self.cc
+            cc=self.cc,
+            bcc=self.bcc,
         )
         mail_sender.send_mail()
         qs = MessageHistory.objects.filter(
@@ -231,14 +233,15 @@ class MailClassesTestCase(TestCase):
             html_message="<p>test html message</p>",
             from_email=settings.DEFAULT_FROM_EMAIL,
             attachment=None,
-            cc=self.cc
+            cc=self.cc,
+            bcc=self.bcc,
         )
         mail_sender.send_mail()
         self.assertEqual(mock_mail_send.call_count, 1)
         log = mock_logger.call_args[0][0]
         self.assertEqual(
             log,
-            'Sending mail to {receiver} with cc = {cc} (MailSenderClass : GenericMailSender)'.format(
+            'Sending mail to {receiver} with cc = {cc}, bcc = {cc} (MailSenderClass : GenericMailSender)'.format(
                 receiver=settings.COMMON_EMAIL_RECEIVER,
                 cc=settings.COMMON_EMAIL_RECEIVER
             )
@@ -256,16 +259,18 @@ class MailClassesTestCase(TestCase):
             html_message="<p>test html message</p>",
             from_email=settings.DEFAULT_FROM_EMAIL,
             attachment=None,
-            cc=self.cc
+            cc=self.cc,
+            bcc=self.bcc,
         )
         mail_sender.send_mail()
         self.assertEqual(mock_mail_send.call_count, 1)
         log = mock_logger.call_args[0][0]
         self.assertEqual(
             log,
-            'Sending mail to {receiver} with cc = {cc} (MailSenderClass : ConnectedUserMailSender)'.format(
+            'Sending mail to {receiver} with cc = {cc}, bcc = {bcc} (MailSenderClass : ConnectedUserMailSender)'.format(
                 receiver=self.connected_person.email,
                 cc=self.connected_person.email,
+                bcc=self.connected_person.email,
             )
         )
 
@@ -282,7 +287,8 @@ class MailClassesTestCase(TestCase):
             html_message="<p>test html message</p>",
             from_email=settings.DEFAULT_FROM_EMAIL,
             attachment=None,
-            cc=self.cc
+            cc=self.cc,
+            bcc=self.bcc,
         )
         mail_sender.send_mail()
         self.assertEqual(mock_mail_send.call_count, 1)
@@ -290,9 +296,10 @@ class MailClassesTestCase(TestCase):
         log = mock_logger.call_args[0][0]
         self.assertEqual(
             log,
-            'Sending mail to {receiver} with cc = {cc} (MailSenderClass : ConnectedUserMailSender)'.format(
+            'Sending mail to {receiver} with cc = {cc}, bcc = {bcc} (MailSenderClass : ConnectedUserMailSender)'.format(
                 receiver=settings.COMMON_EMAIL_RECEIVER,
                 cc=settings.COMMON_EMAIL_RECEIVER,
+                bcc=settings.COMMON_EMAIL_RECEIVER,
             )
         )
 
@@ -315,16 +322,18 @@ class MailClassesTestCase(TestCase):
             html_message="<p>test html message</p>",
             from_email=settings.DEFAULT_FROM_EMAIL,
             attachment=None,
-            cc=self.cc
+            cc=self.cc,
+            bcc=self.bcc,
         )
         mail_sender.send_mail()
         self.assertEqual(mock_mail_send.call_count, 1)
         log = mock_logger.call_args[0][0]
         self.assertEqual(
             log,
-            'Sending mail to {receiver} with cc = {cc} (MailSenderClass : RealReceiverMailSender)'.format(
+            'Sending mail to {receiver} with cc = {cc}, bcc = {bcc} (MailSenderClass : RealReceiverMailSender)'.format(
                 receiver=self.receivers[0].get('receiver_email'),
                 cc=self.cc[0].email,
+                bcc=self.bcc[0].email,
             )
         )
 
