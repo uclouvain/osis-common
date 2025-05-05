@@ -35,7 +35,7 @@ import traceback
 import uuid
 from decimal import Decimal
 from importlib import util
-from typing import List, Dict, Type, Callable
+from typing import List, Dict, Type, Callable, Optional
 
 import cattr
 import pika
@@ -91,6 +91,7 @@ class HandlersPerContextFactory:
     def get() -> Dict[str, EventHandlers]:
         consumers_list = {}
         handlers_path = glob.glob("infrastructure/*/handlers.py", recursive=True)
+        # TODO repositionner sur la racine d'Osis
         for handler_path in handlers_path:
             with contextlib.suppress(AttributeError):
                 handler_module = HandlersPerContextFactory.__import_file('handler_module', handler_path)
@@ -461,11 +462,9 @@ class InboxConsumer:
         unprocessed_events_of_current_strategy = list(unprocessed_events_qs[:batch_size * delta_event])
         unprocessed_events_of_current_consumer = []
         for unprocessed_event in unprocessed_events_of_current_strategy:
-            try:
-                event_instance = self.__build_event_instance(unprocessed_event)
-            except EventClassNotFound:
+            event_instance = self._build_event_instance(unprocessed_event)
+            if not event_instance:
                 continue
-
             if self.routing_strategy.should_process(event_instance, self.consumer_id):
                 unprocessed_events_of_current_consumer.append(unprocessed_event.pk)
             if len(unprocessed_events_of_current_consumer) >= batch_size:
@@ -489,10 +488,8 @@ class InboxConsumer:
         )
 
     def consume(self, unprocessed_event):
-        event_instance = None
-        event_name = unprocessed_event.event_name
-        try:
-            event_instance = self.__build_event_instance(unprocessed_event)
+        event_instance = self._build_event_instance(unprocessed_event)
+        if event_instance:
             event_handlers_declared_as_async = [
                 f for f in self.event_handlers[event_instance.__class__]
                 if isinstance(f, EventHandler) and f.consumption_mode == EventConsumptionMode.ASYNCHRONOUS
@@ -500,32 +497,30 @@ class InboxConsumer:
             for event_handler in event_handlers_declared_as_async:
                 event_handler.handle(self.message_bus_instance, event_instance)
             unprocessed_event.mark_as_processed()
-        except EventClassNotFound as e:
-            logger.warning(e.message)
-        except Exception as e:
-            logger.exception(
-                f"{self.get_logger_prefix_message()}: Cannot process {event_name} event ({event_instance})",
-                exc_info=True
-            )
-            unprocessed_event.mark_as_error('\n'.join(traceback.format_exception(e)))
         return unprocessed_event
 
-    def __build_event_instance(self, unprocessed_event: 'Inbox'):
+    def _build_event_instance(self, unprocessed_event: 'Inbox') -> Optional['Event']:
         try:
-            event_cls = next(
-                event_cls for event_cls, fn_list in self.event_handlers.items()
-                if event_cls.__name__ == unprocessed_event.event_name
-            )
-            return event_cls.deserialize({
-                'transaction_id': str(unprocessed_event.transaction_id),
-                **unprocessed_event.payload,
-            })
-        except StopIteration:
+            return self._deserialize_event(unprocessed_event)
+        except (StopIteration, EventClassNotFound):
             # mark as dead letter pour éviter de bloquer le processus de consommation pour une raison autre que métier
             # Si l'event n'est plus dans les handlers, pas nécessaire de réessayer
             exception = EventClassNotFound(unprocessed_event.event_name)
             unprocessed_event.mark_as_dead_letter('\n'.join(traceback.format_exception(exception)))
-            raise exception
+        except Exception as e:
+            unprocessed_event.mark_as_error('\n'.join(traceback.format_exception(e)))
+
+    def _deserialize_event(self, unprocessed_event):
+        event_cls = next(
+            event_cls for event_cls, fn_list in self.event_handlers.items()
+            if event_cls.__name__ == unprocessed_event.event_name
+        )
+        return event_cls.deserialize(
+            {
+                'transaction_id': str(unprocessed_event.transaction_id),
+                **unprocessed_event.payload,
+            }
+        )
 
     def get_logger_prefix_message(self) -> str:
         return f"[Inbox Worker - {self.context_name} - " \
