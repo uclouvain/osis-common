@@ -6,8 +6,8 @@ cattrs==24.1.2
 certifi==2025.1.31
 
 # Testing & quality
-tblib==3.0.0  # Useful to get better stacktrace with parallel tests
+tblib==3.1.0  # Useful to get better stacktrace with parallel tests
 diff-cover==9.2.4  # Useful for diff-quality
-pycodestyle==2.12.1
-pylint==3.3.5
+pycodestyle==2.13.0
+pylint==3.3.6
 freezegun==1.5.1

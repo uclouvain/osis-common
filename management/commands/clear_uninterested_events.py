@@ -56,7 +56,4 @@ class Command(BaseCommand):
             context_names_to_clear = list(HandlersPerContextFactory.get().keys())
 
         for context_name in context_names_to_clear:
-            EventQueueConsumer(
-                context_name=context_name,
-                event_handlers=HandlersPerContextFactory.get()[context_name]
-            ).clear_uninterested_events()
+            EventQueueConsumer(context_name=context_name).clear_uninterested_events()
