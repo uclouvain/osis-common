@@ -397,36 +397,43 @@ class InboxConsumer:
             f"events matching strategy and consumer"
         )
         if len(unprocessed_events_ids):
-            with transaction.atomic():
-                unprocessed_events_in_batch = self.inbox_model.objects.select_for_update().filter(
-                    pk__in=unprocessed_events_ids
-                ).order_by('creation_date')
+            failed_event = None
+            try:
+                with transaction.atomic():
+                    unprocessed_events_in_batch = self.inbox_model.objects.select_for_update().filter(
+                        pk__in=unprocessed_events_ids
+                    ).order_by('creation_date')
 
-                logger.info(f"{self.get_logger_prefix_message()}: Process {len(unprocessed_events_in_batch)} events...")
-                for unprocessed_event in unprocessed_events_in_batch:
-                    with self._start_as_current_span_from_unprocessed_event(unprocessed_event) as span:
-                        span.set_attribute("event.class", unprocessed_event.event_name)
-                        span.set_attribute("event.value", json.dumps(unprocessed_event.payload))
-                        span.set_attribute("inbox_consumer.strategy_name", self.strategy_name)
-                        span.set_attribute("inbox_consumer.consumer_id", self.consumer_id)
+                    logger.info(f"{self.get_logger_prefix_message()}: Process {len(unprocessed_events_in_batch)} events...")
+                    for unprocessed_event in unprocessed_events_in_batch:
+                        with self._start_as_current_span_from_unprocessed_event(unprocessed_event) as span:
+                            span.set_attribute("event.class", unprocessed_event.event_name)
+                            span.set_attribute("event.value", json.dumps(unprocessed_event.payload))
+                            span.set_attribute("inbox_consumer.strategy_name", self.strategy_name)
+                            span.set_attribute("inbox_consumer.consumer_id", self.consumer_id)
 
-                        processed_event = self.consume(unprocessed_event)
-                        if not processed_event.is_successfully_processed():
-                            if processed_event.attempts_number >= settings.MESSAGE_BUS['INBOX_MAX_RETRIES']:
-                                span.set_status(trace.StatusCode.ERROR, "Max attempts retried reached")
-                                logger.error(
+                            try:
+                                self.consume(unprocessed_event)
+                            except Exception as e:
+                                span.set_status(trace.StatusCode.ERROR, str(e))
+                                logger.exception(
                                     f"{self.get_logger_prefix_message()}: "
-                                    f"Mark event as dead letter because max attempts reached "
-                                    f"(ID: {processed_event.id} - Name {processed_event.event_name})"
+                                    f"Exception raised while consuming event (ID: {unprocessed_event.id})"
                                 )
-                                processed_event.mark_as_dead_letter()
-                            else:
-                                logger.warning(
-                                    f"{self.get_logger_prefix_message()}: Stop events processing because "
-                                    f"current event (ID: {processed_event.id} - Name {processed_event.event_name}) "
-                                    f"not correctly processed..."
-                                )
-                                break
+                                failed_event = unprocessed_event
+                                raise   # Trigger rollback
+            except Exception as e:
+                logger.warning(f"{self.get_logger_prefix_message()}: Transaction rollbacked due to an exception.")
+                if failed_event:
+                    if failed_event.attempts_number >= settings.MESSAGE_BUS['INBOX_MAX_RETRIES']:
+                        logger.error(
+                            f"{self.get_logger_prefix_message()}: "
+                            f"Mark event as dead letter because max attempts reached "
+                            f"(ID: {failed_event.id} - Name {failed_event.event_name})"
+                        )
+                        failed_event.mark_as_dead_letter('\n'.join(traceback.format_exception(e)))
+                    else:
+                        failed_event.mark_as_error('\n'.join(traceback.format_exception(e)))
 
     def get_unprocessed_events_ids(self, batch_size: int) -> List[int]:
         """
