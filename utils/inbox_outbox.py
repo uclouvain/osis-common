@@ -431,9 +431,9 @@ class InboxConsumer:
                             f"Mark event as dead letter because max attempts reached "
                             f"(ID: {failed_event.id} - Name {failed_event.event_name})"
                         )
-                        failed_event.mark_as_dead_letter()
+                        failed_event.mark_as_dead_letter('\n'.join(traceback.format_exception(e)))
                     else:
-                        failed_event.mark_as_error()
+                        failed_event.mark_as_error('\n'.join(traceback.format_exception(e)))
 
     def get_unprocessed_events_ids(self, batch_size: int) -> List[int]:
         """
