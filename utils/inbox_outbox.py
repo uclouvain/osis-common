@@ -413,7 +413,7 @@ class InboxConsumer:
                             span.set_attribute("inbox_consumer.consumer_id", self.consumer_id)
 
                             try:
-                                processed_event = self.consume(unprocessed_event)
+                                self.consume(unprocessed_event)
                             except Exception as e:
                                 span.set_status(trace.StatusCode.ERROR, str(e))
                                 logger.exception(
@@ -422,23 +422,6 @@ class InboxConsumer:
                                 )
                                 failed_event = unprocessed_event
                                 raise   # Trigger rollback
-
-                            if not processed_event.is_successfully_processed():
-                                if processed_event.attempts_number >= settings.MESSAGE_BUS['INBOX_MAX_RETRIES']:
-                                    span.set_status(trace.StatusCode.ERROR, "Max attempts retried reached")
-                                    logger.error(
-                                        f"{self.get_logger_prefix_message()}: "
-                                        f"Mark event as dead letter because max attempts reached "
-                                        f"(ID: {processed_event.id} - Name {processed_event.event_name})"
-                                    )
-                                    processed_event.mark_as_dead_letter()
-                                else:
-                                    logger.warning(
-                                        f"{self.get_logger_prefix_message()}: Stop events processing because "
-                                        f"current event (ID: {processed_event.id} - Name {processed_event.event_name}) "
-                                        f"not correctly processed..."
-                                    )
-                                    break
             except Exception as e:
                 logger.warning(f"{self.get_logger_prefix_message()}: Transaction rollbacked due to an exception.")
                 if failed_event:
