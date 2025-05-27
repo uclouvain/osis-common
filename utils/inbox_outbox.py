@@ -322,20 +322,32 @@ class EventQueueConsumer:
                 ch.basic_reject(delivery_tag=method.delivery_tag, requeue=False)
                 return False
 
-            self.inbox_model.objects.get_or_create(
-                consumer=self.context_name,
-                transaction_id=uuid.UUID(properties.message_id),
-                defaults={
-                    "event_name": event_name,
-                    "payload": json.loads(body),
-                    "meta": {
-                        'OTEL': self._get_otel_metadata(span)
+            if self._have_at_least_one_event_declared_async(event_name):
+                self.inbox_model.objects.get_or_create(
+                    consumer=self.context_name,
+                    transaction_id=uuid.UUID(properties.message_id),
+                    defaults={
+                        "event_name": event_name,
+                        "payload": json.loads(body),
+                        "meta": {
+                            'OTEL': self._get_otel_metadata(span)
+                        }
                     }
-                }
-            )
+                )
             ch.basic_ack(delivery_tag=method.delivery_tag)
             logger.info(f"{self.get_logger_prefix_message()}: Process message finished...")
             return True
+
+    def _have_at_least_one_event_declared_async(self, event_name: str) -> bool:
+        event_cls = next(
+            event_cls for event_cls, fn_list in self.event_handlers.items()
+            if event_cls.__name__ == event_name
+        )
+        return bool([
+            f for f in self.event_handlers[event_cls]
+            if isinstance(f, EventHandler) and f.consumption_mode == EventConsumptionMode.ASYNCHRONOUS
+        ])
+
 
     @staticmethod
     def _get_otel_metadata(span: 'Span') -> Dict[str, int]:
