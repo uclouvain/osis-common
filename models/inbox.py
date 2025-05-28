@@ -92,10 +92,14 @@ class Inbox(InboxAbstractModel):
             'consumer', 'transaction_id',
         )
 
-    def mark_as_processed(self):
+    def mark_as_processed(self, strategy_name: str, consumer_id: int):
         self.status = self.PROCESSED
         self.last_execution_date = datetime.datetime.now()
         self.attempts_number += 1
+        self.meta['inbox_worker'] = {
+            'strategy_name': strategy_name,
+            'consumer_id': consumer_id
+        }
         self.save()
 
     def mark_as_error(self, error_description: str = None):
