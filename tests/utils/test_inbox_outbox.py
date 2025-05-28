@@ -28,13 +28,12 @@ from unittest.mock import patch
 
 import attr
 import mock
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from osis_common.ddd.interface import Event
 from osis_common.models.inbox import Inbox
 from osis_common.utils.inbox_outbox import InboxConsumer, DEFAULT_ROUTING_STRATEGY_NAME, InboxConsumerRoutingStrategy, \
     EventClassNotFound
-from infrastructure.messages_bus import message_bus_instance
 
 
 @attr.dataclass(slots=True, frozen=True, kw_only=True)
@@ -49,6 +48,9 @@ class AnotherDummyEvent(Event):
     sigle_formation: str
 
 
+@override_settings(
+    MESSAGE_BUS={'INBOX_MODEL': 'osis_common.models.inbox.Inbox', 'OUTBOX_MODEL': 'osis_common.models.outbox.Outbox'}
+)
 class InboxConsumerTestCaseMixin(TestCase):
     def setUp(self):
         self.context_name = 'deliberation'
@@ -112,7 +114,7 @@ class InboxConsumerDefaultStrategyTestCase(InboxConsumerTestCaseMixin):
 
     def test_consume_all_pending_events_strategy(self):
         consumer = InboxConsumer(
-            message_bus_instance=message_bus_instance,
+            message_bus_instance=mock.Mock(),
             context_name=self.context_name,
             consumer_id=self.consumer_id,
             strategy_name=self.strategy_name,
@@ -128,7 +130,7 @@ class InboxConsumerDefaultStrategyTestCase(InboxConsumerTestCaseMixin):
 
     def test_consume_pending_events_according_to_batch_size(self):
         consumer = InboxConsumer(
-            message_bus_instance=message_bus_instance,
+            message_bus_instance=mock.Mock(),
             context_name=self.context_name,
             consumer_id=self.consumer_id,
             strategy_name=self.strategy_name,
@@ -145,7 +147,7 @@ class InboxConsumerDefaultStrategyTestCase(InboxConsumerTestCaseMixin):
     def test_consumer_all_unprocessed_events_raise_error_if_consumer_id_is_greater_than_0(self):
         with self.assertRaises(ValueError):
             InboxConsumer(
-                message_bus_instance=message_bus_instance,
+                message_bus_instance=mock.Mock(),
                 context_name=self.context_name,
                 consumer_id=1,
                 strategy_name=self.strategy_name,
@@ -154,7 +156,7 @@ class InboxConsumerDefaultStrategyTestCase(InboxConsumerTestCaseMixin):
     def test_consumer_all_unprocessed_events_raise_error_if_consumer_id_is_less_than_0(self):
         with self.assertRaises(ValueError):
             InboxConsumer(
-                message_bus_instance=message_bus_instance,
+                message_bus_instance=mock.Mock(),
                 context_name=self.context_name,
                 consumer_id=-1,
                 strategy_name=self.strategy_name,
@@ -163,7 +165,7 @@ class InboxConsumerDefaultStrategyTestCase(InboxConsumerTestCaseMixin):
     def test_consumer_all_unprocessed_events_raise_error_if_start_with_unexisting_strategy_name(self):
         with self.assertRaises(ValueError):
             InboxConsumer(
-                message_bus_instance=message_bus_instance,
+                message_bus_instance=mock.Mock(),
                 context_name=self.context_name,
                 consumer_id=self.consumer_id,
                 strategy_name='not_existing_strategy_name',
@@ -182,7 +184,7 @@ class InboxConsumerDefaultStrategyTestCase(InboxConsumerTestCaseMixin):
         )
 
         consumer = InboxConsumer(
-            message_bus_instance=message_bus_instance,
+            message_bus_instance=mock.Mock(),
             context_name=self.context_name,
             consumer_id=self.consumer_id,
             strategy_name=self.strategy_name,
@@ -206,7 +208,7 @@ class InboxConsumerDefaultStrategyTestCase(InboxConsumerTestCaseMixin):
         et qu'il ne bloque le traitement des Inbox suivants
         """
         consumer = InboxConsumer(
-            message_bus_instance=message_bus_instance,
+            message_bus_instance=mock.Mock(),
             context_name=self.context_name,
             consumer_id=self.consumer_id,
             strategy_name=self.strategy_name,
@@ -265,10 +267,9 @@ class InboxConsumerCustomStrategyTestCase(InboxConsumerTestCaseMixin):
             status=Inbox.PENDING,
         )
 
-
     def test_default_strategy_must_not_consume_events_outside_his_strategy(self):
         consumer = InboxConsumer(
-            message_bus_instance=message_bus_instance,
+            message_bus_instance=mock.Mock(),
             context_name=self.context_name,
             consumer_id=self.consumer_id,
             strategy_name=self.strategy_name,
@@ -286,10 +287,9 @@ class InboxConsumerCustomStrategyTestCase(InboxConsumerTestCaseMixin):
         self.event_D.refresh_from_db()
         self.assertEqual(self.event_D.status, Inbox.PROCESSED, msg="Managed by default strategy - consumption")
 
-
     def test_custom_strategy_must_consume_events_of_consumer_0(self):
         consumer = InboxConsumer(
-            message_bus_instance=message_bus_instance,
+            message_bus_instance=mock.Mock(),
             context_name=self.context_name,
             consumer_id=0,  # Consumer 1 of 2
             strategy_name='noma',
@@ -317,7 +317,7 @@ class InboxConsumerCustomStrategyTestCase(InboxConsumerTestCaseMixin):
 
     def test_custom_strategy_must_consume_event_of_consumer_1(self):
         consumer = InboxConsumer(
-            message_bus_instance=message_bus_instance,
+            message_bus_instance=mock.Mock(),
             context_name=self.context_name,
             consumer_id=1,  # Consumer 2 of 2
             strategy_name='noma',
@@ -347,7 +347,7 @@ class InboxConsumerCustomStrategyTestCase(InboxConsumerTestCaseMixin):
     def test_consumer_all_unprocessed_events_raise_error_if_consumer_id_is_greater_than_total_consumer(self):
         with self.assertRaises(ValueError):
             InboxConsumer(
-                message_bus_instance=message_bus_instance,
+                message_bus_instance=mock.Mock(),
                 context_name=self.context_name,
                 consumer_id=10,
                 strategy_name='noma',
