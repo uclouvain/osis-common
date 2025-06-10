@@ -322,20 +322,41 @@ class EventQueueConsumer:
                 ch.basic_reject(delivery_tag=method.delivery_tag, requeue=False)
                 return False
 
-            self.inbox_model.objects.get_or_create(
-                consumer=self.context_name,
-                transaction_id=uuid.UUID(properties.message_id),
-                defaults={
-                    "event_name": event_name,
-                    "payload": json.loads(body),
-                    "meta": {
-                        'OTEL': self._get_otel_metadata(span)
+            if self._have_at_least_one_event_declared_async(event_name):
+                self.inbox_model.objects.get_or_create(
+                    consumer=self.context_name,
+                    transaction_id=uuid.UUID(properties.message_id),
+                    defaults={
+                        "event_name": event_name,
+                        "payload": json.loads(body),
+                        "meta": {
+                            'OTEL': self._get_otel_metadata(span)
+                        }
                     }
-                }
-            )
+                )
+            else:
+                logger.info(
+                    f"{self.get_logger_prefix_message()}: "
+                    f"Discard event {event_name} because no async action in context {self.context_name}..."
+                )
+
             ch.basic_ack(delivery_tag=method.delivery_tag)
             logger.info(f"{self.get_logger_prefix_message()}: Process message finished...")
             return True
+
+    def _have_at_least_one_event_declared_async(self, event_name: str) -> bool:
+        event_class = next(
+            (cls for cls in self.event_handlers if cls.__name__ == event_name),
+            None
+        )
+        if event_class is None:
+            return False
+
+        async_handlers = [
+            handler for handler in self.event_handlers[event_class]
+            if isinstance(handler, EventHandler) and handler.consumption_mode == EventConsumptionMode.ASYNCHRONOUS
+        ]
+        return bool(async_handlers)
 
     @staticmethod
     def _get_otel_metadata(span: 'Span') -> Dict[str, int]:
@@ -503,7 +524,7 @@ class InboxConsumer:
             ]
             for event_handler in event_handlers_declared_as_async:
                 event_handler.handle(self.message_bus_instance, event_instance)
-            unprocessed_event.mark_as_processed()
+            unprocessed_event.mark_as_processed(strategy_name=self.strategy_name, consumer_id=self.consumer_id)
         return unprocessed_event
 
     def _build_event_instance(self, unprocessed_event: 'Inbox') -> Optional['Event']:
