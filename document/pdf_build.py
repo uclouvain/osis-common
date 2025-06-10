@@ -27,13 +27,14 @@ import tempfile
 
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-from weasyprint import HTML
 
 from osis_common.decorators.download import set_download_cookie
 
 
 @set_download_cookie
 def render_pdf(request, context, filename, template):
+    from weasyprint import HTML
+
     html_string = render_to_string(template, context)
     html = HTML(string=html_string, base_url=request.build_absolute_uri())
     result = html.write_pdf(presentational_hints=True)
