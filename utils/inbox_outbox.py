@@ -31,6 +31,7 @@ import importlib
 import json
 import logging
 import os
+import re
 import traceback
 import uuid
 from decimal import Decimal
@@ -182,7 +183,9 @@ class EventQueueProducer:
         )
 
     def _process_unprocessed_event(self, unprocess_event_rowdb):
-        headers = {}
+        headers = {
+            'event_name_hash': unprocess_event_rowdb.meta.get('EVENT_NAME_HASH'),
+        }
         propagate.inject(headers)
 
         self.channel.basic_publish(
@@ -307,22 +310,31 @@ class EventQueueConsumer:
             current_message_count += 1
 
     def _process_message(self, ch, method, properties, body) -> bool:
+        logger.info(f"{self.get_logger_prefix_message()}: Process message started...")
         headers = properties.headers if properties and properties.headers else {}
-        otel_context = propagate.extract(headers)
-
         event_name = method.routing_key.split('.')[-1]
+
+        otel_context = propagate.extract(headers)
         with tracer.start_as_current_span(
             f"{self.context_name}.consumers_worker.process.{event_name}",
             context=otel_context
         ) as span:
-            logger.info(f"{self.get_logger_prefix_message()}: Process message started...")
-            if not properties.message_id:
-                span.set_status(trace.StatusCode.ERROR, "Missing message_id in properties")
-                logger.error(f"{self.get_logger_prefix_message()}: Missing message_id in properties.")
-                ch.basic_reject(delivery_tag=method.delivery_tag, requeue=False)
-                return False
+            if not self._is_event_name_hash_valid(event_name, headers):
+                logger.info(
+                    f"{self.get_logger_prefix_message()}: Discard event {event_name} because invalid event name hash..."
+                )
+            if not self._have_at_least_one_event_declared_async(event_name):
+                logger.info(
+                    f"{self.get_logger_prefix_message()}: "
+                    f"Discard event {event_name} because no async action in context {self.context_name}..."
+                )
+            else:
+                if not properties.message_id:
+                    span.set_status(trace.StatusCode.ERROR, "Missing message_id in properties")
+                    logger.error(f"{self.get_logger_prefix_message()}: Missing message_id in properties.")
+                    ch.basic_reject(delivery_tag=method.delivery_tag, requeue=False)
+                    return False
 
-            if self._have_at_least_one_event_declared_async(event_name):
                 self.inbox_model.objects.get_or_create(
                     consumer=self.context_name,
                     transaction_id=uuid.UUID(properties.message_id),
@@ -334,12 +346,6 @@ class EventQueueConsumer:
                         }
                     }
                 )
-            else:
-                logger.info(
-                    f"{self.get_logger_prefix_message()}: "
-                    f"Discard event {event_name} because no async action in context {self.context_name}..."
-                )
-
             ch.basic_ack(delivery_tag=method.delivery_tag)
             logger.info(f"{self.get_logger_prefix_message()}: Process message finished...")
             return True
@@ -357,6 +363,19 @@ class EventQueueConsumer:
             if isinstance(handler, EventHandler) and handler.consumption_mode == EventConsumptionMode.ASYNCHRONOUS
         ]
         return bool(async_handlers)
+
+    def _is_event_name_hash_valid(self, event_name: str, headers: Dict) -> bool:
+        event_class = next(
+            (cls for cls in self.event_handlers if cls.__name__ == event_name),
+            None
+        )
+        if event_class is None:
+            return False
+
+        hasher = hashlib.new('sha256')
+        hasher.update(str(event_class.__module__).encode('utf-8'))
+        return hasher.hexdigest() == headers.get('event_name_hash')
+
 
     @staticmethod
     def _get_otel_metadata(span: 'Span') -> Dict[str, int]:
