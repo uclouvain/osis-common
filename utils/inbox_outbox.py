@@ -322,18 +322,17 @@ class EventQueueConsumer:
                 logger.info(
                     f"{self.get_logger_prefix_message()}: Discard event {event_name} because invalid event name hash..."
                 )
-            if not self._have_at_least_one_event_declared_async(event_name):
+            elif not self._have_at_least_one_event_declared_async(event_name):
                 logger.info(
                     f"{self.get_logger_prefix_message()}: "
                     f"Discard event {event_name} because no async action in context {self.context_name}..."
                 )
+            elif not properties.message_id:
+                span.set_status(trace.StatusCode.ERROR, "Missing message_id in properties")
+                logger.error(f"{self.get_logger_prefix_message()}: Missing message_id in properties.")
+                ch.basic_reject(delivery_tag=method.delivery_tag, requeue=False)
+                return False
             else:
-                if not properties.message_id:
-                    span.set_status(trace.StatusCode.ERROR, "Missing message_id in properties")
-                    logger.error(f"{self.get_logger_prefix_message()}: Missing message_id in properties.")
-                    ch.basic_reject(delivery_tag=method.delivery_tag, requeue=False)
-                    return False
-
                 self.inbox_model.objects.get_or_create(
                     consumer=self.context_name,
                     transaction_id=uuid.UUID(properties.message_id),
