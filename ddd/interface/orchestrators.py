@@ -153,7 +153,7 @@ class PersistedOrchestratorMixin(ABC):
     Mixin pour orchestrateur avec persistance Django.
     """
     max_retries_workflow_in_error = 3
-    model_class: type[models.Model] = None
+    model_class: type[OrchestratorModel] = None
 
     def load_workflow_instance(self, workflow_uuid: uuid.UUID):
         try:
@@ -161,7 +161,7 @@ class PersistedOrchestratorMixin(ABC):
                 'person'
             ).select_for_update(nowait=True).get(uuid=workflow_uuid)
         except DatabaseError:
-            raise Exception("Une instance de l’orchestrateur est déjà en cours de traitement.")
+            raise WorkflowEnCoursDeTraitementException
 
     def run(self, workflow_uuid: uuid.UUID) -> None:
         if self.model_class is None:
@@ -171,7 +171,7 @@ class PersistedOrchestratorMixin(ABC):
             workflow = self.load_workflow_instance(workflow_uuid)
 
             if workflow.step_execution_count >= self.max_retries_workflow_in_error:
-                raise Exception("Max retries atteint pour ce workflow.")
+                raise WorkflowEnErreurMaxRetryReachedException
 
             workflow.last_execution = datetime.now()
             current_step_idx = next(
@@ -208,3 +208,16 @@ class PersistedOrchestratorMixin(ABC):
                             })
                     break
             workflow.save()
+
+    @abstractmethod
+    def get_or_initialize(self, *args, **kwargs) -> uuid.UUID:
+        pass
+
+
+
+class WorkflowEnCoursDeTraitementException(Exception):
+    pass
+
+
+class WorkflowEnErreurMaxRetryReachedException(Exception):
+    pass
