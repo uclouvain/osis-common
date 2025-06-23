@@ -275,7 +275,8 @@ def _make_upsert(fields, super_class, model_class, instance=None):
     if instance:
         # Fields can contain only partial update of models, so we need to setattr on instance found in DB
         for field_name, value in kwargs.items():
-            setattr(instance, field_name, value)
+            if value != '' and value is not None and value != getattr(instance, field_name):
+                setattr(instance, field_name, value)
         super(super_class, instance).save(force_update=True)
     else:
         instance = model_class(**kwargs)
