@@ -421,7 +421,9 @@ class InboxConsumer:
             failed_event = None
             try:
                 with transaction.atomic():
-                    unprocessed_events_in_batch = self.inbox_model.objects.select_for_update().filter(
+                    unprocessed_events_in_batch = self.inbox_model.objects.select_for_update(
+                        skip_locked=True  # Prevent blocking inter-consumer
+                    ).filter(
                         pk__in=unprocessed_events_ids
                     ).order_by('creation_date')
 
