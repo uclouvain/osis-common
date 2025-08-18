@@ -69,6 +69,12 @@ class InboxConsumerTestCaseMixin(TestCase):
                 "noma": "54545454"
             },
             status=Inbox.PENDING,
+            meta={
+                'inbox_worker': {
+                    'strategy_name': DEFAULT_ROUTING_STRATEGY_NAME,
+                    'consumer_id': 0,
+                }
+            }
         )
         self.event_B = Inbox.objects.create(
             transaction_id=uuid.uuid4(),
@@ -79,6 +85,12 @@ class InboxConsumerTestCaseMixin(TestCase):
                 "noma": "15454545454"
             },
             status=Inbox.PENDING,
+            meta={
+                'inbox_worker': {
+                    'strategy_name': DEFAULT_ROUTING_STRATEGY_NAME,
+                    'consumer_id': 0,
+                }
+            }
         )
 
     def _mock_handlers_per_context(self):
@@ -181,6 +193,12 @@ class InboxConsumerDefaultStrategyTestCase(InboxConsumerTestCaseMixin):
                 "noma": "15454545454"
             },
             status=Inbox.PENDING,
+            meta={
+                'inbox_worker': {
+                    'strategy_name': self.strategy_name,
+                    'consumer_id': self.consumer_id,
+                }
+            }
         )
 
         consumer = InboxConsumer(
@@ -244,6 +262,17 @@ class InboxConsumerCustomStrategyTestCase(InboxConsumerTestCaseMixin):
             routing_fn=lambda event: event.noma,
             total_consumers=2
         )
+        self.event_A.meta['inbox_worker'] = {
+            'strategy_name': 'noma',
+            'consumer_id': 1,
+        }
+        self.event_A.save()
+        self.event_B.meta['inbox_worker'] = {
+            'strategy_name': 'noma',
+            'consumer_id': 0,
+        }
+        self.event_B.save()
+
         self.mock_get_routing.return_value = self.custom_routing_strategy
 
         self.event_C = Inbox.objects.create(
@@ -255,6 +284,12 @@ class InboxConsumerCustomStrategyTestCase(InboxConsumerTestCaseMixin):
                 "sigle_formation": "DROI1BA"
             },
             status=Inbox.PENDING,
+            meta={
+                'inbox_worker': {
+                    'strategy_name': DEFAULT_ROUTING_STRATEGY_NAME,
+                    'consumer_id': 0,
+                }
+            }
         )
         self.event_D = Inbox.objects.create(
             transaction_id=uuid.uuid4(),
@@ -265,6 +300,12 @@ class InboxConsumerCustomStrategyTestCase(InboxConsumerTestCaseMixin):
                 "sigle_formation": "BIR1BA"
             },
             status=Inbox.PENDING,
+            meta={
+                'inbox_worker': {
+                    'strategy_name': DEFAULT_ROUTING_STRATEGY_NAME,
+                    'consumer_id': 0,
+                }
+            }
         )
 
     def test_default_strategy_must_not_consume_events_outside_his_strategy(self):
