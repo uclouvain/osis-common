@@ -1,13 +1,13 @@
 django-ckeditor==6.6.1  # Next version show security alert (maybe update ckeditor version 5)
 voluptuous==0.15.2
-weasyprint==64.1  # Pending correction
+weasyprint==66.0
 attrs==25.3.0
-cattrs==24.1.2
-certifi==2025.1.31
+cattrs==25.2.0
+certifi==2025.8.3
 
 # Testing & quality
 tblib==3.1.0  # Useful to get better stacktrace with parallel tests
-diff-cover==9.2.4  # Useful for diff-quality
-pycodestyle==2.13.0
-pylint==3.3.6
-freezegun==1.5.1
+diff-cover==9.6.0  # Useful for diff-quality
+pycodestyle==2.14.0
+pylint==3.3.8
+freezegun==1.5.5
