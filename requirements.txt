@@ -1,4 +1,4 @@
-Django==4.2.23
+Django==4.2.24
 django-localflavor==5.0
 django-statici18n==2.6.0
 django-analytical==3.2.0
