@@ -56,7 +56,7 @@ opentelemetry-instrumentation-urllib3==0.58b0
 opentelemetry-exporter-otlp==1.37.0
 
 # Modules transverses
-git+https://github.com/uclouvain/osis-document.git@0.10.11#egg=osis_document
-git+https://github.com/uclouvain/osis-signature.git@0.1#egg=osis_signature
-git+https://github.com/uclouvain/osis-notification.git@0.1.9b#egg=osis_notification
+git+https://github.com/uclouvain/osis-document-components.git@1.0.1#egg=osis_document_components
+git+https://github.com/uclouvain/osis-signature.git@0.1.01#egg=osis_signature
+git+https://github.com/uclouvain/osis-notification.git@0.1.9c#egg=osis_notification
 git+https://github.com/uclouvain/osis-async.git@0.11#egg=osis_async
