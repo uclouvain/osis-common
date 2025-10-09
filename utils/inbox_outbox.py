@@ -50,6 +50,7 @@ from opentelemetry.trace import SpanContext, TraceFlags, NonRecordingSpan, Span
 from osis_common.ddd import interface
 from osis_common.ddd.interface import EventHandler, EventConsumptionMode
 from osis_common.ddd.interface.domain_models import EventHandlers, Event
+from osis_common.models.inbox import InboxAbstractModel
 from osis_common.queue import queue_sender
 
 logger = logging.getLogger(settings.ASYNC_WORKERS_LOGGER)
@@ -216,6 +217,7 @@ class EventQueueConsumer:
         super().__init__(*args, **kwargs)
         self.context_name = context_name
         self.event_handlers = HandlersPerContextFactory.get()[self.context_name]
+        self.routing_strategy = InboxConsumerRoutingStrategyFactory.get(context_name=self.context_name)
         self.inbox_model = _load_inbox_model()
         self.establish_connection()
 
@@ -323,14 +325,35 @@ class EventQueueConsumer:
                 return False
 
             if self._have_at_least_one_event_declared_async(event_name):
+                transaction_id = uuid.UUID(properties.message_id)
+                event_payload = json.loads(body)
+                event_status = InboxAbstractModel.PENDING
+                exception = None
+
+                try:
+                    inbox_worker = self._determine_inbox_worker(
+                        transaction_id=transaction_id,
+                        event_name=event_name,
+                        event_payload=event_payload,
+                    )
+                except (StopIteration, EventClassNotFound):
+                    exception = '\n'.join(traceback.format_exception(EventClassNotFound(event_name)))
+                    event_status = InboxAbstractModel.DEAD_LETTER
+                except Exception as e:
+                    exception = '\n'.join(traceback.format_exception(e))
+                    event_status = InboxAbstractModel.ERROR
+
                 self.inbox_model.objects.get_or_create(
                     consumer=self.context_name,
                     transaction_id=uuid.UUID(properties.message_id),
                     defaults={
                         "event_name": event_name,
-                        "payload": json.loads(body),
+                        "payload": event_payload,
+                        "status": event_status,
+                        "traceback": exception,
                         "meta": {
-                            'OTEL': self._get_otel_metadata(span)
+                            'OTEL': self._get_otel_metadata(span),
+                            'inbox_worker' : inbox_worker
                         }
                     }
                 )
@@ -364,6 +387,41 @@ class EventQueueConsumer:
             "TRACE_ID": span.get_span_context().trace_id,
             "SPAN_ID": span.get_span_context().span_id,
         }
+
+    def _determine_inbox_worker(
+        self,
+        transaction_id: uuid.UUID,
+        event_name: str,
+        event_payload: Dict,
+    ) -> Dict[str, int]:
+        if event_name in self.routing_strategy.get_all_handled_event_names():
+            event_instance = self.__deserialize_event(transaction_id, event_name, event_payload)
+            strategy = self.routing_strategy.resolve_strategy_for_event(event_instance)
+
+            strategy_name = strategy.name
+            consumer_id_selected = next(
+                consumer_id for consumer_id in range(0, strategy.total_consumers)
+                if strategy.should_process(event_instance, consumer_id)
+            )
+        else:
+            strategy_name = DEFAULT_ROUTING_STRATEGY_NAME
+            consumer_id_selected = 0
+
+        return {
+            'strategy_name': strategy_name,
+            'consumer_id': consumer_id_selected,
+        }
+
+    def __deserialize_event(self, transaction_id: uuid.UUID, event_name: str, event_payload: Dict) -> Event:
+        event_cls = next(
+            event_cls for event_cls, fn_list in self.event_handlers.items() if event_cls.__name__ == event_name
+        )
+        return event_cls.deserialize(
+            {
+                'transaction_id': str(transaction_id),
+                **event_payload,
+            }
+        )
 
 
 class InboxConsumer:
@@ -421,11 +479,15 @@ class InboxConsumer:
             failed_event = None
             try:
                 with transaction.atomic():
-                    unprocessed_events_in_batch = self.inbox_model.objects.select_for_update().filter(
+                    unprocessed_events_in_batch = self.inbox_model.objects.select_for_update(
+                        skip_locked=True  # Prevent blocking inter-consumer
+                    ).filter(
                         pk__in=unprocessed_events_ids
                     ).order_by('creation_date')
 
-                    logger.info(f"{self.get_logger_prefix_message()}: Process {len(unprocessed_events_in_batch)} events...")
+                    logger.info(
+                        f"{self.get_logger_prefix_message()}: Process {len(unprocessed_events_in_batch)} events..."
+                    )
                     for unprocessed_event in unprocessed_events_in_batch:
                         with self._start_as_current_span_from_unprocessed_event(unprocessed_event) as span:
                             span.set_attribute("event.class", unprocessed_event.event_name)
@@ -461,43 +523,19 @@ class InboxConsumer:
         Return a list of unprocessed events id of the current strategy routing and current consumer
         order by creation date
         """
-        # Step 1 : Filter to routing strategy
-        unprocessed_events_qs = self.inbox_model.objects.filter(
-            consumer=self.context_name,
-        ).exclude(
-            status__in=[
-                self.inbox_model.PROCESSED,
-                self.inbox_model.DEAD_LETTER,
-            ]
+        return list(
+            self.inbox_model.objects.filter(
+                consumer=self.context_name,
+                # Attribution to a specific inbox are realised in EventQueueConsumer (_process_message)
+                meta__inbox_worker__strategy_name=self.strategy_name,
+                meta__inbox_worker__consumer_id=self.consumer_id,
+            ).exclude(
+                status__in=[
+                    self.inbox_model.PROCESSED,
+                    self.inbox_model.DEAD_LETTER,
+                ]
+            ).order_by('creation_date').values_list('id', flat=True)[:batch_size]
         )
-        if self.strategy_name == DEFAULT_ROUTING_STRATEGY_NAME:
-            # Exclude events which are declared in other strategies because default strategy doesn't required
-            # event registration
-            unprocessed_events_qs = unprocessed_events_qs.exclude(
-                event_name__in=self.routing_strategy.get_all_handled_event_names()
-            )
-            delta_event = 1
-        else:
-            # Filter only on event which are declared in current strategy
-            unprocessed_events_qs = unprocessed_events_qs.filter(
-                event_name__in=self.routing_strategy.handled_event_names(strategy_name=self.strategy_name)
-            )
-            delta_event = self.routing_strategy.strategies[self.strategy_name].total_consumers
-        unprocessed_events_qs = unprocessed_events_qs.order_by('creation_date')
-
-        # Step 2 : Filter to consumer ID
-        # /!\ Take more data than batch size (* delta_event) because, we filter in memory according to routing_key
-        unprocessed_events_of_current_strategy = list(unprocessed_events_qs[:batch_size * delta_event])
-        unprocessed_events_of_current_consumer = []
-        for unprocessed_event in unprocessed_events_of_current_strategy:
-            event_instance = self._build_event_instance(unprocessed_event)
-            if not event_instance:
-                continue
-            if self.routing_strategy.should_process(event_instance, self.consumer_id):
-                unprocessed_events_of_current_consumer.append(unprocessed_event.pk)
-            if len(unprocessed_events_of_current_consumer) >= batch_size:
-                break
-        return unprocessed_events_of_current_consumer
 
     def _start_as_current_span_from_unprocessed_event(self, unprocess_event_rowdb):
         otel_data = unprocess_event_rowdb.meta.get('OTEL')
@@ -641,14 +679,14 @@ class InboxConsumerRoutingStrategy:
         self,
         event_instance: Event
     ) -> str:
-        strategy = self._resolve_strategy_for_event(event_instance)
+        strategy = self.resolve_strategy_for_event(event_instance)
         return strategy.get_routing_key(event_instance)
 
     def should_process(self, event_instance: Event, consumer_id: int) -> bool:
-        strategy = self._resolve_strategy_for_event(event_instance)
+        strategy = self.resolve_strategy_for_event(event_instance)
         return strategy.should_process(event_instance, consumer_id)
 
-    def _resolve_strategy_for_event(self, event_instance: Event) -> RoutingStrategy:
+    def resolve_strategy_for_event(self, event_instance: Event) -> RoutingStrategy:
         return next(
             (
                 s for name, s in self.strategies.items()
