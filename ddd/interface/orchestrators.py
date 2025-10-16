@@ -143,6 +143,7 @@ class OrchestratorModel(models.Model):
     step_execution_count = models.IntegerField(default=0)
     last_execution = models.DateTimeField(auto_now=True)
     histories = models.JSONField(default=list)
+    context_data = models.JSONField(default=dict, help_text="Données de contexte partagées entre les étapes de la saga")
 
     class Meta:
         abstract = True
