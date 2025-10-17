@@ -133,13 +133,13 @@ class OrchestratorModel(models.Model):
     Modèle abstrait à hériter pour créer un modèle de persistance d'un orchestrateur.
     """
     STEP_STATE_CHOICES = [
-        (StepState.PENDING, "En attente"),
-        (StepState.ERROR, "En erreur"),
-        (StepState.OK, "Ok"),
+        (StepState.PENDING.name, "En attente"),
+        (StepState.ERROR.name, "En erreur"),
+        (StepState.OK.name, "Ok"),
     ]
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     current_step = models.CharField(max_length=255)
-    step_state = models.CharField(max_length=50, choices=STEP_STATE_CHOICES, default=StepState.PENDING)
+    step_state = models.CharField(max_length=50, choices=STEP_STATE_CHOICES, default=StepState.PENDING.name)
     step_execution_count = models.IntegerField(default=0)
     last_execution = models.DateTimeField(auto_now=True)
     histories = models.JSONField(default=list)
@@ -156,11 +156,12 @@ class PersistedOrchestratorMixin(ABC):
     max_retries_workflow_in_error = 3
     model_class: type[OrchestratorModel] = None
 
+    def _do_run_on_exception(self):
+        pass
+
     def load_workflow_instance(self, workflow_uuid: uuid.UUID):
         try:
-            return self.model_class.objects.select_related(
-                'person'
-            ).select_for_update(nowait=True).get(uuid=workflow_uuid)
+            return self.model_class.objects.select_for_update(nowait=True).get(uuid=workflow_uuid)
         except DatabaseError:
             raise WorkflowEnCoursDeTraitementException
 
@@ -184,18 +185,20 @@ class PersistedOrchestratorMixin(ABC):
                 workflow.step_execution_count += 1
                 try:
                     step.do_run(workflow=workflow)
-                    if workflow.step_state == StepState.PENDING:
+                    if workflow.step_state == StepState.PENDING.name:
                         break
                     workflow.step_execution_count = 0
                     executed_steps.append(step)
                 except Exception as e:
-                    workflow.step_state = StepState.ERROR
+                    workflow.step_state = StepState.ERROR.name
                     workflow.histories.append({
                         'name': step.name,
                         'date': datetime.now().isoformat(),
-                        'state':  StepState.ERROR,
-                        'description': f"{repr(e)}"
+                        'state':  StepState.ERROR.name,
+                        'description': f"{getattr(e, 'message', repr(e))}"
                     })
+
+                    self._do_run_on_exception()
 
                     for prev_step in reversed(executed_steps):
                         try:
@@ -208,7 +211,7 @@ class PersistedOrchestratorMixin(ABC):
                                 'description': f"[Compensation Error] {repr(rollback_error)}"
                             })
                     break
-            workflow.save()
+        workflow.save()
 
     @abstractmethod
     def get_or_initialize(self, *args, **kwargs) -> uuid.UUID:
