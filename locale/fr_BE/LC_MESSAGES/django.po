@@ -99,3 +99,9 @@ msgstr "la somme de contrôle n'est pas valide"
 
 msgid "the only characters allowed are : digits and . and - and /"
 msgstr "les caractères autorisés sont : chiffres et . et - et /"
+
+msgid "The following persons have no role in your trainings"
+msgstr "Les personnes suivantes n'ont pas de rôle sur vos formations"
+
+msgid "You can add a role to them via the Actions menu"
+msgstr "Vous pouvez leur ajouter un rôle via le menu Actions"
