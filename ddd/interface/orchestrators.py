@@ -156,7 +156,7 @@ class PersistedOrchestratorMixin(ABC):
     max_retries_workflow_in_error = 3
     model_class: type[OrchestratorModel] = None
 
-    def _do_run_on_exception(self):
+    def _do_run_on_exception(self, exception: Exception = None):
         pass
 
     def load_workflow_instance(self, workflow_uuid: uuid.UUID):
@@ -198,7 +198,7 @@ class PersistedOrchestratorMixin(ABC):
                         'description': f"{getattr(e, 'message', repr(e))}"
                     })
 
-                    self._do_run_on_exception()
+                    self._do_run_on_exception(e)
 
                     for prev_step in reversed(executed_steps):
                         try:
