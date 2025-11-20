@@ -90,3 +90,9 @@ msgstr ""
 
 msgid "the only characters allowed are : digits and . and - and /"
 msgstr ""
+
+msgid "The following persons have no role in your trainings"
+msgstr ""
+
+msgid "You can add a role to them via the Actions menu"
+msgstr ""
