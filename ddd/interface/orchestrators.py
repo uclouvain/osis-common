@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import contextlib
 import datetime
 import uuid
 from abc import ABC
@@ -73,6 +74,29 @@ class BaseStep(ABC):
         :param failed_step_name: Nom de l’étape qui a échoué
         """
         pass
+
+
+class TransactionStep(BaseStep):
+    """
+    Représente une étape unique du workflow (exécutable, identifiable par un nom et ayant le sid d'un savepoint)
+    Sans dépendances externes synchrones (envoi de mail, ...)
+    Par défaut, le compensate rollback la transaction englobée par le savepoint
+    """
+    savepoint_id: str
+
+    @classmethod
+    def compensate(cls, workflow: Workflow, failed_step_name: str, **kwargs):
+        if cls.savepoint_id:
+            transaction.savepoint_rollback(cls.savepoint_id)
+
+    @classmethod
+    @contextlib.contextmanager
+    def savepoint_context(cls):
+        """Gestionnaire de contexte pour gérer un savepoint Django."""
+        cls.savepoint_id = transaction.savepoint()
+        yield cls.savepoint_id
+        transaction.savepoint_commit(cls.savepoint_id)
+        cls.savepoint_id = None
 
 
 class BaseOrchestrator(ABC):
@@ -148,6 +172,15 @@ class OrchestratorModel(models.Model):
     class Meta:
         abstract = True
 
+    @property
+    def current_error(self):
+        if self.step_state != StepState.ERROR.name:
+            return None
+        return next(
+            history['description'] for history in reversed(self.histories) if history['state'] == StepState.ERROR.name
+        )
+
+
 
 class PersistedOrchestratorMixin(ABC):
     """
@@ -155,9 +188,6 @@ class PersistedOrchestratorMixin(ABC):
     """
     max_retries_workflow_in_error = 3
     model_class: type[OrchestratorModel] = None
-
-    def _do_run_on_exception(self, exception: Exception = None):
-        pass
 
     def load_workflow_instance(self, workflow_uuid: uuid.UUID):
         try:
@@ -197,8 +227,6 @@ class PersistedOrchestratorMixin(ABC):
                         'state':  StepState.ERROR.name,
                         'description': f"{getattr(e, 'message', repr(e))}"
                     })
-
-                    self._do_run_on_exception(e)
 
                     for prev_step in reversed(executed_steps):
                         try:
