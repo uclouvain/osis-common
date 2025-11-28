@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import contextlib
 import datetime
 import uuid
 from abc import ABC
@@ -87,6 +88,15 @@ class TransactionStep(BaseStep):
     def compensate(cls, workflow: Workflow, failed_step_name: str, **kwargs):
         if cls.savepoint_id:
             transaction.savepoint_rollback(cls.savepoint_id)
+
+    @classmethod
+    @contextlib.contextmanager
+    def savepoint_context(cls):
+        """Gestionnaire de contexte pour gérer un savepoint Django."""
+        cls.savepoint_id = transaction.savepoint()
+        yield cls.savepoint_id
+        transaction.savepoint_commit(cls.savepoint_id)
+        cls.savepoint_id = None
 
 
 class BaseOrchestrator(ABC):
@@ -161,6 +171,15 @@ class OrchestratorModel(models.Model):
 
     class Meta:
         abstract = True
+
+    @property
+    def current_error(self):
+        if self.step_state != StepState.ERROR.name:
+            return None
+        return next(
+            history['description'] for history in reversed(self.histories) if history['state'] == StepState.ERROR.name
+        )
+
 
 
 class PersistedOrchestratorMixin(ABC):
