@@ -35,6 +35,8 @@ from typing import Protocol, List
 from django.db import models
 from django.db import transaction, DatabaseError
 
+from base.ddd.utils.business_validator import MultipleBusinessExceptions
+
 
 class StepState(str, Enum):
     PENDING = "PENDING"
@@ -219,27 +221,34 @@ class PersistedOrchestratorMixin(ABC):
                         break
                     workflow.step_execution_count = 0
                     executed_steps.append(step)
-                except Exception as e:
-                    workflow.step_state = StepState.ERROR.name
-                    workflow.histories.append({
-                        'name': step.name,
-                        'date': datetime.now().isoformat(),
-                        'state':  StepState.ERROR.name,
-                        'description': f"{getattr(e, 'message', repr(e))}"
-                    })
-
-                    for prev_step in reversed(executed_steps):
-                        try:
-                            prev_step.compensate(workflow=workflow, failed_step_name=step.name)
-                        except Exception as rollback_error:
-                            workflow.histories.append({
-                                'name': prev_step.name,
-                                'date': datetime.now().isoformat(),
-                                'state':  StepState.ERROR,
-                                'description': f"[Compensation Error] {repr(rollback_error)}"
-                            })
+                except MultipleBusinessExceptions as e:
+                    messages = [exception.message for exception in e.exceptions]
+                    self.handle_step_error(workflow, step, executed_steps, "\n".join(messages))
                     break
+                except Exception as e:
+                    self.handle_step_error(workflow, step, executed_steps, getattr(e, 'message', repr(e)))
+                    break
+
         workflow.save()
+
+    def handle_step_error(self, workflow, step, executed_steps, error_message):
+        workflow.step_state = StepState.ERROR.name
+        workflow.histories.append({
+            'name': step.name,
+            'date': datetime.now().isoformat(),
+            'state': StepState.ERROR.name,
+            'description': error_message
+        })
+        for prev_step in reversed(executed_steps):
+            try:
+                prev_step.compensate(workflow=workflow, failed_step_name=step.name)
+            except Exception as rollback_error:
+                workflow.histories.append({
+                    'name': prev_step.name,
+                    'date': datetime.now().isoformat(),
+                    'state': StepState.ERROR,
+                    'description': f"[Compensation Error] {repr(rollback_error)}"
+                })
 
     @abstractmethod
     def get_or_initialize(self, *args, **kwargs) -> uuid.UUID:
