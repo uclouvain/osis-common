@@ -75,6 +75,20 @@ class BaseStep(ABC):
         pass
 
 
+class TransactionStep(BaseStep):
+    """
+    Représente une étape unique du workflow (exécutable, identifiable par un nom et ayant le sid d'un savepoint)
+    Sans dépendances externes synchrones (envoi de mail, ...)
+    Par défaut, le compensate rollback la transaction englobée par le savepoint
+    """
+    savepoint_id: str
+
+    @classmethod
+    def compensate(cls, workflow: Workflow, failed_step_name: str, **kwargs):
+        if cls.savepoint_id:
+            transaction.savepoint_rollback(cls.savepoint_id)
+
+
 class BaseOrchestrator(ABC):
     """
     Contient la logique d’enchaînement des étapes
@@ -156,9 +170,6 @@ class PersistedOrchestratorMixin(ABC):
     max_retries_workflow_in_error = 3
     model_class: type[OrchestratorModel] = None
 
-    def _do_run_on_exception(self, exception: Exception = None):
-        pass
-
     def load_workflow_instance(self, workflow_uuid: uuid.UUID):
         try:
             return self.model_class.objects.select_for_update(nowait=True).get(uuid=workflow_uuid)
@@ -197,8 +208,6 @@ class PersistedOrchestratorMixin(ABC):
                         'state':  StepState.ERROR.name,
                         'description': f"{getattr(e, 'message', repr(e))}"
                     })
-
-                    self._do_run_on_exception(e)
 
                     for prev_step in reversed(executed_steps):
                         try:
