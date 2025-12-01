@@ -23,6 +23,7 @@
 #    see http://www.gnu.org/licenses/.
 #
 # ##############################################################################
+import contextlib
 import datetime
 import uuid
 from abc import ABC
@@ -33,6 +34,8 @@ from typing import Protocol, List
 
 from django.db import models
 from django.db import transaction, DatabaseError
+
+from base.ddd.utils.business_validator import MultipleBusinessExceptions
 
 
 class StepState(str, Enum):
@@ -73,6 +76,29 @@ class BaseStep(ABC):
         :param failed_step_name: Nom de l’étape qui a échoué
         """
         pass
+
+
+class TransactionStep(BaseStep):
+    """
+    Représente une étape unique du workflow (exécutable, identifiable par un nom et ayant le sid d'un savepoint)
+    Sans dépendances externes synchrones (envoi de mail, ...)
+    Par défaut, le compensate rollback la transaction englobée par le savepoint
+    """
+    savepoint_id: str
+
+    @classmethod
+    def compensate(cls, workflow: Workflow, failed_step_name: str, **kwargs):
+        if cls.savepoint_id:
+            transaction.savepoint_rollback(cls.savepoint_id)
+
+    @classmethod
+    @contextlib.contextmanager
+    def savepoint_context(cls):
+        """Gestionnaire de contexte pour gérer un savepoint Django."""
+        cls.savepoint_id = transaction.savepoint()
+        yield cls.savepoint_id
+        transaction.savepoint_commit(cls.savepoint_id)
+        cls.savepoint_id = None
 
 
 class BaseOrchestrator(ABC):
@@ -133,20 +159,33 @@ class OrchestratorModel(models.Model):
     Modèle abstrait à hériter pour créer un modèle de persistance d'un orchestrateur.
     """
     STEP_STATE_CHOICES = [
-        (StepState.PENDING, "En attente"),
-        (StepState.ERROR, "En erreur"),
-        (StepState.OK, "Ok"),
+        (StepState.PENDING.name, "En attente"),
+        (StepState.ERROR.name, "En erreur"),
+        (StepState.OK.name, "Ok"),
     ]
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     current_step = models.CharField(max_length=255)
-    step_state = models.CharField(max_length=50, choices=STEP_STATE_CHOICES, default=StepState.PENDING)
+    step_state = models.CharField(max_length=50, choices=STEP_STATE_CHOICES, default=StepState.PENDING.name)
     step_execution_count = models.IntegerField(default=0)
     last_execution = models.DateTimeField(auto_now=True)
     histories = models.JSONField(default=list)
-    context_data = models.JSONField(default=dict, help_text="Données de contexte partagées entre les étapes de la saga")
+    context_data = models.JSONField(
+        default=dict,
+        help_text="Données de contexte partagées entre les étapes de la saga",
+        blank=True
+    )
 
     class Meta:
         abstract = True
+
+    @property
+    def current_error(self):
+        if self.step_state != StepState.ERROR.name:
+            return None
+        return next(
+            history['description'] for history in reversed(self.histories) if history['state'] == StepState.ERROR.name
+        )
+
 
 
 class PersistedOrchestratorMixin(ABC):
@@ -158,9 +197,7 @@ class PersistedOrchestratorMixin(ABC):
 
     def load_workflow_instance(self, workflow_uuid: uuid.UUID):
         try:
-            return self.model_class.objects.select_related(
-                'person'
-            ).select_for_update(nowait=True).get(uuid=workflow_uuid)
+            return self.model_class.objects.select_for_update(nowait=True).get(uuid=workflow_uuid)
         except DatabaseError:
             raise WorkflowEnCoursDeTraitementException
 
@@ -184,31 +221,38 @@ class PersistedOrchestratorMixin(ABC):
                 workflow.step_execution_count += 1
                 try:
                     step.do_run(workflow=workflow)
-                    if workflow.step_state == StepState.PENDING:
+                    if workflow.step_state == StepState.PENDING.name:
                         break
                     workflow.step_execution_count = 0
                     executed_steps.append(step)
-                except Exception as e:
-                    workflow.step_state = StepState.ERROR
-                    workflow.histories.append({
-                        'name': step.name,
-                        'date': datetime.now().isoformat(),
-                        'state':  StepState.ERROR,
-                        'description': f"{repr(e)}"
-                    })
-
-                    for prev_step in reversed(executed_steps):
-                        try:
-                            prev_step.compensate(workflow=workflow, failed_step_name=step.name)
-                        except Exception as rollback_error:
-                            workflow.histories.append({
-                                'name': prev_step.name,
-                                'date': datetime.now().isoformat(),
-                                'state':  StepState.ERROR,
-                                'description': f"[Compensation Error] {repr(rollback_error)}"
-                            })
+                except MultipleBusinessExceptions as e:
+                    messages = [exception.message for exception in e.exceptions]
+                    self.handle_step_error(workflow, step, executed_steps, "\n".join(messages))
                     break
-            workflow.save()
+                except Exception as e:
+                    self.handle_step_error(workflow, step, executed_steps, getattr(e, 'message', repr(e)))
+                    break
+
+        workflow.save()
+
+    def handle_step_error(self, workflow, step, executed_steps, error_message):
+        workflow.step_state = StepState.ERROR.name
+        workflow.histories.append({
+            'name': step.name,
+            'date': datetime.now().isoformat(),
+            'state': StepState.ERROR.name,
+            'description': error_message
+        })
+        for prev_step in reversed(executed_steps):
+            try:
+                prev_step.compensate(workflow=workflow, failed_step_name=step.name)
+            except Exception as rollback_error:
+                workflow.histories.append({
+                    'name': prev_step.name,
+                    'date': datetime.now().isoformat(),
+                    'state': StepState.ERROR,
+                    'description': f"[Compensation Error] {repr(rollback_error)}"
+                })
 
     @abstractmethod
     def get_or_initialize(self, *args, **kwargs) -> uuid.UUID:

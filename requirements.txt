@@ -1,4 +1,4 @@
-Django==4.2.25
+Django==5.2.8
 django-localflavor==5.0
 django-statici18n==2.6.0
 django-analytical==3.2.0
@@ -9,24 +9,28 @@ django-htmx==1.26.0
 django-sass==1.1.0
 django-ckeditor==6.6.1  # Next version show security alert (maybe update ckeditor version 5)
 
+# Minify / Compress CSS/JS
+django-pipeline==4.1.0
+jsmin==3.0.1
+
 voluptuous==0.15.2
 attrs==25.4.0
 cattrs==25.3.0
-certifi==2025.10.5
+certifi==2025.11.12
 unidecode==1.4.0
 requests==2.32.5
 
-phonenumberslite==9.0.15 # Useful in admission
+phonenumberslite==9.0.18 # Useful in admission
 pendulum==3.1.0 # Useful in internship
 
 # PostgreSQL
 psycopg2-binary==2.9.10
 
 # Testing & quality
-tblib==3.1.0  # Useful to get better stacktrace with parallel tests
-diff-cover==9.7.1  # Useful for diff-quality
+tblib==3.2.2  # Useful to get better stacktrace with parallel tests
+diff-cover==9.7.2  # Useful for diff-quality
 pycodestyle==2.14.0
-pylint==3.3.9
+pylint==4.0.3
 freezegun==1.5.5
 mock==5.2.0
 django-hijack==3.7.4
@@ -38,8 +42,8 @@ openpyxl==3.1.5
 weasyprint==66.0
 
 # Bootstrap
-django-bootstrap3==25.2
-django-bootstrap5==25.2
+django-bootstrap3==25.3
+django-bootstrap5==25.3
 
 # Django-admin
 django-admin-list-filter-dropdown==1.0.3
@@ -48,15 +52,15 @@ django-admin-list-filter-dropdown==1.0.3
 pika==1.3.2
 
 # OpenTelemetry
-opentelemetry-api==1.37.0
-opentelemetry-sdk==1.37.0
-opentelemetry-instrumentation-django==0.58b0
-opentelemetry-instrumentation-psycopg2==0.58b0
-opentelemetry-instrumentation-urllib3==0.58b0
-opentelemetry-exporter-otlp==1.37.0
+opentelemetry-api==1.38.0
+opentelemetry-sdk==1.38.0
+opentelemetry-instrumentation-django==0.59b0
+opentelemetry-instrumentation-psycopg2==0.59b0
+opentelemetry-instrumentation-urllib3==0.59b0
+opentelemetry-exporter-otlp==1.38.0
 
 # Modules transverses
-git+https://github.com/uclouvain/osis-document-components.git@1.0.1#egg=osis_document_components
-git+https://github.com/uclouvain/osis-signature.git@0.1.01#egg=osis_signature
-git+https://github.com/uclouvain/osis-notification.git@0.1.9c#egg=osis_notification
-git+https://github.com/uclouvain/osis-async.git@0.11#egg=osis_async
+git+https://github.com/uclouvain/osis-document-components.git@1.0.2#egg=osis_document_components
+git+https://github.com/uclouvain/osis-signature.git@0.1.1#egg=osis_signature
+git+https://github.com/uclouvain/osis-notification.git@0.1.11#egg=osis_notification
+git+https://github.com/uclouvain/osis-async.git@0.13#egg=osis_async
