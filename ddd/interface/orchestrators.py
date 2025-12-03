@@ -97,8 +97,6 @@ class TransactionStep(BaseStep):
         """Gestionnaire de contexte pour gérer un savepoint Django."""
         cls.savepoint_id = transaction.savepoint()
         yield cls.savepoint_id
-        transaction.savepoint_commit(cls.savepoint_id)
-        cls.savepoint_id = None
 
 
 class BaseOrchestrator(ABC):
@@ -128,7 +126,7 @@ class InMemoryOrchestratorMixin(ABC):
             workflow.step_execution_count += 1
             try:
                 step.do_run(workflow=workflow)
-                if workflow.step_state == StepState.PENDING:
+                if workflow.step_state == StepState.PENDING.name:
                     break
                 workflow.step_execution_count = 0
                 executed_steps.append(step)
@@ -148,7 +146,7 @@ class InMemoryOrchestratorMixin(ABC):
                         workflow.histories.append({
                             'name': prev_step.name,
                             'date': datetime.now().isoformat(),
-                            'state': StepState.ERROR,
+                            'state': StepState.ERROR.name,
                             'description': f"[Compensation Error] {repr(rollback_error)}"
                         })
                 break
@@ -235,7 +233,8 @@ class PersistedOrchestratorMixin(ABC):
 
         workflow.save()
 
-    def handle_step_error(self, workflow, step, executed_steps, error_message):
+    @staticmethod
+    def handle_step_error(workflow, step, executed_steps, error_message):
         workflow.step_state = StepState.ERROR.name
         workflow.histories.append({
             'name': step.name,
@@ -250,7 +249,7 @@ class PersistedOrchestratorMixin(ABC):
                 workflow.histories.append({
                     'name': prev_step.name,
                     'date': datetime.now().isoformat(),
-                    'state': StepState.ERROR,
+                    'state': StepState.ERROR.name,
                     'description': f"[Compensation Error] {repr(rollback_error)}"
                 })
 
