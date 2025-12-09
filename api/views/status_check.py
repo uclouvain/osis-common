@@ -28,10 +28,14 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.http import JsonResponse
 from django.views import View
+from django.contrib.auth.decorators import login_not_required
+from django.utils.decorators import method_decorator
 
 from osis_common.status import db, cache, queue
 
 
+
+@method_decorator(login_not_required, name="dispatch")
 class StatusCheckView(View):
     name = "status_check"
 
