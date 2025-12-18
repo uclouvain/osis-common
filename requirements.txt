@@ -9,6 +9,7 @@ django-waffle==5.0.0
 django-htmx==1.27.0
 django-sass==1.1.0
 django-ckeditor==6.6.1  # Next version show security alert (maybe update ckeditor version 5)
+iPython==9.8.0
 
 # Minify / Compress CSS/JS
 django-pipeline==4.1.0
