@@ -14,14 +14,14 @@ django-ckeditor==6.6.1  # Next version show security alert (maybe update ckedito
 django-pipeline==4.1.0
 jsmin==3.0.1
 
-voluptuous==0.15.2
+voluptuous==0.16.0
 attrs==25.4.0
 cattrs==25.3.0
-certifi==2025.11.12
+certifi==2026.1.4
 unidecode==1.4.0
 requests==2.32.5
 
-phonenumberslite==9.0.20 # Useful in admission
+phonenumberslite==9.0.21 # Useful in admission
 pendulum==3.1.0 # Useful in internship
 
 # PostgreSQL
@@ -29,7 +29,7 @@ psycopg2-binary==2.9.10
 
 # Testing & quality
 tblib==3.2.2  # Useful to get better stacktrace with parallel tests
-diff-cover==10.0.0  # Useful for diff-quality
+diff-cover==10.1.0  # Useful for diff-quality
 pycodestyle==2.14.0
 pylint==4.0.4
 freezegun==1.5.5
@@ -43,8 +43,8 @@ openpyxl==3.1.5
 weasyprint==67.0
 
 # Bootstrap
-django-bootstrap3==25.3
-django-bootstrap5==25.3
+django-bootstrap3==26.1
+django-bootstrap5==26.1
 
 # Django-admin
 django-admin-list-filter-dropdown==1.0.3
