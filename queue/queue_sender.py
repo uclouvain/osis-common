@@ -104,19 +104,12 @@ class QueuePublisher:
         self._connection: Optional[pika.BlockingConnection] = None
         self._channel: Optional[pika.adapters.blocking_connection.BlockingChannel] = None
 
-    def on_delivery_confirmation_callback(self, method_frame):
-        if method_frame and method_frame.method.NAME == pika.spec.Basic.Nack:
-            logger.warning(f"NACK reçu queue={self.queue_name} tag={method_frame.delivery_tag}")
-
-    def on_message_sent_callback(self, nb_messages: int):
-        pass
-
     def connect(self):
         if not self._connection or self._connection.is_closed:
             self._connection = pika.BlockingConnection(self.connexion_params)
             self._channel = self._connection.channel()
 
-            self._channel.confirm_delivery(self.on_delivery_confirmation_callback)
+            self._channel.confirm_delivery()
 
     def publish(self, message: Dict) -> None:
         self.connect()
@@ -129,7 +122,6 @@ class QueuePublisher:
                 body=json.dumps(message),
                 properties=properties
             )
-            self.on_message_sent_callback(1)
         except json.JSONDecodeError as e:
             logger.exception(f"Unable to serialize data which will be sent to the queue: {self.queue_name}")
             raise e
@@ -140,18 +132,6 @@ class QueuePublisher:
         except Exception as e:
             logger.error(f"Publish failed to queue {self.queue_name}: {str(e)}")
             raise
-
-    def process_confirms(self, timeout: float = 5.0) -> None:
-        if self._channel and self._channel.is_open:
-            try:
-                self._channel.process_data_events(time_limit=timeout)
-            except ChannelClosed:
-                logger.warning(f"Canal closed during confirmation on queue f{self.queue_name}")
-
-    def publish_batch(self, messages: List[Dict]) -> None:
-        for msg in messages:
-            self.publish(msg)
-        self.process_confirms()
 
     def close(self):
         if self._channel and self._channel.is_open:
