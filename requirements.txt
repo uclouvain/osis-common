@@ -40,7 +40,7 @@ django-hijack==3.7.4
 # xls
 openpyxl==3.1.5
 # pdf
-weasyprint==67.0
+weasyprint==68.0
 
 # Bootstrap
 django-bootstrap3==26.1
