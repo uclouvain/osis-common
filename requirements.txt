@@ -1,4 +1,4 @@
-Django==5.2.9
+Django==5.2.10
 urllib3==2.5.0  # We must use this version because SDK will be broken (!Need to update open-apigenerator)
 django-localflavor==5.0
 django-statici18n==2.6.0
@@ -21,7 +21,7 @@ certifi==2026.1.4
 unidecode==1.4.0
 requests==2.32.5
 
-phonenumberslite==9.0.21 # Useful in admission
+phonenumberslite==9.0.22 # Useful in admission
 pendulum==3.1.0 # Useful in internship
 
 # PostgreSQL
@@ -29,18 +29,18 @@ psycopg2-binary==2.9.10
 
 # Testing & quality
 tblib==3.2.2  # Useful to get better stacktrace with parallel tests
-diff-cover==10.1.0  # Useful for diff-quality
+diff-cover==10.2.0  # Useful for diff-quality
 pycodestyle==2.14.0
 pylint==4.0.4
 freezegun==1.5.5
 mock==5.2.0
-django-hijack==3.7.4
+django-hijack==3.7.6
 
 # Production de fichiers
 # xls
 openpyxl==3.1.5
 # pdf
-weasyprint==67.0
+weasyprint==68.0
 
 # Bootstrap
 django-bootstrap3==26.1
