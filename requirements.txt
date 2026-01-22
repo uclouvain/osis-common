@@ -58,6 +58,7 @@ opentelemetry-sdk==1.39.1
 opentelemetry-instrumentation-django==0.60b1
 opentelemetry-instrumentation-psycopg2==0.60b1
 opentelemetry-instrumentation-urllib3==0.60b1
+opentelemetry-instrumentation-logging==0.60b1
 opentelemetry-exporter-otlp==1.39.1
 
 # Modules transverses
