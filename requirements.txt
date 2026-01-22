@@ -1,5 +1,5 @@
 Django==5.2.9
-urllib3==2.5.0  # We must use this version because SDK will be broken (!Need to update open-apigenerator)
+urllib3==2.6.3
 django-localflavor==5.0
 django-statici18n==2.6.0
 django-analytical==3.2.0
