@@ -1,4 +1,4 @@
-Django==5.2.10
+Django==5.2.11
 urllib3==2.5.0  # We must use this version because SDK will be broken (!Need to update open-apigenerator)
 django-localflavor==5.0
 django-statici18n==2.6.0
@@ -21,8 +21,8 @@ certifi==2026.1.4
 unidecode==1.4.0
 requests==2.32.5
 
-phonenumberslite==9.0.22 # Useful in admission
-pendulum==3.1.0 # Useful in internship
+phonenumberslite==9.0.23 # Useful in admission
+pendulum==3.2.0 # Useful in internship
 
 # PostgreSQL
 psycopg2-binary==2.9.10
@@ -40,7 +40,7 @@ django-hijack==3.7.6
 # xls
 openpyxl==3.1.5
 # pdf
-weasyprint==68.0
+weasyprint==68.1
 
 # Bootstrap
 django-bootstrap3==26.1
@@ -62,7 +62,7 @@ opentelemetry-instrumentation-logging==0.60b1
 opentelemetry-exporter-otlp==1.39.1
 
 # Modules transverses
-git+https://github.com/uclouvain/osis-document-components.git@1.0.2#egg=osis_document_components
+git+https://github.com/uclouvain/osis-document-components.git@1.0.6#egg=osis_document_components
 git+https://github.com/uclouvain/osis-signature.git@0.1.1#egg=osis_signature
 git+https://github.com/uclouvain/osis-notification.git@0.1.11#egg=osis_notification
 git+https://github.com/uclouvain/osis-async.git@0.13#egg=osis_async
