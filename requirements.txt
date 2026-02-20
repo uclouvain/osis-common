@@ -9,6 +9,7 @@ django-waffle==5.0.0
 django-htmx==1.27.0
 django-sass==1.1.0
 django-ckeditor==6.6.1  # Next version show security alert (maybe update ckeditor version 5)
+dj-urls-panel==0.2.1  # a supprimer si pas utile; a voir avec analystes sur la branche que je vais faire OSIS-10840
 
 # Minify / Compress CSS/JS
 django-pipeline==4.1.0
@@ -16,12 +17,12 @@ jsmin==3.0.1
 
 voluptuous==0.16.0
 attrs==25.4.0
-cattrs==25.3.0
+cattrs==26.1.0
 certifi==2026.1.4
 unidecode==1.4.0
 requests==2.32.5
 
-phonenumberslite==9.0.23 # Useful in admission
+phonenumberslite==9.0.24 # Useful in admission
 pendulum==3.2.0 # Useful in internship
 
 # PostgreSQL
@@ -31,7 +32,7 @@ psycopg2-binary==2.9.10
 tblib==3.2.2  # Useful to get better stacktrace with parallel tests
 diff-cover==10.2.0  # Useful for diff-quality
 pycodestyle==2.14.0
-pylint==4.0.4
+pylint==4.0.5
 freezegun==1.5.5
 mock==5.2.0
 django-hijack==3.7.6
@@ -44,7 +45,7 @@ weasyprint==68.1
 
 # Bootstrap
 django-bootstrap3==26.1
-django-bootstrap5==26.1
+django-bootstrap5==26.2
 
 # Django-admin
 django-admin-list-filter-dropdown==1.0.3
