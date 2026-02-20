@@ -34,7 +34,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models, transaction
-from django.db.models import DateTimeField, DateField, Q
+from django.db.models import DateTimeField, DateField
 from django.utils.encoding import force_str
 from pika.exceptions import ChannelClosed, ConnectionClosed
 
@@ -225,14 +225,18 @@ def persist(structure):
             if isinstance(value, dict):
                 fields[field_name] = persist(value)
 
-        if structure.get('model') == "base.Person":
+        global_id = fields.get("global_id")
+        uuid = fields.get("uuid")
+
+        query_set = model_class.objects.none()
+
+        if structure.get('model') == "base.Person" and global_id:
             # La modification du global_id peut être entrainée par la gestion de compte (DigIT)
-            query_set = model_class.objects.filter(
-                Q(global_id=fields.get('global_id')) |
-                Q(uuid=fields.get('uuid'))
-            )
+            query_set = model_class.objects.filter(global_id=global_id)
+            if not query_set.exists():
+                query_set = model_class.objects.filter(uuid=uuid)
         else:
-            query_set = model_class.objects.filter(uuid=fields.get('uuid'))
+            query_set = model_class.objects.filter(uuid=uuid)
 
         persisted_obj = query_set.first()
         super_class = model_class.__bases__[0]
