@@ -228,8 +228,6 @@ def persist(structure):
         global_id = fields.get("global_id")
         uuid = fields.get("uuid")
 
-        query_set = model_class.objects.none()
-
         if structure.get('model') == "base.Person" and global_id:
             # La modification du global_id peut être entrainée par la gestion de compte (DigIT)
             query_set = model_class.objects.filter(global_id=global_id)
