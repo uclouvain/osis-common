@@ -31,6 +31,11 @@ from django.conf import settings
 from django.test.runner import DiscoverRunner
 from mock import patch
 
+if settings.EXPORT_TEST_RESULTS_AS_XML:
+    up_test_class = XMLTestRunner
+else:
+    up_test_class = DiscoverRunner
+
 
 class DebugTimeTextTestResult(unittest.TextTestResult):
     def __init__(self, stream, descriptions, verbosity):
@@ -69,8 +74,10 @@ class DebugTimeTestRunner(unittest.TextTestRunner):
         return getattr(settings, 'SLOW_TEST_THRESHOLD', 0.8)
 
 
-class InstalledAppsTestRunner(DiscoverRunner):
-    test_runner = DebugTimeTestRunner
+class InstalledAppsTestRunner(up_test_class):
+    
+    if not settings.EXPORT_TEST_RESULTS_AS_XML:
+        test_runner = DebugTimeTestRunner
 
     @staticmethod
     def mock_user_roles_api_return():
@@ -81,13 +88,9 @@ class InstalledAppsTestRunner(DiscoverRunner):
 
     def build_suite(self, test_labels=None, *args, **kwargs):
         django_version = get_django_version()
-        tests_type = 'Unit Tests Only'
         print('###### Tests Infos #####################################')
         print('### Test Runner : {}'.format(settings.TEST_RUNNER))
         print('### Django Version : {}'.format(django_version))
-        print('### Tests type: {}'.format(tests_type))
-        if hasattr(settings, 'FUNCT_TESTS_CONFIG') and settings.FUNCT_TESTS_CONFIG:
-            print('### Virtual Display: {}'.format(settings.FUNCT_TESTS_CONFIG.get('VIRTUAL_DISPLAY')))
         print('########################################################')
         print('')
         if hasattr(settings, 'MOCK_USER_ROLES_API_CALL') and settings.MOCK_USER_ROLES_API_CALL:
@@ -98,7 +101,7 @@ class InstalledAppsTestRunner(DiscoverRunner):
         # disable permission cache setting for all tests
         setattr(settings, 'PERMISSION_CACHE_ENABLED', False)
 
-        return super(InstalledAppsTestRunner, self).build_suite(test_labels or settings.APPS_TO_TEST, *args, **kwargs)
+        return super(InstalledAppsTestRunner, self).build_suite(test_labels, *args, **kwargs)
 
     def teardown_test_environment(self, **kwargs):
         if hasattr(settings, 'MOCK_USER_ROLES_API_CALL') and settings.MOCK_USER_ROLES_API_CALL:
