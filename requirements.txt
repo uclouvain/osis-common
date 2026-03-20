@@ -1,4 +1,4 @@
-Django==5.2.11
+Django==5.2.12
 urllib3==2.5.0  # We must use this version because SDK will be broken (!Need to update open-apigenerator)
 django-localflavor==5.0
 django-statici18n==2.6.0
@@ -9,7 +9,7 @@ django-waffle==5.0.0
 django-htmx==1.27.0
 django-sass==1.1.0
 django-ckeditor==6.6.1  # Next version show security alert (maybe update ckeditor version 5)
-dj-urls-panel==0.2.1  # a supprimer si pas utile; a voir avec analystes sur la branche que je vais faire OSIS-10840
+dj-control-room[all]==1.1.1  # a supprimer si pas utile; a voir avec analystes sur la branche que je vais faire OSIS-10840
 
 # Minify / Compress CSS/JS
 django-pipeline==4.1.0
@@ -18,11 +18,11 @@ jsmin==3.0.1
 voluptuous==0.16.0
 attrs==25.4.0
 cattrs==26.1.0
-certifi==2026.1.4
+certifi==2026.2.25
 unidecode==1.4.0
 requests==2.32.5
 
-phonenumberslite==9.0.24 # Useful in admission
+phonenumberslite==9.0.25 # Useful in admission
 pendulum==3.2.0 # Useful in internship
 
 # PostgreSQL
@@ -54,16 +54,16 @@ django-admin-list-filter-dropdown==1.0.3
 pika==1.3.2
 
 # OpenTelemetry
-opentelemetry-api==1.39.1
-opentelemetry-sdk==1.39.1
-opentelemetry-instrumentation-django==0.60b1
-opentelemetry-instrumentation-psycopg2==0.60b1
-opentelemetry-instrumentation-urllib3==0.60b1
-opentelemetry-instrumentation-logging==0.60b1
-opentelemetry-exporter-otlp==1.39.1
+opentelemetry-api==1.40.0
+opentelemetry-sdk==1.40.0
+opentelemetry-instrumentation-django==0.61b0
+opentelemetry-instrumentation-psycopg2==0.61b0
+opentelemetry-instrumentation-urllib3==0.61b0
+opentelemetry-instrumentation-logging==0.61b0
+opentelemetry-exporter-otlp==1.40.0
 
 # Modules transverses
-git+https://github.com/uclouvain/osis-document-components.git@1.0.6#egg=osis_document_components
+git+https://github.com/uclouvain/osis-document-components.git@1.0.7#egg=osis_document_components
 git+https://github.com/uclouvain/osis-signature.git@0.1.1#egg=osis_signature
 git+https://github.com/uclouvain/osis-notification.git@0.1.11#egg=osis_notification
 git+https://github.com/uclouvain/osis-async.git@0.13#egg=osis_async
