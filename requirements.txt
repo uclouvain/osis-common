@@ -41,7 +41,7 @@ django-hijack==3.7.6
 # xls
 openpyxl==3.1.5
 # pdf
-weasyprint==67.0  # issue with >= 68.0 No sapce left due to temp directories not deleted after generation
+weasyprint==68.0  # issue with 68.1 because out of memory
 
 # Bootstrap
 django-bootstrap3==26.1
