@@ -32,6 +32,7 @@ from django.test.runner import DiscoverRunner
 from mock import patch
 
 if settings.EXPORT_TEST_RESULTS_AS_XML:
+    from xmlrunner.extra.djangotestrunner import XMLTestRunner
     up_test_class = XMLTestRunner
 else:
     up_test_class = DiscoverRunner
@@ -101,10 +102,10 @@ class OsisTestRunner(up_test_class):
         # disable permission cache setting for all tests
         setattr(settings, 'PERMISSION_CACHE_ENABLED', False)
 
-        return super(InstalledAppsTestRunner, self).build_suite(test_labels, *args, **kwargs)
+        return super(OsisTestRunner, self).build_suite(test_labels, *args, **kwargs)
 
     def teardown_test_environment(self, **kwargs):
         if hasattr(settings, 'MOCK_USER_ROLES_API_CALL') and settings.MOCK_USER_ROLES_API_CALL:
             self.user_roles_api_call.stop()
-        super(InstalledAppsTestRunner, self).teardown_test_environment(**kwargs)
+        super(OsisTestRunner, self).teardown_test_environment(**kwargs)
 
