@@ -74,7 +74,7 @@ class DebugTimeTestRunner(unittest.TextTestRunner):
         return getattr(settings, 'SLOW_TEST_THRESHOLD', 0.8)
 
 
-class InstalledAppsTestRunner(up_test_class):
+class OsisTestRunner(up_test_class):
     
     if not settings.EXPORT_TEST_RESULTS_AS_XML:
         test_runner = DebugTimeTestRunner
