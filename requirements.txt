@@ -26,7 +26,7 @@ phonenumberslite==9.0.26 # Useful in admission
 pendulum==3.2.0 # Useful in internship
 
 # PostgreSQL
-psycopg2-binary==2.9.10
+psycopg2-binary==2.9.11
 
 # Testing & quality
 tblib==3.2.2  # Useful to get better stacktrace with parallel tests
@@ -41,7 +41,7 @@ django-hijack==3.7.7
 # xls
 openpyxl==3.1.5
 # pdf
-weasyprint==68.0  # issue with 68.1 because out of memory
+weasyprint==68.1
 
 # Bootstrap
 django-bootstrap3==26.1
