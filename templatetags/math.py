@@ -41,3 +41,8 @@ def div(value, arg):
 @register.filter
 def add_float(value, arg):
     return value + arg
+
+
+@register.filter
+def is_even(value: int) -> bool:
+    return value % 2 == 0
