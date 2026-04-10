@@ -35,6 +35,7 @@ pylint==4.0.5
 freezegun==1.5.5
 mock==5.2.0
 django-hijack==3.7.7
+unittest-xml-reporting==4.0.0
 
 # Production de fichiers
 # xls
