@@ -31,7 +31,7 @@ from django.conf import settings
 from django.test.runner import DiscoverRunner
 from mock import patch
 
-if settings.EXPORT_TEST_RESULTS_AS_XML:
+if hasattr(settings, "EXPORT_TEST_RESULTS_AS_XML") and settings.EXPORT_TEST_RESULTS_AS_XML:
     from xmlrunner.extra.djangotestrunner import XMLTestRunner
     up_test_class = XMLTestRunner
 else:
@@ -77,7 +77,7 @@ class DebugTimeTestRunner(unittest.TextTestRunner):
 
 class OsisTestRunner(up_test_class):
     
-    if not settings.EXPORT_TEST_RESULTS_AS_XML:
+    if not (hasattr(settings, "EXPORT_TEST_RESULTS_AS_XML") and settings.EXPORT_TEST_RESULTS_AS_XML):
         test_runner = DebugTimeTestRunner
 
     @staticmethod
