@@ -23,13 +23,17 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from ckeditor.widgets import CKEditorWidget
 from django import forms
 from django.conf import settings
 from django.forms import ModelForm
 
 from osis_common.models import message_template
 from osis_common.models.document_file import DocumentFile
+
+try:
+    from ckeditor.widgets import CKEditorWidget
+except ModuleNotFoundError:
+    CKEditorWidget = forms.Textarea
 
 
 class MessageTemplateForm(ModelForm):
