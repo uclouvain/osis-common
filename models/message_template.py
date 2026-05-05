@@ -23,11 +23,15 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
-from ckeditor.fields import RichTextField
 from django.conf import settings
 from django.db import models
 
 from osis_common.models import osis_model_admin
+
+try:
+    from ckeditor.fields import RichTextField
+except ModuleNotFoundError:
+    RichTextField = models.TextField
 
 
 class MessageTemplateAdmin(osis_model_admin.OsisModelAdmin):
